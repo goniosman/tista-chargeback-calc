@@ -1,0 +1,683 @@
+{
+  "order_id": "457313",
+  "contractor": "Pixel Path (P2)",
+  "pixel": "> 5000",
+  "total_files": 22,
+  "files": [
+    {
+      "id": 1,
+      "filename": "batch-1/louve_bone_0488.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 2,
+      "filename": "batch-1/louve_bone_0514.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 3,
+      "filename": "batch-1/louve_bone_0504.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 4,
+      "filename": "batch-1/louve_bone_0064.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 5,
+      "filename": "batch-1/louve_bone_0573.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 6,
+      "filename": "batch-1/louve_bone_0716.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 7,
+      "filename": "batch-1/louve_bone_0565.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 8,
+      "filename": "batch-1/louve_bone_0546.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 9,
+      "filename": "batch-1/louve_bone_0399.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 10,
+      "filename": "batch-1/louve_bone_0224.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 11,
+      "filename": "batch-1/louve_bone_0296.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 12,
+      "filename": "batch-1/louve_bone_0596.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 13,
+      "filename": "batch-1/louve_bone_0134.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 14,
+      "filename": "batch-1/louve_bone_0255.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 15,
+      "filename": "batch-1/louve_bone_0283.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 16,
+      "filename": "batch-1/louve_bone_0537.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 17,
+      "filename": "batch-1/louve_bone_0523.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 18,
+      "filename": "batch-1/louve_bone_0480.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 19,
+      "filename": "batch-1/louve_bone_0124.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 20,
+      "filename": "batch-1/louve_bone_0695.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 21,
+      "filename": "batch-1/louve_bone_0521.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    },
+    {
+      "id": 22,
+      "filename": "batch-1/louve_bone_0681.tif",
+      "location": "Pixel Path (P2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Dust, spot and scratch removal",
+          "raw_name": "Dust, spot and scratch removal",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Wrinkle on clothing",
+          "raw_name": "Wrinkle on clothing removal",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Dust, spot and scratch removal (Category 2), Dust, spot and scratch removal (Category 2), Wrinkle on clothing (Category 1), Wrinkle on clothing (Category 1)"
+    }
+  ],
+  "warnings": []
+}

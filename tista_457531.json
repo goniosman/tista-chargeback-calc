@@ -1,0 +1,22 @@
+{
+  "order_id": "457531",
+  "dispute_id": "47400",
+  "dispute_reason": "Correction",
+  "contractor": "Perfect Pixel (GB2)",
+  "dispute_location": "Perfect Pixel (GB2)",
+  "fault_by": "Quality Control",
+  "delayed_by_text": "",
+  "delayed_by_seconds": null,
+  "delay_seconds": null,
+  "fault_quantity": 5.0,
+  "fault_severity": "Low",
+  "status": "Awaiting res...",
+  "order_duration_text": "96:00:00",
+  "order_duration_seconds": 345600,
+  "pixel": "> 5000",
+  "service_type": "Clipping path",
+  "category_level": "Category 2",
+  "average_category": 2.0,
+  "services": [],
+  "warnings": []
+}

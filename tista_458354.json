@@ -1,0 +1,19 @@
+{
+  "order_id": "458354",
+  "contractor": "",
+  "dispute_location": "",
+  "delayed_by_text": "",
+  "delayed_by_seconds": null,
+  "delay_seconds": null,
+  "fault_quantity": null,
+  "order_duration_text": "6:00:00",
+  "order_duration_seconds": 21600,
+  "pixel": "> 5000",
+  "service_type": "Clipping path",
+  "category_level": "Category 2",
+  "average_category": 2.0,
+  "services": [],
+  "warnings": [
+    "Order #458354 was not found in the Dispute table."
+  ]
+}

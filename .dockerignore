@@ -1,0 +1,15 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.exe
+*.dmg
+*.zip
+*.rar
+build/
+dist/
+macOS/
+scratch/
+.tista-profile
+Test_Chargeback Calculator.xlsx

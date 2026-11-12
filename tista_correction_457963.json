@@ -1,0 +1,327 @@
+{
+  "order_id": "457963",
+  "contractor": "Path",
+  "pixel": "> 5000",
+  "total_files": 12,
+  "files": [
+    {
+      "id": 1,
+      "filename": "batch-1/00NH169SAT_BLK_01.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Clipping path (Category 1), Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 2,
+      "filename": "batch-1/00NH169SAT_BLK_02.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 3,
+      "filename": "batch-1/00NH169SAT_BLK_03.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 4,
+      "filename": "batch-1/00NH169SAT_BLK_04.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 5,
+      "filename": "batch-1/00NH169SAT_BLK_05.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Clipping path (Category 1), Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 6,
+      "filename": "batch-1/00NH169SAT_BLK_06.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 7,
+      "filename": "batch-1/00NH169SAT_CHP 001.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 8,
+      "filename": "batch-1/00NH169SAT_CHP 002.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 9,
+      "filename": "batch-1/00NH169SAT_CHP 003.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 10,
+      "filename": "batch-1/00NH169SAT_CHP 004.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 11,
+      "filename": "batch-1/00NH169SAT_CHP 005.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Clipping path (Category 1), Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 12,
+      "filename": "batch-1/P26_00NH169SAT_CHP_012.jpg",
+      "location": "ClippingPix",
+      "dimension": "2001-3000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Multi-clipping path",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 1), Color variants (Category 1)"
+    }
+  ],
+  "warnings": []
+}

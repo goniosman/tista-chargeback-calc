@@ -1,0 +1,22 @@
+{
+  "order_id": "458192",
+  "dispute_id": "47359",
+  "dispute_reason": "Correction",
+  "contractor": "Vectorio",
+  "dispute_location": "Vectorio",
+  "fault_by": "Quality Control",
+  "delayed_by_text": "",
+  "delayed_by_seconds": null,
+  "delay_seconds": null,
+  "fault_quantity": 1.0,
+  "fault_severity": "Low",
+  "status": "Awaiting res...",
+  "order_duration_text": "24:00:00",
+  "order_duration_seconds": 86400,
+  "pixel": "> 5000",
+  "service_type": "Clipping path",
+  "category_level": "Category 2",
+  "average_category": 2.0,
+  "services": [],
+  "warnings": []
+}

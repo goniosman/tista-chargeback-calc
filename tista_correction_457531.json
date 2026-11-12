@@ -1,0 +1,834 @@
+{
+  "order_id": "457531",
+  "contractor": "Perfect Pixel (GB2)",
+  "pixel": "> 5000",
+  "total_files": 45,
+  "files": [
+    {
+      "id": 1,
+      "filename": "H533_0150_Crop.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Image masking",
+          "raw_name": "Image masking",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Image masking (Category 1), Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 2,
+      "filename": "H704_0165_Crop.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Image masking",
+          "raw_name": "Image masking",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Image masking (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 3,
+      "filename": "H623_0213_Lemonade1.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Image masking",
+          "raw_name": "Image masking",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Image masking (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 4,
+      "filename": "H624_0233_Lemonade.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Clipping path",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 2), Color variants (Category 1)"
+    },
+    {
+      "id": 5,
+      "filename": "H428_01671.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Clipping path",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 2), Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 6,
+      "filename": "H444_1086_Ivory.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Clipping path",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 2), Color variants (Category 1)"
+    },
+    {
+      "id": 7,
+      "filename": "H720_00332_GRAY.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Image masking",
+          "raw_name": "Image masking",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Image masking (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 8,
+      "filename": "H903_1375_Crop.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": "1001-2000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Clipping path",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 2), Color variants (Category 1)"
+    },
+    {
+      "id": 9,
+      "filename": "H533_0150_Crop - Copy - Copy (10).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 10,
+      "filename": "H533_0150_Crop - Copy - Copy (11) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 11,
+      "filename": "H533_0150_Crop - Copy - Copy (11).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 12,
+      "filename": "H533_0150_Crop - Copy - Copy (12) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 13,
+      "filename": "H533_0150_Crop - Copy - Copy (12).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 14,
+      "filename": "H533_0150_Crop - Copy - Copy (13) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 15,
+      "filename": "H533_0150_Crop - Copy - Copy (13).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 16,
+      "filename": "H533_0150_Crop - Copy - Copy (14) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 17,
+      "filename": "H533_0150_Crop - Copy - Copy (14).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 18,
+      "filename": "H533_0150_Crop - Copy - Copy (15) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 19,
+      "filename": "H533_0150_Crop - Copy - Copy (16) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 20,
+      "filename": "H533_0150_Crop - Copy - Copy (17) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 21,
+      "filename": "H533_0150_Crop - Copy - Copy (18) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 22,
+      "filename": "H533_0150_Crop - Copy - Copy (19) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1), Color variants (Category 1)"
+    },
+    {
+      "id": 23,
+      "filename": "H533_0150_Crop - Copy - Copy (20) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 24,
+      "filename": "H533_0150_Crop - Copy - Copy (21) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 25,
+      "filename": "H533_0150_Crop - Copy - Copy (22) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 26,
+      "filename": "H533_0150_Crop - Copy - Copy (23) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 27,
+      "filename": "H533_0150_Crop - Copy - Copy (24) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 28,
+      "filename": "H533_0150_Crop - Copy - Copy (25) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 29,
+      "filename": "H533_0150_Crop - Copy - Copy (26) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 30,
+      "filename": "H533_0150_Crop - Copy - Copy (27) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 31,
+      "filename": "H533_0150_Crop - Copy - Copy (28) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 32,
+      "filename": "H533_0150_Crop - Copy - Copy (29) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 33,
+      "filename": "H533_0150_Crop - Copy - Copy (30) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 34,
+      "filename": "H533_0150_Crop - Copy - Copy (31) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 35,
+      "filename": "H533_0150_Crop - Copy - Copy (32) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 36,
+      "filename": "H533_0150_Crop - Copy - Copy (33) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 37,
+      "filename": "H533_0150_Crop - Copy - Copy (34) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 38,
+      "filename": "H533_0150_Crop - Copy - Copy (35) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 39,
+      "filename": "H533_0150_Crop - Copy - Copy (36) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 40,
+      "filename": "H533_0150_Crop - Copy - Copy (37) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 41,
+      "filename": "H428_01671_GRAY.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Clipping path",
+          "raw_name": "Clipping path",
+          "complexity": "C2",
+          "category": "Category 2",
+          "numeric_cat": 2.0
+        },
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Clipping path (Category 2), Color variants (Category 1)"
+    },
+    {
+      "id": 42,
+      "filename": "H428_01671_GRAY - Copy (2) - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 43,
+      "filename": "H428_01671_GRAY - Copy (2).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 44,
+      "filename": "H428_01671_GRAY - Copy (4).jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    },
+    {
+      "id": 45,
+      "filename": "H428_01671_GRAY - Copy.jpg",
+      "location": "Perfect Pixel (GB2)",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Color variants",
+          "raw_name": "Color variants",
+          "complexity": "C1",
+          "category": "Category 1",
+          "numeric_cat": 1.0
+        }
+      ],
+      "services_display": "Color variants (Category 1)"
+    }
+  ],
+  "warnings": []
+}

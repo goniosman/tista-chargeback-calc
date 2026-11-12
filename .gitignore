@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.spec
+
+# Build & Dist binaries
+build/
+dist/
+macOS/
+scratch/
+*.exe
+*.dmg
+*.zip
+*.rar
+
+# Tista sensitive session data
+.tista-profile/
+*.log
+
+# Misc test files
+Test_Chargeback Calculator.xlsx

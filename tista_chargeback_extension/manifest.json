@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Tista Chargeback Calculator & Closer",
+  "version": "2.0.0",
+  "description": "Serverless Chargeback Calculator and 1-Click Dispute Closer for Tista.app",
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://tista.app/*"],
+      "js": ["prices.js", "content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Tista Chargeback Calculator"
+  },
+  "permissions": ["storage"]
+}

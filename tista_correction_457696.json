@@ -1,0 +1,265 @@
+{
+  "order_id": "457696",
+  "contractor": "Edgebo",
+  "pixel": "> 5000",
+  "total_files": 16,
+  "files": [
+    {
+      "id": 1,
+      "filename": "MARDEGAN-03-11-20260191.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 2,
+      "filename": "MARDEGAN-03-11-20260194.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 3,
+      "filename": "MARDEGAN-03-11-20260200.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 4,
+      "filename": "MARDEGAN-03-11-20260201.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 5,
+      "filename": "MARDEGAN-03-11-20260204.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 6,
+      "filename": "MARDEGAN-03-11-20260205.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 7,
+      "filename": "MARDEGAN-03-11-20260218.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 8,
+      "filename": "MARDEGAN-03-11-20260219.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 9,
+      "filename": "MARDEGAN-03-11-20260227.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 10,
+      "filename": "MARDEGAN-03-11-20260229.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 11,
+      "filename": "MARDEGAN-03-11-20260232.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 12,
+      "filename": "MARDEGAN-03-11-20260234.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 13,
+      "filename": "MARDEGAN-03-11-20260255.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 14,
+      "filename": "MARDEGAN-03-11-20260257.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 15,
+      "filename": "MARDEGAN-03-11-20260262.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 16,
+      "filename": "MARDEGAN-03-11-20260263.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    }
+  ],
+  "warnings": []
+}

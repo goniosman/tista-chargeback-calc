@@ -1,0 +1,2775 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Chargeback Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky top bar with tabs; each calculator = inputs card + live result panel, then two editable tables below. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#1b2428; --muted:#5d6b70; --line:#d9e0de; --soft:#eaf0ee;
+  --accent:#0d6b62; --accent-ink:#ffffff; --danger:#b23a24; --danger-soft:#fbe9e5; --ok-soft:#e2f2ee;
+  --font-head:'Space Grotesk',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101617; --surface:#182022; --ink:#e6eeec; --muted:#93a4a6; --line:#2b3739; --soft:#1f2a2c;
+  --accent:#4cc3b3; --accent-ink:#0b1a18; --danger:#ff9b86; --danger-soft:#33201c; --ok-soft:#1b2f2c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101617; --surface:#182022; --ink:#e6eeec; --muted:#93a4a6; --line:#2b3739; --soft:#1f2a2c;
+  --accent:#4cc3b3; --accent-ink:#0b1a18; --danger:#ff9b86; --danger-soft:#33201c; --ok-soft:#1b2f2c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1080px;margin:0 auto}
+header{padding-block:22px 12px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font-family:var(--font-head);font-size:26px;line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+nav button{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.top{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+.card+.card{margin-top:16px}
+h2{font-family:var(--font-head);font-size:16px;margin:0 0 14px}
+.f{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 12px;align-items:center;margin-bottom:10px}
+@media(max-width:520px){.f{grid-template-columns:minmax(0,1fr)}}
+.f label{font-weight:500}
+.hint{grid-column:2;color:var(--muted);font-size:12px;margin-top:-2px}
+@media(max-width:520px){.hint{grid-column:1}}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:7px 9px;width:100%;min-width:0}
+input[type=number]{font-family:var(--font-mono)}
+.ro{background:var(--soft);font-family:var(--font-mono);padding:7px 9px;border-radius:4px;border:1px solid var(--line)}
+.result{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.result h2{color:inherit;opacity:.85;font-size:13px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-body);font-weight:600}
+.big{font-family:var(--font-head);font-size:40px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;word-break:break-all}
+.steps{margin:14px 0 0;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--accent-ink) 30%,transparent);font-family:var(--font-mono);font-size:12.5px;display:grid;gap:4px}
+.steps div{display:flex;justify-content:space-between;gap:12px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 4px;vertical-align:middle}
+td.n,th.n{text-align:right}
+td .ro{text-align:right;min-height:34px}
+tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:4px;cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.x{padding:4px 9px;color:var(--danger)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.tier{width:100%;min-width:0;font-size:13px}
+.tier td,.tier th{padding:5px 8px;border-bottom:1px solid var(--line)}
+.tier tr.on td{background:var(--ok-soft);font-weight:600}
+.warn{background:var(--danger-soft);color:var(--danger);padding:8px 10px;border-radius:4px;margin-top:10px;font-size:13px}
+.formula{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
+.sev tr.on td{background:var(--ok-soft);font-weight:600}
+[hidden]{display:none!important}
+.badge-cat{display:inline-block;padding:2px 7px;font-size:11px;font-weight:600;font-family:var(--font-mono);background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:4px;letter-spacing:0.02em}
+.tbl-files{width:100%;border-collapse:collapse}
+.tbl-files th,.tbl-files td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl-files tr:hover td{background:var(--soft)}
+.tbl-files tr.selected td{background:var(--ok-soft)}
+.tbl-files input[type="checkbox"]{width:16px;height:16px;cursor:pointer}
+.svc-item{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.badge-reason{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em}
+.badge-reason.Correction{background:#e0f2fe;color:#0284c7}
+.badge-reason.Delay{background:#fef3c7;color:#b45309}
+.badge-reason.Quality{background:#f3e8ff;color:#7e22ce}
+.badge-min{background:var(--ok-soft);color:var(--ok);font-size:10.5px;font-weight:600;padding:2px 5px;border-radius:3px;margin-left:4px;white-space:nowrap}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center}
+.kpi-val{font-size:26px;font-weight:700;font-family:var(--font-head);color:var(--accent)}
+.kpi-lbl{font-size:11.5px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+.contractor-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--soft);border:1px solid var(--line);border-radius:14px;font-size:12px;font-weight:500;margin:3px 4px 3px 0}
+.contractor-pill strong{color:var(--accent)}
+
+/* Global Loading System */
+#global-top-progress{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#2ecc71,var(--accent));background-size:200% 100%;animation:moveBar 1.2s linear infinite;z-index:100000;display:none}
+@keyframes moveBar{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
+#global-loader-overlay{position:fixed;inset:0;background:rgba(13,17,23,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:99999;display:none;align-items:center;justify-content:center;transition:opacity .2s ease}
+.loader-box{background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 35px rgba(0,0,0,0.6);border-radius:12px;padding:28px 36px;text-align:center;max-width:440px;width:90%;animation:popIn .25s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes popIn{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}
+.loader-spinner{width:48px;height:48px;margin:0 auto 16px;border:4px solid var(--soft);border-top:4px solid var(--accent);border-right:4px solid var(--accent);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.loader-title{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.loader-sub{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:14px}
+.loader-cancel-btn{background:var(--soft);border:1px solid var(--line);color:var(--muted);padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;transition:all .15s ease}
+.loader-cancel-btn:hover{background:var(--line);color:var(--ink)}
+
+/* Card Loading Overlay for Total Chargeback Cards */
+.card.result{position:relative;overflow:hidden;min-height:220px}
+.result-card-loader{position:absolute;inset:0;background:var(--accent);color:var(--accent-ink);z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;border-radius:inherit;opacity:1;box-shadow:0 4px 20px rgba(0,0,0,0.25)}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+.result-card-spinner{width:42px;height:42px;border:3.5px solid rgba(0,0,0,0.18);border-top-color:var(--accent-ink);border-right-color:var(--accent-ink);border-radius:50%;animation:spin .75s linear infinite;margin-bottom:12px}
+.result-card-title{font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px;color:var(--accent-ink)}
+.result-card-sub{font-size:12.5px;opacity:0.88;line-height:1.4;max-width:280px;margin-bottom:12px;color:var(--accent-ink)}
+.result-card-dismiss{background:rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.22);color:var(--accent-ink);font-size:11px;padding:4px 12px;border-radius:12px;cursor:pointer;font-weight:600;transition:all .15s ease}
+.result-card-dismiss:hover{background:rgba(0,0,0,0.22)}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+</style>
+<div id="global-top-progress"></div>
+<div id="global-loader-overlay">
+  <div class="loader-box">
+    <div class="loader-spinner"></div>
+    <div id="loader-title" class="loader-title">Loading...</div>
+    <div id="loader-sub" class="loader-sub">Please wait while communicating with Tista...</div>
+    <button type="button" class="loader-cancel-btn" onclick="hideLoading()">Dismiss</button>
+  </div>
+</div>
+<div class="wrap">
+<header style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+  <div><h1>Chargeback Calculator</h1><p class="sub">Correction and delay chargebacks, using the price list and formulas from the Excel workbook.</p></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <button id="btn-tista-login" type="button" class="btn" style="display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;">
+      <span id="tista-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e3b341"></span>
+      <span id="tista-status-text">🔑 Tista Login</span>
+    </button>
+    <a href="BOOKMARKLET.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(32,178,170,0.15);border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:20px;" title="কোনো পাইথন বা সার্ভার ছাড়াই সরাসরি ব্রাউজারে Tista-র ভেতরে কাজ করুন">
+      ⚡ সার্ভার ছাড়া Tista-তে ব্যবহার করুন (Serverless)
+    </a>
+  </div>
+</header>
+<nav role="tablist" id="tabs">
+  <button role="tab" data-tab="cor" aria-selected="true">Correction</button>
+  <button role="tab" data-tab="del" aria-selected="false">Delay Delivery</button>
+  <button role="tab" data-tab="auto" aria-selected="false">Automatic Delay</button>
+  <button role="tab" data-tab="autocor" aria-selected="false">Auto Correction</button>
+  <button role="tab" data-tab="batch" aria-selected="false">Batch Chargeback</button>
+  <button role="tab" data-tab="cfg" aria-selected="false">Price List</button>
+</nav>
+<main id="pane"></main>
+</div>
+<script>
+const DEFAULT_CFG = {"contractors": ["Creative Path (P1)", "Pixel Path (P2)", "Perfect Pixel (GB2)", "Path", "Grasigner Kitchen", "Khandoker Graphics", "Graphics Picture", "Vectorio", "Cutout Edge", "Edgebo", "Healing Image", "Photo Fix Zone", "ClippingPix", "Subs"], "status": ["Completed", "Under Dispute", "Completed but Charged Back", "Require Pertial Revision", "Pending", "Completed but Delayed", "Charged Back with Pertial Revision", "In Progress", "Under Review"], "severity": ["Minor", "Medium", "Major"], "prices": [["Clipping path", "Category 1", "< 1000", 0.05], ["Clipping path", "Category 1", "1001-2000", 0.07], ["Clipping path", "Category 1", "2001-3000", 0.09], ["Clipping path", "Category 1", "3001-4000", 0.11], ["Clipping path", "Category 1", "4001-5000", 0.12], ["Clipping path", "Category 1", "> 5000", 0.14], ["Clipping path", "Category 1.5", "< 1000", 0.08], ["Clipping path", "Category 1.5", "1001-2000", 0.11], ["Clipping path", "Category 1.5", "2001-3000", 0.14], ["Clipping path", "Category 1.5", "3001-4000", 0.16], ["Clipping path", "Category 1.5", "4001-5000", 0.19], ["Clipping path", "Category 1.5", "> 5000", 0.21], ["Clipping path", "Category 2", "< 1000", 0.11], ["Clipping path", "Category 2", "1001-2000", 0.15], ["Clipping path", "Category 2", "2001-3000", 0.18], ["Clipping path", "Category 2", "3001-4000", 0.22], ["Clipping path", "Category 2", "4001-5000", 0.25], ["Clipping path", "Category 2", "> 5000", 0.27], ["Clipping path", "Category 2.25", "< 1000", 0.0], ["Clipping path", "Category 2.25", "1001-2000", 0.0], ["Clipping path", "Category 2.25", "2001-3000", 0.0], ["Clipping path", "Category 2.25", "3001-4000", 0.0], ["Clipping path", "Category 2.25", "4001-5000", 0.0], ["Clipping path", "Category 2.25", "> 5000", 0.0], ["Clipping path", "Category 2.5", "< 1000", 0.12], ["Clipping path", "Category 2.5", "1001-2000", 0.17], ["Clipping path", "Category 2.5", "2001-3000", 0.2], ["Clipping path", "Category 2.5", "3001-4000", 0.23], ["Clipping path", "Category 2.5", "4001-5000", 0.27], ["Clipping path", "Category 2.5", "> 5000", 0.3], ["Clipping path", "Category 2.75", "< 1000", 0.0], ["Clipping path", "Category 2.75", "1001-2000", 0.0], ["Clipping path", "Category 2.75", "2001-3000", 0.0], ["Clipping path", "Category 2.75", "3001-4000", 0.0], ["Clipping path", "Category 2.75", "4001-5000", 0.0], ["Clipping path", "Category 2.75", "> 5000", 0.0], ["Clipping path", "Category 3", "< 1000", 0.16], ["Clipping path", "Category 3", "1001-2000", 0.22], ["Clipping path", "Category 3", "2001-3000", 0.26], ["Clipping path", "Category 3", "3001-4000", 0.3], ["Clipping path", "Category 3", "4001-5000", 0.35], ["Clipping path", "Category 3", "> 5000", 0.39], ["Clipping path", "Category 3.25", "< 1000", 0.0], ["Clipping path", "Category 3.25", "1001-2000", 0.0], ["Clipping path", "Category 3.25", "2001-3000", 0.0], ["Clipping path", "Category 3.25", "3001-4000", 0.0], ["Clipping path", "Category 3.25", "4001-5000", 0.0], ["Clipping path", "Category 3.25", "> 5000", 0.0], ["Clipping path", "Category 3.5", "< 1000", 0.31], ["Clipping path", "Category 3.5", "1001-2000", 0.37], ["Clipping path", "Category 3.5", "2001-3000", 0.43], ["Clipping path", "Category 3.5", "3001-4000", 0.5], ["Clipping path", "Category 3.5", "4001-5000", 0.58], ["Clipping path", "Category 3.5", "> 5000", 0.62], ["Clipping path", "Category 3.75", "< 1000", 0.0], ["Clipping path", "Category 3.75", "1001-2000", 0.0], ["Clipping path", "Category 3.75", "2001-3000", 0.0], ["Clipping path", "Category 3.75", "3001-4000", 0.0], ["Clipping path", "Category 3.75", "4001-5000", 0.0], ["Clipping path", "Category 3.75", "> 5000", 0.0], ["Clipping path", "Category 4", "< 1000", 0.46], ["Clipping path", "Category 4", "1001-2000", 0.52], ["Clipping path", "Category 4", "2001-3000", 0.6], ["Clipping path", "Category 4", "3001-4000", 0.7], ["Clipping path", "Category 4", "4001-5000", 0.82], ["Clipping path", "Category 4", "> 5000", 0.86], ["Clipping path", "Category 4.25", "< 1000", 0.0], ["Clipping path", "Category 4.25", "1001-2000", 0.0], ["Clipping path", "Category 4.25", "2001-3000", 0.0], ["Clipping path", "Category 4.25", "3001-4000", 0.0], ["Clipping path", "Category 4.25", "4001-5000", 0.0], ["Clipping path", "Category 4.25", "> 5000", 0.0], ["Clipping path", "Category 4.5", "< 1000", 0.91], ["Clipping path", "Category 4.5", "1001-2000", 1.18], ["Clipping path", "Category 4.5", "2001-3000", 1.53], ["Clipping path", "Category 4.5", "3001-4000", 1.85], ["Clipping path", "Category 4.5", "4001-5000", 1.95], ["Clipping path", "Category 4.5", "> 5000", 2.15], ["Clipping path", "Category 4.75", "< 1000", 0.0], ["Clipping path", "Category 4.75", "1001-2000", 0.0], ["Clipping path", "Category 4.75", "2001-3000", 0.0], ["Clipping path", "Category 4.75", "3001-4000", 0.0], ["Clipping path", "Category 4.75", "4001-5000", 0.0], ["Clipping path", "Category 4.75", "> 5000", 0.0], ["Clipping path", "Category 5", "< 1000", 1.36], ["Clipping path", "Category 5", "1001-2000", 1.84], ["Clipping path", "Category 5", "2001-3000", 2.45], ["Clipping path", "Category 5", "3001-4000", 3.0], ["Clipping path", "Category 5", "4001-5000", 3.08], ["Clipping path", "Category 5", "> 5000", 3.45], ["Clipping path", "Category 5.5", "< 1000", 2.23], ["Clipping path", "Category 5.5", "1001-2000", 2.72], ["Clipping path", "Category 5.5", "2001-3000", 3.61], ["Clipping path", "Category 5.5", "3001-4000", 4.38], ["Clipping path", "Category 5.5", "4001-5000", 4.7], ["Clipping path", "Category 5.5", "> 5000", 5.1], ["Clipping path", "Category 6", "< 1000", 3.09], ["Clipping path", "Category 6", "1001-2000", 3.6], ["Clipping path", "Category 6", "2001-3000", 4.78], ["Clipping path", "Category 6", "3001-4000", 5.77], ["Clipping path", "Category 6", "4001-5000", 6.33], ["Clipping path", "Category 6", "> 5000", 6.75], ["Multi-clipping path", "Category 1", "< 1000", 0.17], ["Multi-clipping path", "Category 1", "1001-2000", 0.23], ["Multi-clipping path", "Category 1", "2001-3000", 0.29], ["Multi-clipping path", "Category 1", "3001-4000", 0.37], ["Multi-clipping path", "Category 1", "4001-5000", 0.38], ["Multi-clipping path", "Category 1", "> 5000", 0.42], ["Multi-clipping path", "Category 2", "< 1000", 0.53], ["Multi-clipping path", "Category 2", "1001-2000", 0.56], ["Multi-clipping path", "Category 2", "2001-3000", 0.65], ["Multi-clipping path", "Category 2", "3001-4000", 0.73], ["Multi-clipping path", "Category 2", "4001-5000", 0.75], ["Multi-clipping path", "Category 2", "> 5000", 1.03], ["Multi-clipping path", "Category 2.5", "< 1000", 0.87], ["Multi-clipping path", "Category 2.5", "1001-2000", 1.29], ["Multi-clipping path", "Category 2.5", "2001-3000", 1.38], ["Multi-clipping path", "Category 2.5", "3001-4000", 1.46], ["Multi-clipping path", "Category 2.5", "4001-5000", 1.7], ["Multi-clipping path", "Category 2.5", "> 5000", 1.96], ["Multi-clipping path", "Category 3", "< 1000", 1.2], ["Multi-clipping path", "Category 3", "1001-2000", 2.03], ["Multi-clipping path", "Category 3", "2001-3000", 2.11], ["Multi-clipping path", "Category 3", "3001-4000", 2.19], ["Multi-clipping path", "Category 3", "4001-5000", 2.64], ["Multi-clipping path", "Category 3", "> 5000", 2.89], ["Multi-clipping path", "Category 3.5", "< 1000", 1.59], ["Multi-clipping path", "Category 3.5", "1001-2000", 2.22], ["Multi-clipping path", "Category 3.5", "2001-3000", 2.56], ["Multi-clipping path", "Category 3.5", "3001-4000", 3.0], ["Multi-clipping path", "Category 3.5", "4001-5000", 3.3], ["Multi-clipping path", "Category 3.5", "> 5000", 4.22], ["Multi-clipping path", "Category 4", "< 1000", 1.97], ["Multi-clipping path", "Category 4", "1001-2000", 2.42], ["Multi-clipping path", "Category 4", "2001-3000", 3.01], ["Multi-clipping path", "Category 4", "3001-4000", 3.8], ["Multi-clipping path", "Category 4", "4001-5000", 3.96], ["Multi-clipping path", "Category 4", "> 5000", 5.54], ["Image masking", "Category 1", "< 1000", 0.28], ["Image masking", "Category 1", "1001-2000", 0.37], ["Image masking", "Category 1", "2001-3000", 0.4], ["Image masking", "Category 1", "3001-4000", 0.42], ["Image masking", "Category 1", "4001-5000", 0.48], ["Image masking", "Category 1", "> 5000", 0.51], ["Image masking", "Category 2", "< 1000", 0.5], ["Image masking", "Category 2", "1001-2000", 0.55], ["Image masking", "Category 2", "2001-3000", 0.7], ["Image masking", "Category 2", "3001-4000", 0.73], ["Image masking", "Category 2", "4001-5000", 0.75], ["Image masking", "Category 2", "> 5000", 0.78], ["Image masking", "Category 2.5", "< 1000", 0.75], ["Image masking", "Category 2.5", "1001-2000", 0.77], ["Image masking", "Category 2.5", "2001-3000", 0.88], ["Image masking", "Category 2.5", "3001-4000", 0.92], ["Image masking", "Category 2.5", "4001-5000", 0.95], ["Image masking", "Category 2.5", "> 5000", 0.97], ["Image masking", "Category 3", "< 1000", 0.99], ["Image masking", "Category 3", "1001-2000", 1.0], ["Image masking", "Category 3", "2001-3000", 1.06], ["Image masking", "Category 3", "3001-4000", 1.1], ["Image masking", "Category 3", "4001-5000", 1.14], ["Image masking", "Category 3", "> 5000", 1.16], ["Image masking", "Category 3.25", "< 1000", 0.0], ["Image masking", "Category 3.25", "1001-2000", 0.0], ["Image masking", "Category 3.25", "2001-3000", 0.0], ["Image masking", "Category 3.25", "3001-4000", 0.0], ["Image masking", "Category 3.25", "4001-5000", 0.0], ["Image masking", "Category 3.25", "> 5000", 0.0], ["Image masking", "Category 3.5", "< 1000", 1.2], ["Image masking", "Category 3.5", "1001-2000", 1.44], ["Image masking", "Category 3.5", "2001-3000", 1.54], ["Image masking", "Category 3.5", "3001-4000", 1.63], ["Image masking", "Category 3.5", "4001-5000", 1.74], ["Image masking", "Category 3.5", "> 5000", 1.85], ["Image masking", "Category 3.75", "< 1000", 0.0], ["Image masking", "Category 3.75", "1001-2000", 0.0], ["Image masking", "Category 3.75", "2001-3000", 0.0], ["Image masking", "Category 3.75", "3001-4000", 0.0], ["Image masking", "Category 3.75", "4001-5000", 0.0], ["Image masking", "Category 3.75", "> 5000", 0.0], ["Image masking", "Category 4", "< 1000", 1.25], ["Image masking", "Category 4", "1001-2000", 1.71], ["Image masking", "Category 4", "2001-3000", 1.84], ["Image masking", "Category 4", "3001-4000", 1.98], ["Image masking", "Category 4", "4001-5000", 2.15], ["Image masking", "Category 4", "> 5000", 2.33], ["Image masking", "Category 4.5", "< 1000", 1.57], ["Image masking", "Category 4.5", "1001-2000", 1.99], ["Image masking", "Category 4.5", "2001-3000", 2.56], ["Image masking", "Category 4.5", "3001-4000", 2.7], ["Image masking", "Category 4.5", "4001-5000", 2.87], ["Image masking", "Category 4.5", "> 5000", 3.21], ["Image masking", "Category 5", "< 1000", 1.89], ["Image masking", "Category 5", "1001-2000", 2.26], ["Image masking", "Category 5", "2001-3000", 3.28], ["Image masking", "Category 5", "3001-4000", 3.42], ["Image masking", "Category 5", "4001-5000", 3.6], ["Image masking", "Category 5", "> 5000", 4.08], ["Drop shadow", "Category 1", "< 1000", 0.06], ["Drop shadow", "Category 1", "1001-2000", 0.06], ["Drop shadow", "Category 1", "2001-3000", 0.09], ["Drop shadow", "Category 1", "3001-4000", 0.1], ["Drop shadow", "Category 1", "4001-5000", 0.11], ["Drop shadow", "Category 1", "> 5000", 0.11], ["Existing shadow", "Category 1", "< 1000", 0.15], ["Existing shadow", "Category 1", "1001-2000", 0.16], ["Existing shadow", "Category 1", "2001-3000", 0.17], ["Existing shadow", "Category 1", "3001-4000", 0.18], ["Existing shadow", "Category 1", "4001-5000", 0.2], ["Existing shadow", "Category 1", "> 5000", 0.22], ["Natural shadow", "Category 1", "< 1000", 0.15], ["Natural shadow", "Category 1", "1001-2000", 0.18], ["Natural shadow", "Category 1", "2001-3000", 0.2], ["Natural shadow", "Category 1", "3001-4000", 0.21], ["Natural shadow", "Category 1", "4001-5000", 0.21], ["Natural shadow", "Category 1", "> 5000", 0.22], ["Natural shadow", "Category 2", "< 1000", 0.25], ["Natural shadow", "Category 2", "1001-2000", 0.28], ["Natural shadow", "Category 2", "2001-3000", 0.35], ["Natural shadow", "Category 2", "3001-4000", 0.36], ["Natural shadow", "Category 2", "4001-5000", 0.37], ["Natural shadow", "Category 2", "> 5000", 0.39], ["Natural shadow", "Category 3", "< 1000", 0.67], ["Natural shadow", "Category 3", "1001-2000", 0.73], ["Natural shadow", "Category 3", "2001-3000", 0.81], ["Natural shadow", "Category 3", "3001-4000", 0.85], ["Natural shadow", "Category 3", "4001-5000", 0.88], ["Natural shadow", "Category 3", "> 5000", 0.92], ["Floating shadow", "Category 1", "< 1000", 0.05], ["Floating shadow", "Category 1", "1001-2000", 0.05], ["Floating shadow", "Category 1", "2001-3000", 0.05], ["Floating shadow", "Category 1", "3001-4000", 0.06], ["Floating shadow", "Category 1", "4001-5000", 0.06], ["Floating shadow", "Category 1", "> 5000", 0.06], ["Reflection shadow", "Category 1", "< 1000", 0.17], ["Reflection shadow", "Category 1", "1001-2000", 0.18], ["Reflection shadow", "Category 1", "2001-3000", 0.19], ["Reflection shadow", "Category 1", "3001-4000", 0.19], ["Reflection shadow", "Category 1", "4001-5000", 0.2], ["Reflection shadow", "Category 1", "> 5000", 0.2], ["Reflection shadow", "Category 2", "< 1000", 0.33], ["Reflection shadow", "Category 2", "1001-2000", 0.37], ["Reflection shadow", "Category 2", "2001-3000", 0.38], ["Reflection shadow", "Category 2", "3001-4000", 0.38], ["Reflection shadow", "Category 2", "4001-5000", 0.47], ["Reflection shadow", "Category 2", "> 5000", 0.49], ["Reflection shadow", "Category 3", "< 1000", 0.91], ["Reflection shadow", "Category 3", "1001-2000", 1.04], ["Reflection shadow", "Category 3", "2001-3000", 1.16], ["Reflection shadow", "Category 3", "3001-4000", 1.21], ["Reflection shadow", "Category 3", "4001-5000", 1.29], ["Reflection shadow", "Category 3", "> 5000", 1.46], ["Ghost mannequin", "Category 1", "< 1000", 0.21], ["Ghost mannequin", "Category 1", "1001-2000", 0.23], ["Ghost mannequin", "Category 1", "2001-3000", 0.24], ["Ghost mannequin", "Category 1", "3001-4000", 0.26], ["Ghost mannequin", "Category 1", "4001-5000", 0.28], ["Ghost mannequin", "Category 1", "> 5000", 0.35], ["Ghost mannequin", "Category 2", "< 1000", 0.44], ["Ghost mannequin", "Category 2", "1001-2000", 0.62], ["Ghost mannequin", "Category 2", "2001-3000", 0.76], ["Ghost mannequin", "Category 2", "3001-4000", 0.86], ["Ghost mannequin", "Category 2", "4001-5000", 0.89], ["Ghost mannequin", "Category 2", "> 5000", 0.91], ["Dust, spot and scratch removal", "Category 1", "< 1000", 0.13], ["Dust, spot and scratch removal", "Category 1", "1001-2000", 0.13], ["Dust, spot and scratch removal", "Category 1", "2001-3000", 0.24], ["Dust, spot and scratch removal", "Category 1", "3001-4000", 0.26], ["Dust, spot and scratch removal", "Category 1", "4001-5000", 0.3], ["Dust, spot and scratch removal", "Category 1", "> 5000", 0.35], ["Dust, spot and scratch removal", "Category 1.5", "< 1000", 0.52], ["Dust, spot and scratch removal", "Category 1.5", "1001-2000", 0.59], ["Dust, spot and scratch removal", "Category 1.5", "2001-3000", 0.73], ["Dust, spot and scratch removal", "Category 1.5", "3001-4000", 0.8], ["Dust, spot and scratch removal", "Category 1.5", "4001-5000", 0.88], ["Dust, spot and scratch removal", "Category 1.5", "> 5000", 0.92], ["Dust, spot and scratch removal", "Category 2", "< 1000", 1.03], ["Dust, spot and scratch removal", "Category 2", "1001-2000", 1.18], ["Dust, spot and scratch removal", "Category 2", "2001-3000", 1.36], ["Dust, spot and scratch removal", "Category 2", "3001-4000", 1.5], ["Dust, spot and scratch removal", "Category 2", "4001-5000", 1.64], ["Dust, spot and scratch removal", "Category 2", "> 5000", 1.69], ["Wrinkle on clothing", "Category 1", "< 1000", 0.33], ["Wrinkle on clothing", "Category 1", "1001-2000", 0.33], ["Wrinkle on clothing", "Category 1", "2001-3000", 0.33], ["Wrinkle on clothing", "Category 1", "3001-4000", 0.33], ["Wrinkle on clothing", "Category 1", "4001-5000", 0.33], ["Wrinkle on clothing", "Category 1", "> 5000", 0.33], ["Beauty airbrushing", "Category 1", "< 1000", 0.31], ["Beauty airbrushing", "Category 1", "1001-2000", 0.31], ["Beauty airbrushing", "Category 1", "2001-3000", 0.31], ["Beauty airbrushing", "Category 1", "3001-4000", 0.31], ["Beauty airbrushing", "Category 1", "4001-5000", 0.31], ["Beauty airbrushing", "Category 1", "> 5000", 0.31], ["Beauty airbrushing", "Category 2", "< 1000", 0.31], ["Beauty airbrushing", "Category 2", "1001-2000", 0.47], ["Beauty airbrushing", "Category 2", "2001-3000", 0.67], ["Beauty airbrushing", "Category 2", "3001-4000", 0.67], ["Beauty airbrushing", "Category 2", "4001-5000", 0.75], ["Beauty airbrushing", "Category 2", "> 5000", 0.87], ["Camera reflection removal", "Category 1", "< 1000", 0.27], ["Camera reflection removal", "Category 1", "1001-2000", 0.35], ["Camera reflection removal", "Category 1", "2001-3000", 0.4], ["Camera reflection removal", "Category 1", "3001-4000", 0.44], ["Camera reflection removal", "Category 1", "4001-5000", 0.49], ["Camera reflection removal", "Category 1", "> 5000", 0.53], ["Camera reflection removal", "Category 1.5", "< 1000", 0.93], ["Camera reflection removal", "Category 1.5", "1001-2000", 1.14], ["Camera reflection removal", "Category 1.5", "2001-3000", 1.24], ["Camera reflection removal", "Category 1.5", "3001-4000", 1.43], ["Camera reflection removal", "Category 1.5", "4001-5000", 1.56], ["Camera reflection removal", "Category 1.5", "> 5000", 1.6], ["Camera reflection removal", "Category 2", "< 1000", 1.78], ["Camera reflection removal", "Category 2", "1001-2000", 2.16], ["Camera reflection removal", "Category 2", "2001-3000", 2.34], ["Camera reflection removal", "Category 2", "3001-4000", 2.73], ["Camera reflection removal", "Category 2", "4001-5000", 2.95], ["Camera reflection removal", "Category 2", "> 5000", 3.0], ["Color variants", "Category 1", "< 1000", 0.15], ["Color variants", "Category 1", "1001-2000", 0.16], ["Color variants", "Category 1", "2001-3000", 0.18], ["Color variants", "Category 1", "3001-4000", 0.23], ["Color variants", "Category 1", "4001-5000", 0.29], ["Color variants", "Category 1", "> 5000", 0.36], ["Logo", "Category 1", "< 1000", 0.6], ["Logo", "Category 1", "1001-2000", 0.61], ["Logo", "Category 1", "2001-3000", 0.61], ["Logo", "Category 1", "3001-4000", 0.61], ["Logo", "Category 1", "4001-5000", 0.61], ["Logo", "Category 1", "> 5000", 0.61], ["Logo", "Category 1.5", "< 1000", 1.02], ["Logo", "Category 1.5", "1001-2000", 1.02], ["Logo", "Category 1.5", "2001-3000", 1.02], ["Logo", "Category 1.5", "3001-4000", 1.02], ["Logo", "Category 1.5", "4001-5000", 1.02], ["Logo", "Category 1.5", "> 5000", 1.02], ["Logo", "Category 2", "< 1000", 2.19], ["Logo", "Category 2", "1001-2000", 2.2], ["Logo", "Category 2", "2001-3000", 2.2], ["Logo", "Category 2", "3001-4000", 2.2], ["Logo", "Category 2", "4001-5000", 2.2], ["Logo", "Category 2", "> 5000", 2.2], ["Logo", "Category 2.5", "< 1000", 4.17], ["Logo", "Category 2.5", "1001-2000", 4.18], ["Logo", "Category 2.5", "2001-3000", 4.18], ["Logo", "Category 2.5", "3001-4000", 4.18], ["Logo", "Category 2.5", "4001-5000", 4.18], ["Logo", "Category 2.5", "> 5000", 4.18], ["Logo", "Category 3", "< 1000", 7.94], ["Logo", "Category 3", "1001-2000", 7.95], ["Logo", "Category 3", "2001-3000", 7.95], ["Logo", "Category 3", "3001-4000", 7.95], ["Logo", "Category 3", "4001-5000", 7.95], ["Logo", "Category 3", "> 5000", 7.95], ["Artwork", "Category 1", "< 1000", 3.43], ["Artwork", "Category 1", "1001-2000", 3.44], ["Artwork", "Category 1", "2001-3000", 3.44], ["Artwork", "Category 1", "3001-4000", 3.44], ["Artwork", "Category 1", "4001-5000", 3.44], ["Artwork", "Category 1", "> 5000", 3.44], ["Artwork", "Category 2", "< 1000", 9.04], ["Artwork", "Category 2", "1001-2000", 9.05], ["Artwork", "Category 2", "2001-3000", 9.05], ["Artwork", "Category 2", "3001-4000", 9.05], ["Artwork", "Category 2", "4001-5000", 9.05], ["Artwork", "Category 2", "> 5000", 9.05], ["Artwork", "Category 3", "< 1000", 23.78], ["Artwork", "Category 3", "1001-2000", 23.79], ["Artwork", "Category 3", "2001-3000", 23.79], ["Artwork", "Category 3", "3001-4000", 23.79], ["Artwork", "Category 3", "4001-5000", 23.79], ["Artwork", "Category 3", "> 5000", 23.79], ["Line drawing", "Category 1", "< 1000", 2.1], ["Line drawing", "Category 1", "1001-2000", 2.11], ["Line drawing", "Category 1", "2001-3000", 2.11], ["Line drawing", "Category 1", "3001-4000", 2.11], ["Line drawing", "Category 1", "4001-5000", 2.11], ["Line drawing", "Category 1", "> 5000", 2.11], ["Line drawing", "Category 2", "< 1000", 7.8], ["Line drawing", "Category 2", "1001-2000", 7.81], ["Line drawing", "Category 2", "2001-3000", 7.81], ["Line drawing", "Category 2", "3001-4000", 7.81], ["Line drawing", "Category 2", "4001-5000", 7.81], ["Line drawing", "Category 2", "> 5000", 7.81], ["Illustration", "Category 1", "< 1000", 0.5], ["Illustration", "Category 1", "1001-2000", 0.51], ["Illustration", "Category 1", "2001-3000", 0.51], ["Illustration", "Category 1", "3001-4000", 0.51], ["Illustration", "Category 1", "4001-5000", 0.51], ["Illustration", "Category 1", "> 5000", 0.51], ["Illustration", "Category 2", "< 1000", 2.04], ["Illustration", "Category 2", "1001-2000", 2.05], ["Illustration", "Category 2", "2001-3000", 2.05], ["Illustration", "Category 2", "3001-4000", 2.05], ["Illustration", "Category 2", "4001-5000", 2.05], ["Illustration", "Category 2", "> 5000", 2.05], ["Illustration", "Category 3", "< 1000", 8.19], ["Illustration", "Category 3", "1001-2000", 8.2], ["Illustration", "Category 3", "2001-3000", 8.2], ["Illustration", "Category 3", "3001-4000", 8.2], ["Illustration", "Category 3", "4001-5000", 8.2], ["Illustration", "Category 3", "> 5000", 8.2], ["Additional copy", "Category 1", "< 1000", 0.02], ["Additional copy", "Category 1", "1001-2000", 0.02], ["Additional copy", "Category 1", "2001-3000", 0.02], ["Additional copy", "Category 1", "3001-4000", 0.02], ["Additional copy", "Category 1", "4001-5000", 0.02], ["Additional copy", "Category 1", "> 5000", 0.02], ["File format change", "Category 1", "< 1000", 0.0], ["File format change", "Category 1", "1001-2000", 0.0], ["File format change", "Category 1", "2001-3000", 0.0], ["File format change", "Category 1", "3001-4000", 0.0], ["File format change", "Category 1", "4001-5000", 0.0], ["File format change", "Category 1", "> 5000", 0.0], ["Straighten, crop and set margin", "Category 1", "< 1000", 0.0], ["Straighten, crop and set margin", "Category 1", "1001-2000", 0.0], ["Straighten, crop and set margin", "Category 1", "2001-3000", 0.0], ["Straighten, crop and set margin", "Category 1", "3001-4000", 0.0], ["Straighten, crop and set margin", "Category 1", "4001-5000", 0.0], ["Straighten, crop and set margin", "Category 1", "> 5000", 0.0], ["Resize", "Category 1", "< 1000", 0.0], ["Resize", "Category 1", "1001-2000", 0.0], ["Resize", "Category 1", "2001-3000", 0.0], ["Resize", "Category 1", "3001-4000", 0.0], ["Resize", "Category 1", "4001-5000", 0.0], ["Resize", "Category 1", "> 5000", 0.0], ["Renaming", "Category 1", "< 1000", 0.0], ["Renaming", "Category 1", "1001-2000", 0.0], ["Renaming", "Category 1", "2001-3000", 0.0], ["Renaming", "Category 1", "3001-4000", 0.0], ["Renaming", "Category 1", "4001-5000", 0.0], ["Renaming", "Category 1", "> 5000", 0.0], ["Symmetrical edit", "Category 1", "< 1000", 0.82], ["Symmetrical edit", "Category 1", "1001-2000", 0.89], ["Symmetrical edit", "Category 1", "2001-3000", 0.99], ["Symmetrical edit", "Category 1", "3001-4000", 1.05], ["Symmetrical edit", "Category 1", "4001-5000", 1.16], ["Symmetrical edit", "Category 1", "> 5000", 1.3], ["Background removal", "Category 1", "< 1000", 0.3], ["Background removal", "Category 1", "1001-2000", 0.3], ["Background removal", "Category 1", "2001-3000", 0.3], ["Background removal", "Category 1", "3001-4000", 0.3], ["Background removal", "Category 1", "4001-5000", 0.3], ["Background removal", "Category 1", "> 5000", 0.3]]};
+const PIX = ['< 1000','1001-2000','2001-3000','3001-4000','4001-5000','> 5000'];
+const SEV = {Major:2.5, Medium:2.0, Minor:1.5, Multiple:4.0};
+const TIERS = [ // delay % (lower, upper] -> share of service price
+  {lo:0, hi:.05, r:.2},{lo:.05,hi:.15,r:.4},{lo:.15,hi:.30,r:.6},{lo:.30,hi:.50,r:.8},{lo:.50,hi:Infinity,r:1}];
+const blank = n => Array.from({length:n},()=>({s:'',c:'',p:'',q:''}));
+const DEF = () => ({
+  tab:'cor', prices: DEFAULT_CFG.prices.map(r=>({s:r[0],c:r[1],p:r[2],v:r[3]})),
+  autoId:'458305', auto:null,
+  corAutoId:'457696', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Minor', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:true, corPasteText:'',
+  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', showPaste: false, showSlides: false, slideUrl: 'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing' }, 
+  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',sev:'Minor',qty:4,
+    order:[['Clipping path','Category 1','> 5000',56],['Clipping path','Category 1','4001-5000'],['Clipping path','Category 4','> 5000'],['Clipping path','Category 3.5','4001-5000'],['Clipping path','Category 1.5','4001-5000'],['Clipping path','Category 2','4001-5000'],['Clipping path','Category 4','4001-5000'],['Clipping path','Category 3.5','> 5000'],['Clipping path','Category 2.5','3001-4000'],['Image masking','Category 2.5','4001-5000'],['Image masking','Category 2','4001-5000']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
+    cb:[['Clipping path','Category 1.5','> 5000'],['Multi-clipping path','Category 2','> 5000'],['Image masking','','> 5000'],['Clipping path','','4001-5000'],['',' ',''],['','','']].map(a=>({s:a[0],c:a[1].trim(),p:a[2],q:''}))},
+  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',qty:10,dur:'24:00:00',sec:-82273.432024749,
+    order:[['Image masking','Category 3','> 5000',2],['Dust, spot and scratch removal','Category 1','> 5000',141],['Beauty airbrushing','Category 1','> 5000',141],['Wrinkle on clothing','Category 1','> 5000',141],['Multi-clipping path','Category 2.5','> 5000'],['Image masking','Category 2','> 5000'],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
+    cb:[['Clipping path','Category 2.5','1001-2000'],['','',''],['','',''],['','',''],['','',''],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:''}))},
+  cfgFilter:{q:'',s:''}
+});
+let S = DEF();
+try{ const raw=localStorage.getItem('chargeback-calc-v1'); if(raw){ const o=JSON.parse(raw); if(o&&o.cor&&o.del&&o.prices) S=Object.assign(DEF(),o,{cfgFilter:{q:'',s:''}}); } }catch(e){}
+function save(){ try{ localStorage.setItem('chargeback-calc-v1',JSON.stringify(S)); }catch(e){} }
+
+function getApiBase(){
+  const custom = localStorage.getItem('tista_api_base');
+  if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
+  if (window.location.protocol.startsWith('http')) {
+    const h = window.location.hostname;
+    if (h.endsWith('.vercel.app')) {
+      return (custom && custom.trim()) ? custom.trim().replace(/\/+$/, '') : 'http://127.0.0.1:8765';
+    }
+    if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
+    if (window.location.port) return window.location.origin;
+  }
+  return 'http://127.0.0.1:8765';
+}
+const API_BASE = getApiBase();
+
+// ---------- helpers ----------
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+function showCardLoading(tabKey, title, sub){
+  const k = tabKey || S.tab || 'cor';
+  const loaderEl = $(k + '-card-loader');
+  const titleEl = $(k + '-card-loader-title');
+  const subEl = $(k + '-card-loader-sub');
+  const bar = $('global-top-progress');
+  if(bar) bar.style.display = 'block';
+  if(titleEl && title) titleEl.textContent = title;
+  if(subEl && sub) subEl.textContent = sub;
+  if(loaderEl) loaderEl.style.display = 'flex';
+}
+function hideCardLoading(tabKey){
+  const keys = tabKey ? [tabKey] : ['cor', 'del', 'aucor'];
+  keys.forEach(k => {
+    const loaderEl = $(k + '-card-loader');
+    if(loaderEl) loaderEl.style.display = 'none';
+  });
+  const bar = $('global-top-progress');
+  if(bar) bar.style.display = 'none';
+}
+function showLoading(title, subtitle, forceGlobal=false){
+  const bar = $('global-top-progress');
+  if(bar) bar.style.display = 'block';
+  const currentTab = S.tab;
+  if(!forceGlobal && (currentTab === 'cor' || currentTab === 'del' || currentTab === 'autocor')){
+    showCardLoading(currentTab, title, subtitle);
+    return;
+  }
+  if(forceGlobal){
+    const el = $('global-loader-overlay');
+    if($('loader-title')) $('loader-title').textContent = title || 'Loading...';
+    if($('loader-sub')) $('loader-sub').textContent = subtitle || 'Please wait while communicating with Tista...';
+    if(el) { el.style.display = 'flex'; el.style.opacity = '1'; }
+  }
+}
+function hideLoading(){
+  hideCardLoading();
+  const el = $('global-loader-overlay');
+  const bar = $('global-top-progress');
+  if(el) el.style.display = 'none';
+  if(bar) bar.style.display = 'none';
+}
+const money = v => '$'+(Number.isFinite(v)?v:0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num = v => { const n=parseFloat(v); return Number.isFinite(n)?n:0; };
+const services = () => [...new Set(S.prices.map(r=>r.s))];
+const catsOf = s => [...new Set(S.prices.filter(r=>r.s===s).map(r=>r.c))];
+// Excel: VLOOKUP(Service&Category&Pixel, Config!D:H, 5, 0). Not found -> "" (treated as 0)
+function price(s,c,p){ const r=S.prices.find(r=>r.s===s&&r.c===c&&r.p===p); return r?num(r.v):null; }
+const opts = (list,sel,blank) => (blank!==undefined?`<option value="">${blank}</option>`:'')+list.map(x=>`<option${x===sel?' selected':''}>${esc(x)}</option>`).join('');
+const contractors = () => DEFAULT_CFG.contractors;
+
+function parseDur(t){ // [h]:mm:ss -> days
+  t=String(t).trim(); if(!t) return 0;
+  if(t.includes(':')){ const [h,m,s]=t.split(':').map(x=>parseFloat(x)||0); return (h*3600+m*60+(s||0))/86400; }
+  return num(t)/24; // plain number = hours
+}
+function tierFor(d){ if(!(d>0)) return null; return TIERS.find(t=>d>t.lo&&d<=t.hi)||null; }
+
+// ---------- shared pane builders ----------
+function formRow(label,control,hint){ return `<div class="f"><label>${label}</label>${control}${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+function selectors(k){
+  const d=S[k]; const cats=catsOf(d.service);
+  return formRow('Contractor Name',`<select data-k="${k}" data-f="contractor">${opts(contractors(),d.contractor)}</select>`,'Select the contractor')+
+   formRow('Service Type',`<select data-k="${k}" data-f="service" data-rerender="1">${opts(services(),d.service)}</select>`,'Select the service')+
+   formRow('Category Level',`<select data-k="${k}" data-f="cat">${opts(cats,d.cat)}</select>`,'Select the category level')+
+   formRow('Pixel Range',`<select data-k="${k}" data-f="pix">${opts(PIX,d.pix)}</select>`,'Select the pixel range');
+}
+function lineTable(k,which,title,withQty,idPrefix){
+  const rows=S[k][which];
+  const head = withQty
+    ? '<th>Service Type</th><th>Category</th><th>Pixel</th><th class="n">Unit Price</th><th class="n">Quantity</th><th class="n">Total</th><th></th>'
+    : '<th>Service Type</th><th>Category</th><th>Pixel</th><th class="n">Chargeback Amount</th><th></th>';
+  const body=rows.map((r,i)=>`<tr data-k="${k}" data-w="${which}" data-i="${i}">
+    <td><select data-rf="s" data-rerender="1">${opts(services(),r.s,'—')}</select></td>
+    <td><select data-rf="c">${opts(catsOf(r.s),r.c,'—')}</select></td>
+    <td><select data-rf="p">${opts(PIX,r.p,'—')}</select></td>
+    <td><div class="ro" id="${idPrefix}u${i}"></div></td>
+    ${withQty?`<td><input type="number" min="0" step="any" data-rf="q" value="${esc(r.q)}"></td><td><div class="ro" id="${idPrefix}t${i}"></div></td>`:''}
+    <td><button class="btn x" data-del="1" title="Remove row" aria-label="Remove row">✕</button></td></tr>`).join('');
+  return `<div class="card"><h2>${title}</h2><div class="tbl"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody>
+    <tfoot><tr><td colspan="3">Total</td>${withQty?`<td></td><td class="n" id="${idPrefix}qsum"></td><td class="n" id="${idPrefix}sum"></td>`:`<td class="n" id="${idPrefix}sum"></td>`}<td></td></tr></tfoot></table></div>
+    <div class="tools"><button class="btn" data-add="${k}:${which}">+ Add row</button><button class="btn" data-clear="${k}:${which}">Clear rows</button></div></div>`;
+}
+
+// ---------- calculators ----------
+function paneCor(){
+  const d=S.cor;
+  return `<div class="card" style="margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <strong style="font-family:var(--font-head);font-size:15px">⚡ Quick Auto-Fetch:</strong>
+      <input id="cor-quick-id" inputmode="numeric" placeholder="Order ID (e.g. 457531)" style="max-width:180px" value="${esc(S.corAutoId||'')}">
+      <button class="btn pri" id="cor-quick-fetch">⚡ Fetch & Calculate</button>
+      <button class="btn" id="cor-quick-files" title="Open file-by-file selection in Auto Correction tab">Select Files</button>
+    </div>
+    <span id="cor-quick-status" class="sub" style="font-weight:500"></span>
+  </div>
+  <div class="top"><div class="card"><h2>Inputs</h2>${selectors('cor')}
+    ${formRow('Severity Level',`<select data-k="cor" data-f="sev">${opts(Object.keys(SEV),d.sev)}</select>`,'Major 250% · Medium 200% · Minor 150% · Multiple 400%')}
+    ${formRow('Quantity of Service',`<input type="number" min="0" step="any" data-k="cor" data-f="qty" value="${esc(d.qty)}">`,'Total quantity of the selected service and category')}
+    ${formRow('Service Price','<div class="ro" id="c-price"></div>','Looked up from the price list by service, category and pixel range')}
+    <div class="formula">Chargeback = Service Price × Severity % × Quantity</div></div>
+    <div class="card result" id="cor-result-card">
+      <div class="result-card-loader" id="cor-card-loader" style="display:none">
+        <div class="result-card-spinner"></div>
+        <div class="result-card-title" id="cor-card-loader-title">Fetching Order...</div>
+        <div class="result-card-sub" id="cor-card-loader-sub">Connecting to Tista & calculating chargeback...</div>
+        <button type="button" class="result-card-dismiss" onclick="hideCardLoading('cor')">✕ Dismiss</button>
+      </div>
+      <h2>Total Chargeback Amount</h2>
+      <div class="big" id="c-total"></div>
+      <div class="steps" id="c-steps"></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.12)">
+        <button class="btn pri" id="cor-close-btn" style="width:100%;padding:10px 12px;font-size:13px;background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">
+          🔒 Charge to Vendor & Close Dispute on Tista
+        </button>
+        <div id="cor-close-status" class="sub" style="margin-top:6px;font-weight:500;text-align:center"></div>
+      </div>
+    </div></div>
+    <div style="height:16px"></div>
+    ${lineTable('cor','order','Total Order Value',true,'co')}
+    ${lineTable('cor','cb','Total Chargeback Value',false,'cc')}`;
+}
+function paneDel(){
+  const d=S.del;
+  return `<div class="card" style="margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <strong style="font-family:var(--font-head);font-size:15px">⚡ Quick Auto-Fetch:</strong>
+      <input id="del-quick-id" inputmode="numeric" placeholder="Order ID (e.g. 371289)" style="max-width:180px" value="${esc(S.autoId||'')}">
+      <button class="btn pri" id="del-quick-fetch">Fetch from Tista</button>
+    </div>
+    <span id="del-quick-status" class="sub" style="font-weight:500"></span>
+  </div>
+  <div class="card" style="margin-bottom:16px" id="del-comment-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <strong style="font-family:var(--font-head);font-size:14px">💬 Dispute Comment & Delay Link:</strong>
+        <span style="font-size:12px;color:var(--muted)">(Auto-extracts filenames from Dropbox/storage links & sets Quantity)</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input id="del-link-input" placeholder="Paste Dropbox / Transfer / Storage Link from Dispute Comment..." style="flex:1;min-width:260px" value="${esc(d.comment_link||'')}">
+      <button class="btn" id="del-link-extract-btn" type="button" style="font-weight:600">⚡ Extract Files</button>
+      <span id="del-link-status" class="sub" style="font-weight:500"></span>
+    </div>
+    ${d.comment ? `
+      <div style="margin-top:8px;font-size:12.5px;color:var(--muted);background:var(--soft);padding:6px 10px;border-radius:4px;border:1px solid var(--line)">
+        <strong style="color:var(--text)">Dispute Comment:</strong> ${esc(d.comment)}
+      </div>
+    ` : ''}
+    ${(d.filenames && d.filenames.length) ? `
+      <details style="margin-top:8px;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px" open>
+        <summary style="cursor:pointer;font-weight:600;color:var(--accent);font-size:13px;outline:none">
+          📁 Extracted Delayed Files (${d.filenames.length}) - Click to collapse/expand
+        </summary>
+        <div style="margin-top:8px;max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:4px">
+          ${d.filenames.map(fn => `<span style="font-size:11px;font-family:var(--font-mono);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--line)">${esc(fn)}</span>`).join('')}
+        </div>
+      </details>
+    ` : ''}
+  </div>
+  <div class="top"><div><div class="card"><h2>Inputs</h2>${selectors('del')}
+    ${formRow('Quantity of Service',`<input type="number" min="0" step="any" data-k="del" data-f="qty" value="${esc(d.qty)}">`,'Total quantity of the selected service and category')}
+    ${formRow('Service Price','<div class="ro" id="d-price"></div>','Looked up from the price list')}</div>
+    <div class="card"><h2>Delay Percentage Calculator</h2>
+    ${formRow('Order Duration',`<input type="text" inputmode="numeric" data-k="del" data-f="dur" value="${esc(d.dur)}" placeholder="hh:mm:ss">`,'Total order duration as hh:mm:ss (24:00:00 = 1 day)')}
+    ${formRow('Delay time difference (Second)',`<input type="number" step="any" data-k="del" data-f="sec" value="${esc(d.sec)}">`,'Delivery time difference in seconds from the fulfillment history (negative when delayed)')}
+    ${formRow('Delay %','<div class="ro" id="d-pct"></div>','Calculated: |seconds| ÷ 3600 ÷ 24 ÷ order duration (days)')}
+    <div id="d-warn" class="warn" hidden></div></div></div>
+    <div><div class="card result" id="del-result-card">
+      <div class="result-card-loader" id="del-card-loader" style="display:none">
+        <div class="result-card-spinner"></div>
+        <div class="result-card-title" id="del-card-loader-title">Fetching Order...</div>
+        <div class="result-card-sub" id="del-card-loader-sub">Connecting to Tista & calculating chargeback...</div>
+        <button type="button" class="result-card-dismiss" onclick="hideCardLoading('del')">✕ Dismiss</button>
+      </div>
+      <h2>Total Chargeback Amount</h2>
+      <div class="big" id="d-total"></div>
+      <div class="steps" id="d-steps"></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.12)">
+        <button class="btn pri" id="del-close-btn" style="width:100%;padding:10px 12px;font-size:13px;background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">
+          🔒 Charge to Vendor & Close Dispute on Tista
+        </button>
+        <div id="del-close-status" class="sub" style="margin-top:6px;font-weight:500;text-align:center"></div>
+      </div>
+    </div>
+    <div class="card"><h2>Delay % bands</h2><table class="tier" id="d-tiers"><thead><tr><th>Delay %</th><th class="n">Share of price</th></tr></thead><tbody>
+    ${[['more than 0% to 5%','20%'],['more than 5% to 15%','40%'],['more than 15% to 30%','60%'],['more than 30% to 50%','80%'],['more than 50%','100%']].map((t,i)=>`<tr data-t="${i}"><td>${t[0]}</td><td class="n">${t[1]}</td></tr>`).join('')}
+    </tbody></table></div></div></div>
+    <div style="height:16px"></div>
+    ${lineTable('del','order','Total Order Value',true,'do')}
+    ${lineTable('del','cb','Total Chargeback Value',false,'dc')}`;
+}
+function updLines(k,pre){
+  let sum=0,qs=0;
+  S[k].order.forEach((r,i)=>{ const u=price(r.s,r.c,r.p), q=num(r.q), t=(u||0)*q; sum+=t; qs+=q;
+    $(pre+'o'+'u'+i).textContent = u===null?'':money(u); $(pre+'o'+'t'+i).textContent=money(t); });
+  $(pre+'osum').textContent=money(sum); $(pre+'oqsum').textContent=qs||'';
+  let cs=0;
+  S[k].cb.forEach((r,i)=>{ const u=price(r.s,r.c,r.p); cs+=u||0; $(pre+'c'+'u'+i).textContent=u===null?'':money(u); });
+  $(pre+'csum').textContent=money(cs);
+}
+function refreshCor(){
+  const d=S.cor, p=price(d.service,d.cat,d.pix), pr=p||0, m=SEV[d.sev]||0, q=num(d.qty);
+  $('c-price').textContent = p===null?'Not in price list':money(p);
+  const calcTot=pr*m*q;
+  const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
+  $('c-total').textContent=money(tot);
+  let steps = `<div><span>Service price</span><span>${money(pr)}</span></div><div><span>Severity (${esc(d.sev)})</span><span>${Math.round(m*100)}%</span></div><div><span>Quantity</span><span>${q}</span></div>`;
+  if(calcTot > 0 && calcTot < 2.0){
+    steps += `<div><span>Calculated</span><span>${money(calcTot)}</span></div><div style="font-weight:600"><span>Minimum Applied</span><span>$2.00</span></div>`;
+  }
+  $('c-steps').innerHTML=steps;
+  updLines('cor','c');
+}
+function refreshDel(){
+  const d=S.del, p=price(d.service,d.cat,d.pix), pr=p||0, q=num(d.qty);
+  const days=parseDur(d.dur), delayDays=Math.abs(num(d.sec))/3600/24, pct=days>0?delayDays/days:0;
+  const t=tierFor(pct), r=t?t.r:0;
+  $('d-price').textContent = p===null?'Not in price list':money(p);
+  $('d-pct').textContent=(pct*100).toFixed(2)+'%';
+  const w=$('d-warn'); w.hidden = days>0; w.textContent='Order duration must be greater than zero (hh:mm:ss).';
+  const calcTot=pr*r*q;
+  const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
+  $('d-total').textContent=money(tot);
+  let steps = `<div><span>Service price</span><span>${money(pr)}</span></div><div><span>Delay %</span><span>${(pct*100).toFixed(2)}%</span></div><div><span>Share of price</span><span>${Math.round(r*100)}%</span></div><div><span>Quantity</span><span>${q}</span></div>`;
+  if(calcTot > 0 && calcTot < 2.0){
+    steps += `<div><span>Calculated</span><span>${money(calcTot)}</span></div><div style="font-weight:600"><span>Minimum Applied</span><span>$2.00</span></div>`;
+  }
+  $('d-steps').innerHTML=steps;
+  document.querySelectorAll('#d-tiers tr[data-t]').forEach((tr,i)=>tr.classList.toggle('on',t===TIERS[i]));
+  updLines('del','d');
+}
+
+// ---------- automatic delay (import from Tista fetch script) ----------
+const fmtDur = s => { s=Math.round(s); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); };
+function pixRange(txt){
+  if(!txt) return ''; const t=String(txt).trim(); if(PIX.includes(t)) return t;
+  const nums=(t.replace(/,/g,'').match(/\d+(?:\.\d+)?/g)||[]).map(Number); if(!nums.length) return '';
+  const n=Math.max(...nums);
+  if(/[<]/.test(t)&&nums.length===1) return n<=1000?PIX[0]:PIX.find(x=>false)||'';
+  return n<1000?PIX[0]:n<=2000?PIX[1]:n<=3000?PIX[2]:n<=4000?PIX[3]:n<=5000?PIX[4]:PIX[5];
+}
+function analyzeAuto(a){
+  const w=[], f={};
+  f.order_id = a.order_id;
+  f.dispute_id = a.dispute_id;
+  const reason = String(a.dispute_reason || 'Delay').trim();
+  f.reason = reason;
+  const isDelay = !reason || reason.toLowerCase().includes('delay');
+  f.isDelay = isDelay;
+  f.isCorrection = !isDelay;
+
+  const loc = String(a.contractor || a.dispute_location || '').trim();
+  if(loc){
+    const con = contractors().find(c=>c.toLowerCase()===loc.toLowerCase()) ||
+                contractors().find(c=>c.toLowerCase().includes(loc.toLowerCase()) || loc.toLowerCase().includes(c.toLowerCase()));
+    if(con) {
+      f.contractor = con;
+    } else {
+      f.contractor = loc;
+      if(!S.cfg.contractors.includes(loc)) {
+        S.cfg.contractors.push(loc);
+      }
+    }
+  } else {
+    w.push('Dispute location was not found in contractor list. Please verify.');
+  }
+
+  const q = a.fault_quantity != null ? a.fault_quantity : (a.quantity != null ? a.quantity : null);
+  if(q != null) f.qty = q; else w.push('Fault quantity was not found.');
+  if(a.comment) f.comment = a.comment;
+  if(a.comment_link) f.comment_link = a.comment_link;
+  if(a.filenames && a.filenames.length) {
+    f.filenames = a.filenames;
+    f.qty = a.filenames.length;
+  }
+
+  const sevRaw = String(a.fault_severity || '').toLowerCase();
+  f.sev = (sevRaw.includes('high') || sevRaw.includes('critical')) ? 'Major' : ((sevRaw.includes('med')) ? 'Medium' : 'Minor');
+
+  if(isDelay){
+    const sec = a.delay_seconds != null ? a.delay_seconds : (a.delayed_by_seconds != null ? -Math.abs(a.delayed_by_seconds) : (a.delayed_by_hours != null ? -Math.abs(a.delayed_by_hours*3600) : null));
+    if(sec != null) f.sec = sec; else w.push('Delayed by was not found.');
+
+    if(a.order_duration_seconds > 0) f.dur = fmtDur(a.order_duration_seconds);
+    else if(a.order_duration_text) f.dur = a.order_duration_text;
+    else if(a.dur) f.dur = a.dur;
+    else w.push('Order duration was not found. Enter it manually in Delay tab.');
+  }
+
+  const px = pixRange(a.pixel); if(px) f.pix = px; else w.push('Pixel range was not found. Select it manually.');
+
+  if(a.service_type) f.service = a.service_type;
+  if(a.category_level) f.cat = a.category_level;
+  if(a.average_category != null) f.avg = a.average_category;
+
+  const sv = (a.services || []).map(x => ({s: x.service, c: parseFloat(String(x.category).replace(/[^\d.]/g, '')), q: x.quantity == null ? null : +x.quantity})).filter(x => isFinite(x.c));
+  if(!f.service || !f.cat){
+    if(!sv.length){
+      if(!f.service) f.service = 'Clipping path';
+      if(!f.cat) f.cat = 'Category 1';
+      w.push('Services / Categories not found in filter dropdown.');
+    } else {
+      const known = services();
+      const withSvc = sv.filter(x => x.s && known.find(k => k.toLowerCase() === x.s.toLowerCase()));
+      const use = withSvc.length ? withSvc : sv;
+      const weighted = use.every(x => x.q > 0);
+      const tw = use.reduce((s, x) => s + (weighted ? x.q : 1), 0);
+      const avg = use.reduce((s, x) => s + x.c * (weighted ? x.q : 1), 0) / tw;
+      if(f.avg == null) f.avg = avg;
+      if(!f.service){
+        const top = use.slice().sort((a, b) => (b.q || 0) - (a.q || 0))[0];
+        f.service = top && top.s ? known.find(k => k.toLowerCase() === top.s.toLowerCase()) || top.s : 'Clipping path';
+      }
+      if(!f.cat){
+        const cats = catsOf(f.service).map(c => ({c, n: parseFloat(c.replace(/[^\d.]/g, ''))})).sort((a, b) => Math.abs(a.n - avg) - Math.abs(b.n - avg));
+        f.cat = cats[0] ? cats[0].c : 'Category 1';
+      }
+    }
+  }
+  return {f, w};
+}
+function autoPreview(){
+  const a=S.auto; if(!a) return '<p class="sub">No order data loaded yet. Enter an Order ID and click Fetch, or import a JSON file.</p>';
+  const {f,w}=analyzeAuto(a);
+  const row=(k,v)=>`<div class="f"><label>${k}</label><div class="ro" style="text-align:left">${esc(v??'—')}</div></div>`;
+  const p=price(f.service,f.cat,f.pix);
+
+  if(f.isCorrection){
+    const sevMult = f.sev==='Major'?2.5:(f.sev==='Medium'?2.0:1.5);
+    const q = num(f.qty);
+    const calcTot = (p||0)*sevMult*q;
+    const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
+    return `<h2>Order #${esc(a.order_id||'')} Summary <span class="badge-reason Correction" style="font-size:12px;vertical-align:middle;margin-left:6px">${esc(f.reason)}</span></h2>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px">
+      ℹ️ This is a <strong>${esc(f.reason)} Dispute</strong> (Dispute ID: ${esc(f.dispute_id||'—')}). Quality & Correction formulas apply: Unit Price &times; Severity Multiplier &times; Fault Qty (Min $2.00).
+    </div>
+    ${row('Dispute Reason', f.reason)}
+    ${row('Dispute ID', f.dispute_id||'—')}
+    ${row('Contractor Name', f.contractor)}
+    ${row('Service Type', f.service)}
+    ${row('Category Level', f.cat + (f.avg!=null ? ` (Average: ${f.avg.toFixed(2)})` : ''))}
+    ${row('Pixel Range', f.pix)}
+    ${row('Fault Quantity', f.qty)}
+    ${row('Fault Severity', f.sev + ` (${Math.round(sevMult*100)}%)`)}
+    ${row('Unit Price', p!==null ? money(p) : 'Not in price list')}
+    ${calcTot > 0 && calcTot < 2.0 ? row('Calculated', money(calcTot)) : ''}
+    ${row('Final Chargeback Amount', money(tot) + (calcTot > 0 && calcTot < 2.0 ? ' <span class="badge-min">Min $2.00 applied</span>' : ''))}
+    ${w.map(x=>`<div class="warn">${esc(x)}</div>`).join('')}
+    <div class="tools" style="margin-top:14px">
+      <button class="btn pri" id="au-apply-cor">Apply to Correction Calculator</button>
+    </div>`;
+  }
+
+  const days=parseDur(f.dur), delayDays=Math.abs(num(f.sec))/3600/24, pct=days>0?delayDays/days:0;
+  const t=tierFor(pct), r=t?t.r:0, q=num(f.qty);
+  const calcTot=(p||0)*r*q;
+  const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
+
+  return `<h2>Order #${esc(a.order_id||'')} Summary <span class="badge-reason Delay" style="font-size:12px;vertical-align:middle;margin-left:6px">Delay</span></h2>
+  ${a.comment ? `<div style="background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12.5px"><strong style="color:var(--text)">Dispute Comment:</strong> ${esc(a.comment)}</div>` : ''}
+  ${a.comment_link ? `<div style="margin-bottom:10px;font-size:12px"><strong>Link:</strong> <a href="${esc(a.comment_link)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(a.comment_link)}</a></div>` : ''}
+  ${a.filenames && a.filenames.length ? `
+    <details style="margin-bottom:12px;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px" open>
+      <summary style="cursor:pointer;font-weight:600;color:var(--accent);font-size:12.5px;outline:none">
+        📁 Delayed Files from Link (${a.filenames.length}) - Click to collapse/expand
+      </summary>
+      <div style="margin-top:6px;max-height:140px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:4px">
+        ${a.filenames.map(fn => `<span style="font-size:10.5px;font-family:var(--font-mono);background:var(--bg);padding:2px 6px;border-radius:3px;border:1px solid var(--line)">${esc(fn)}</span>`).join('')}
+      </div>
+    </details>
+  ` : ''}
+  ${row('Contractor Name',f.contractor)}
+  ${row('Service Type',f.service)}
+  ${row('Category Level',f.cat + (f.avg!=null ? ` (Average: ${f.avg.toFixed(2)})` : ''))}
+  ${row('Pixel Range',f.pix)}
+  ${row('Quantity of Service',f.qty)}
+  ${row('Order Duration',f.dur)}
+  ${row('Delay Difference (Sec)',f.sec!=null ? f.sec + ' s' : '—')}
+  ${row('Calculated Delay %',(pct*100).toFixed(2)+'% (Share: '+Math.round(r*100)+'%)')}
+  ${row('Unit Price',p!==null ? money(p) : 'Not in price list')}
+  ${calcTot > 0 && calcTot < 2.0 ? row('Calculated', money(calcTot)) : ''}
+  ${row('Est. Chargeback Amount', money(tot) + (calcTot > 0 && calcTot < 2.0 ? ' (Min $2.00 applied)' : ''))}
+  ${w.map(x=>`<div class="warn">${esc(x)}</div>`).join('')}
+  <div class="tools" style="margin-top:14px">
+    <button class="btn pri" id="au-apply">Apply to Delay Delivery Calculator</button>
+  </div>`;
+}
+function applyAutoDelayDirect(){
+  const {f}=analyzeAuto(S.auto), d=S.del;
+  ['contractor','service','cat','pix','dur','sec','qty'].forEach(k=>{ if(f[k]!==undefined&&f[k]!=='') d[k]=f[k]; });
+  if(f.filenames && f.filenames.length){
+    d.filenames = f.filenames;
+    d.qty = f.filenames.length;
+  }
+  if(f.comment) d.comment = f.comment;
+  if(f.comment_link) d.comment_link = f.comment_link;
+  S.tab='del'; save(); render();
+}
+function applyAutoCorDirect(){
+  const {f}=analyzeAuto(S.auto);
+  S.cor.contractor = f.contractor || S.cor.contractor;
+  S.cor.service = f.service || 'Clipping path';
+  S.cor.cat = f.cat || 'Category 1';
+  S.cor.pix = f.pix || '> 5000';
+  S.cor.sev = f.sev || 'Minor';
+  S.cor.qty = f.qty || 1;
+  S.tab = 'cor';
+  save(); render();
+}
+function paneAuto(){
+  return `<div class="top"><div class="card"><h2>Automatic Delay Calculation</h2>
+  <div class="f"><label>Order ID</label><input id="au-id" inputmode="numeric" value="${esc(S.autoId||'')}" placeholder="e.g. 371289"></div>
+  <div class="tools" style="margin:12px 0 16px">
+    <button class="btn pri" id="au-fetch-live">⚡ Fetch from Tista (Live)</button>
+    <span id="au-status" class="sub" style="font-weight:500"></span>
+  </div>
+  <p class="sub" style="border-top:1px solid var(--line);padding-top:12px">
+    <strong>How it works:</strong> Navigates to Tista, logs in, goes to Disputes (filters Order ID, Delay, All Location), extracts Dispute Location &rarr; Contractor, Delayed by (hours to sec), Fault quantity &rarr; Quantity. Then searches Order ID in navbar, opens order file, and calculates Average Category from the Services filter.
+  </p>
+
+  <h2 style="margin-top:20px">Manual / CLI Run</h2>
+  <p class="sub">You can also double-click <code>run_fetch.bat</code> or run this command:</p>
+  <div class="ro" id="au-cmd" style="text-align:left;overflow-wrap:anywhere"></div>
+  <div class="tools"><button class="btn" id="au-copy">Copy command</button></div>
+
+  <h2 style="margin-top:20px">Import JSON File</h2>
+  <div class="f"><label>JSON file</label><input type="file" id="au-file" accept=".json,application/json"></div>
+  <div class="f"><label>or paste JSON</label><textarea id="au-json" rows="3" style="width:100%;font-family:var(--font-mono);font-size:12px"></textarea></div>
+  <div class="tools"><button class="btn" id="au-import">Import File / Text</button><span id="au-err" class="sub"></span></div></div>
+  <div class="card" id="au-out">${autoPreview()}</div></div>`;
+}
+function setCmd(){ const el=$('au-cmd'); if(el) el.textContent='py -3.11 tista_delay_fetch.py '+(S.autoId||'<order_id>'); }
+function importAuto(txt){
+  try{
+    const o=typeof txt==='string'?JSON.parse(txt):txt;
+    if(typeof o!=='object'||!o) throw 0;
+    S.auto=o; S.autoId=o.order_id||S.autoId; save();
+    if($('au-out')) $('au-out').innerHTML=autoPreview();
+    if($('au-err')) $('au-err').textContent='';
+  }
+  catch(e){ if($('au-err')) $('au-err').textContent='This is not a valid result file.'; }
+}
+function applyAuto(){
+  const {f}=analyzeAuto(S.auto), d=S.del;
+  ['contractor','service','cat','pix','dur','sec','qty'].forEach(k=>{ if(f[k]!==undefined&&f[k]!=='') d[k]=f[k]; });
+  if(f.filenames && f.filenames.length){
+    d.filenames = f.filenames;
+    d.qty = f.filenames.length;
+  }
+  if(f.comment) d.comment = f.comment;
+  if(f.comment_link) d.comment_link = f.comment_link;
+  S.tab='del'; save(); render();
+}
+async function fetchLiveTista(idInputId='au-id', statusId='au-status', autoApply=false){
+  const el = $(idInputId);
+  const oid = (el ? el.value : '').trim().replace(/\D/g,'');
+  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const status = $(statusId);
+  const fetchBtn = $(idInputId==='del-quick-id'?'del-quick-fetch':'au-fetch-live');
+  const origBtnText = fetchBtn ? fetchBtn.innerHTML : '';
+  if(fetchBtn){
+    fetchBtn.disabled = true;
+    fetchBtn.innerHTML = '<span class="btn-spinner"></span> Fetching...';
+  }
+  if(status){
+    status.textContent = 'Connecting to Tista... (check browser window if login is required)';
+    status.style.color = 'var(--accent)';
+  }
+  showLoading(`Fetching Order #${oid}`, 'Connecting to Tista & retrieving order details...');
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch?order_id=${oid}`);
+    if(!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    importAuto(data);
+    if(autoApply) applyAuto();
+    if(status){
+      status.textContent = '✓ Fetched & Calculated Order #' + oid + ' successfully!';
+      status.style.color = 'green';
+    }
+  } catch (err) {
+    if(status){
+      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+    if(fetchBtn){
+      fetchBtn.disabled = false;
+      fetchBtn.innerHTML = origBtnText || (autoApply ? 'Fetch from Tista' : '⚡ Fetch from Tista (Live)');
+    }
+  }
+}
+
+async function extractFilesFromDelLink(){
+  const input = $('del-link-input');
+  const status = $('del-link-status');
+  const btn = $('del-link-extract-btn');
+  const url = (input ? input.value : '').trim();
+  if(!url){
+    if(status) { status.textContent = 'Please enter a URL'; status.style.color = 'var(--danger)'; }
+    return;
+  }
+  if(btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Extracting...'; }
+  if(status) { status.textContent = 'Extracting files from link...'; status.style.color = 'var(--accent)'; }
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch_link_files?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    if(data.success && data.filenames && data.filenames.length){
+      S.del.comment_link = url;
+      S.del.filenames = data.filenames;
+      S.del.qty = data.filenames.length;
+      save(); render();
+      if($('del-link-status')) {
+        $('del-link-status').textContent = `✓ Extracted ${data.filenames.length} files! Set Quantity = ${data.filenames.length}`;
+        $('del-link-status').style.color = 'green';
+      }
+    } else {
+      if(status) { status.textContent = 'No filenames found in link.'; status.style.color = 'var(--danger)'; }
+    }
+  } catch(e) {
+    if(status) { status.textContent = 'Error: ' + e.message; status.style.color = 'var(--danger)'; }
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = '⚡ Extract Files'; }
+  }
+}
+
+
+const SAMPLE_COR_457696 = {
+  "order_id": "457696",
+  "contractor": "Edgebo",
+  "pixel": "> 5000",
+  "total_files": 16,
+  "files": [
+    {
+      "id": 1,
+      "filename": "MARDEGAN-03-11-20260191.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 2,
+      "filename": "MARDEGAN-03-11-20260194.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 3,
+      "filename": "MARDEGAN-03-11-20260200.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 4,
+      "filename": "MARDEGAN-03-11-20260201.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 5,
+      "filename": "MARDEGAN-03-11-20260204.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 6,
+      "filename": "MARDEGAN-03-11-20260205.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 7,
+      "filename": "MARDEGAN-03-11-20260218.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 8,
+      "filename": "MARDEGAN-03-11-20260219.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 9,
+      "filename": "MARDEGAN-03-11-20260227.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 10,
+      "filename": "MARDEGAN-03-11-20260229.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 11,
+      "filename": "MARDEGAN-03-11-20260232.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 12,
+      "filename": "MARDEGAN-03-11-20260234.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 13,
+      "filename": "MARDEGAN-03-11-20260255.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 14,
+      "filename": "MARDEGAN-03-11-20260257.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 15,
+      "filename": "MARDEGAN-03-11-20260262.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    },
+    {
+      "id": 16,
+      "filename": "MARDEGAN-03-11-20260263.tif",
+      "location": "Edgebo",
+      "dimension": ">5000px",
+      "services": [
+        {
+          "service": "Camera reflection removal",
+          "raw_name": "Camera reflection removal",
+          "complexity": "C1.5",
+          "category": "Category 1.5",
+          "numeric_cat": 1.5
+        }
+      ],
+      "services_display": "Camera reflection removal (Category 1.5)"
+    }
+  ],
+  "warnings": []
+};
+
+function paneAutoCor(){
+  const auto = S.corAuto;
+  const files = (auto && auto.files) ? auto.files : [];
+  const selSet = new Set(S.corSelectedIds || []);
+  const selectedFiles = files.filter(f => selSet.has(f.id));
+  const selCount = selectedFiles.length;
+
+  const pool = selectedFiles.length ? selectedFiles : files;
+  const allSvcs = [...new Set(pool.flatMap(f => (f.services||[]).map(s => s.service)).filter(Boolean))];
+  if(!allSvcs.length) allSvcs.push('Camera reflection removal');
+  if(!S.corService || !allSvcs.includes(S.corService)){
+    S.corService = allSvcs[0];
+  }
+
+  const relevantCats = [];
+  selectedFiles.forEach(f => {
+    const match = (f.services||[]).find(s => s.service === S.corService);
+    if(match && Number.isFinite(match.numeric_cat)) relevantCats.push(match.numeric_cat);
+  });
+  const avgCatNum = relevantCats.length ? (relevantCats.reduce((a,b)=>a+b, 0) / relevantCats.length) : null;
+
+  const availableCats = catsOf(S.corService);
+  const catVal = c => { const m = String(c).match(/(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 1; };
+  let recommendedCat = availableCats[0] || 'Category 1';
+  if(avgCatNum !== null && availableCats.length > 0){
+    recommendedCat = availableCats.reduce((prev, curr) => Math.abs(catVal(curr) - avgCatNum) < Math.abs(catVal(prev) - avgCatNum) ? curr : prev, availableCats[0]);
+  }
+  if(!S.corCatManual || !availableCats.includes(S.corCat)){
+    S.corCat = recommendedCat;
+  }
+
+  const contractor = (auto && auto.contractor) || (selectedFiles[0] ? selectedFiles[0].location : '') || S.cor.contractor || 'Edgebo';
+  const uPrice = price(S.corService, S.corCat, S.corPix);
+  const pr = uPrice || 0;
+  const sevMult = SEV[S.corSev] || 1.5;
+  const calcTot = pr * sevMult * selCount;
+  const finalTot = selCount > 0 ? (calcTot > 0 ? Math.max(2.0, calcTot) : 0) : 0;
+
+  const q = (S.corFilterQ || '').toLowerCase().trim();
+  const visibleFiles = files.filter(f => {
+    if(!q) return true;
+    const sNames = (f.services||[]).map(s => (s.service + ' ' + (s.raw_name||''))).join(' ');
+    return f.filename.toLowerCase().includes(q) || sNames.toLowerCase().includes(q) || (f.location||'').toLowerCase().includes(q);
+  });
+
+  return `
+  <div class="card" style="margin-bottom:16px">
+    <h2>Automatic Correction Calculation</h2>
+    <p class="sub" style="margin:-6px 0 12px">Search Order ID to automatically fetch all files, select files to compute the category level, and calculate the chargeback amount with minimum $2.00 rule.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input id="aucor-id" inputmode="numeric" value="${esc(S.corAutoId||'')}" placeholder="Order ID (e.g. 457696)" style="max-width:200px">
+      <button class="btn pri" id="aucor-fetch-live">⚡ Fetch from Tista (Live)</button>
+      <button class="btn" id="aucor-import-toggle">Import / Paste JSON</button>
+      <span id="aucor-status" class="sub" style="font-weight:500"></span>
+    </div>
+    <div id="aucor-import-box" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;${S.corShowImport?'':'display:none'}">
+      <div class="f"><label>JSON file</label><input type="file" id="aucor-file" accept=".json,application/json"></div>
+      <div class="f"><label>or paste JSON</label><textarea id="aucor-json" rows="3" style="width:100%;font-family:var(--font-mono);font-size:12px" placeholder="Paste tista_correction_...json contents here"></textarea></div>
+      <div class="tools"><button class="btn" id="aucor-import-btn">Import File / Text</button><span id="aucor-err" class="sub"></span></div>
+    </div>
+  </div>
+
+  ${!auto ? `
+    <div class="card" style="text-align:center;padding:40px 20px">
+      <div style="font-size:32px;margin-bottom:10px">📁</div>
+      <h3 style="font-family:var(--font-head);margin:0 0 8px">No order files loaded yet</h3>
+      <p class="sub" style="max-width:540px;margin:0 auto 16px">Enter an Order ID above (e.g. <code>457696</code>) and click <strong>⚡ Fetch from Tista (Live)</strong>, or load the sample order to test.</p>
+      <div class="tools" style="justify-content:center">
+        <button class="btn" id="aucor-load-sample">Load Order #457696 (Sample)</button>
+      </div>
+    </div>
+  ` : `
+    <div class="top" style="margin-bottom:16px">
+      <div class="card">
+        <h2>Calculation Parameters</h2>
+        <div class="f"><label>Contractor Name</label>
+          <select id="aucor-contractor">${opts(contractors(), contractor)}</select>
+        </div>
+        <div class="f"><label>Service Type</label>
+          <select id="aucor-service">${opts(allSvcs, S.corService)}</select>
+          <div class="hint">Found in order files</div>
+        </div>
+        <div class="f"><label>Average Category</label>
+          <div class="ro" style="display:flex;justify-content:space-between;align-items:center">
+            <span>${avgCatNum !== null ? 'Avg: ' + avgCatNum.toFixed(2) : '—'}</span>
+            <span style="font-size:12px;color:var(--muted)">Auto-detected: <strong>${esc(recommendedCat)}</strong></span>
+          </div>
+        </div>
+        <div class="f"><label>Category Level</label>
+          <select id="aucor-cat">${opts(availableCats, S.corCat)}</select>
+        </div>
+        <div class="f"><label>Pixel Range</label>
+          <select id="aucor-pix">${opts(PIX, S.corPix)}</select>
+        </div>
+        <div class="f"><label>Severity Level</label>
+          <select id="aucor-sev">${opts(Object.keys(SEV), S.corSev)}</select>
+          <div class="hint">Major 250% · Medium 200% · Minor 150% · Multiple 400%</div>
+        </div>
+        <div class="f"><label>Quantity (Files)</label>
+          <div class="ro" style="font-weight:600">${selCount} files selected</div>
+        </div>
+        <div class="formula">Chargeback = Service Price × Severity % × Quantity (Min $2.00)</div>
+      </div>
+
+      <div class="card result" id="aucor-result-card">
+        <div class="result-card-loader" id="aucor-card-loader" style="display:none">
+          <div class="result-card-spinner"></div>
+          <div class="result-card-title" id="aucor-card-loader-title">Fetching Order Files...</div>
+          <div class="result-card-sub" id="aucor-card-loader-sub">Connecting to Tista...</div>
+          <button type="button" class="result-card-dismiss" onclick="hideCardLoading('aucor')">✕ Dismiss</button>
+        </div>
+        <h2>Total Chargeback Amount</h2>
+        <div class="big">${money(finalTot)}</div>
+        <div class="steps">
+          <div><span>Selected Files</span><span>${selCount} / ${files.length}</span></div>
+          <div><span>Service Price</span><span>${uPrice === null ? 'Not in price list' : money(pr)}</span></div>
+          <div><span>Severity (${esc(S.corSev)})</span><span>${Math.round(sevMult * 100)}%</span></div>
+          <div><span>Quantity</span><span>${selCount}</span></div>
+          <div><span>Calculated</span><span>${money(calcTot)}</span></div>
+          ${calcTot > 0 && calcTot < 2.0 ? `<div style="font-weight:600"><span>Minimum Applied</span><span>$2.00</span></div>` : ''}
+        </div>
+        <div class="tools" style="margin-top:16px">
+          <button class="btn pri" id="aucor-apply" style="width:100%;padding:10px;font-size:14px">Apply to Correction Calculator</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+        <div>
+          <h2 style="margin:0 0 4px">Order Files (${files.length})</h2>
+          <p class="sub" style="margin:0">Select files to include in the chargeback calculation:</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="aucor-filter-q" value="${esc(S.corFilterQ||'')}" placeholder="Filter filename, service..." style="max-width:200px;padding:5px 9px">
+          <button class="btn" id="aucor-toggle-paste" style="padding:5px 12px;background:rgba(43,175,149,0.12);border-color:var(--accent);color:var(--accent);font-weight:600">📋 Paste Filenames</button>
+          <button class="btn" id="aucor-select-all" style="padding:5px 10px">Select All</button>
+          <button class="btn" id="aucor-deselect-all" style="padding:5px 10px">Deselect All</button>
+        </div>
+      </div>
+
+      <div id="aucor-paste-box" style="margin-bottom:14px;padding:12px 14px;background:var(--soft);border:1px solid var(--line);border-radius:8px;${S.corShowPasteNames!==false?'':'display:none'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+          <strong style="font-size:13px;color:var(--ink)">📋 Paste Multiple Filenames to Auto-Select:</strong>
+          <span class="sub" style="font-size:12px">Separate by new lines, commas, tabs, or spaces (e.g. copied from Excel or Tista)</span>
+        </div>
+        <textarea id="aucor-paste-names" rows="3" style="width:100%;font-family:var(--font-mono);font-size:12px;padding:8px 10px;line-height:1.4" placeholder="Paste file names here...&#10;H533_0150_Crop.jpg&#10;H704_0165_Crop.jpg&#10;H623_0213_Lemonade1.jpg">${esc(S.corPasteText||'')}</textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+          <button class="btn pri" id="aucor-btn-match-select" style="padding:6px 14px;font-weight:600">✓ Auto-Select Matching Files</button>
+          <button class="btn" id="aucor-btn-match-add" style="padding:6px 12px">+ Add to Selection</button>
+          <button class="btn" id="aucor-btn-paste-clear" style="padding:6px 12px">Clear</button>
+          <span id="aucor-match-status" class="sub" style="font-weight:600;font-size:12.5px"></span>
+        </div>
+      </div>
+
+      <div class="tbl" style="max-height:65vh;overflow:auto">
+        <table class="tbl-files">
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center"><input type="checkbox" id="aucor-chk-all" ${selCount === files.length && files.length > 0 ? 'checked' : ''}></th>
+              <th>Filename</th>
+              <th>Services</th>
+              <th>Location</th>
+              <th>Dimension</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visibleFiles.map(f => {
+              const isSel = selSet.has(f.id);
+              return `
+              <tr class="${isSel ? 'selected' : ''}" data-fid="${f.id}" style="cursor:pointer">
+                <td style="text-align:center"><input type="checkbox" class="aucor-file-chk" data-fid="${f.id}" ${isSel ? 'checked' : ''}></td>
+                <td style="font-family:var(--font-mono);font-size:12.5px;font-weight:500">${esc(f.filename)}</td>
+                <td>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    ${(f.services||[]).map(s => `
+                      <div class="svc-item">
+                        <span>${esc(s.raw_name || s.service)}</span>
+                        <span class="badge-cat">${esc(s.complexity || ('C' + (s.numeric_cat || 1)))}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </td>
+                <td style="font-size:12.5px">${esc(f.location)}</td>
+                <td style="font-size:12px;color:var(--muted)">${esc(f.dimension)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `}
+  `;
+}
+
+function parsePastedFilenames(rawText){
+  if(!rawText) return [];
+  const rawItems = String(rawText).split(/[\r\n,;\t]+/);
+  const result = [];
+  rawItems.forEach(item => {
+    let s = item.trim();
+    if(!s) return;
+    s = s.replace(/^["'`\[\]]+|["'`\[\]]+$/g, '').trim();
+    if(s.includes('/') || s.includes('\\')) s = s.split(/[/\\]/).pop().trim();
+    if(s && s.length >= 1) result.push(s);
+  });
+  return result;
+}
+
+function matchAndSelectFiles(rawText, mode='replace'){
+  if(!S.corAuto || !S.corAuto.files || !S.corAuto.files.length){
+    alert('Please fetch or load order files first.');
+    return;
+  }
+  const targets = parsePastedFilenames(rawText);
+  if(!targets.length){
+    alert('Please enter or paste at least one filename first.');
+    return;
+  }
+
+  const files = S.corAuto.files;
+  const matchedSet = new Set(mode === 'add' ? (S.corSelectedIds || []) : []);
+  const foundTargets = new Set();
+  const notFoundTargets = [];
+
+  targets.forEach(target => {
+    const tNorm = target.toLowerCase();
+    const tBase = tNorm.replace(/\.[a-z0-9]+$/i, '');
+
+    let foundForTarget = false;
+    files.forEach(f => {
+      const fNorm = (f.filename || '').toLowerCase();
+      const fBase = fNorm.replace(/\.[a-z0-9]+$/i, '');
+
+      if(fNorm === tNorm || fBase === tBase || (tNorm.length >= 3 && (fNorm.includes(tNorm) || tNorm.includes(fNorm)))){
+        matchedSet.add(f.id);
+        foundForTarget = true;
+      }
+    });
+
+    if(foundForTarget){
+      foundTargets.add(target);
+    } else {
+      notFoundTargets.push(target);
+    }
+  });
+
+  S.corSelectedIds = Array.from(matchedSet);
+  S.corCatManual = false;
+  S.corPasteText = rawText;
+  save();
+  render();
+
+  const statusEl = $('aucor-match-status');
+  if(statusEl){
+    const selCount = S.corSelectedIds.length;
+    if(notFoundTargets.length === 0){
+      statusEl.textContent = `✓ ${selCount} matching file${selCount === 1 ? '' : 's'} successfully selected!`;
+      statusEl.style.color = '#27ae60';
+    } else {
+      const missingStr = notFoundTargets.slice(0, 3).join(', ') + (notFoundTargets.length > 3 ? ` (+${notFoundTargets.length - 3} more)` : '');
+      statusEl.textContent = `✓ ${selCount} selected (${notFoundTargets.length} not found: ${missingStr})`;
+      statusEl.style.color = selCount > 0 ? '#e67e22' : 'var(--danger)';
+    }
+  }
+}
+
+function importAutoCor(txt){
+  try {
+    const o = typeof txt === 'string' ? JSON.parse(txt) : txt;
+    if(!o || !o.files) throw 0;
+    S.corAuto = o;
+    S.corAutoId = o.order_id || S.corAutoId;
+    S.corSelectedIds = [];
+    S.corService = '';
+    S.corCat = '';
+    if(o.contractor) S.cor.contractor = o.contractor;
+    save();
+    render();
+    if($('aucor-err')) $('aucor-err').textContent = '';
+  } catch(e) {
+    if($('aucor-err')) $('aucor-err').textContent = 'Invalid files result file.';
+  }
+}
+
+function applyAutoCor(){
+  if(!S.corAuto || !S.corAuto.files) return;
+  const files = S.corAuto.files;
+  const selSet = new Set(S.corSelectedIds || []);
+  const selCount = files.filter(f => selSet.has(f.id)).length;
+  if(selCount === 0){
+    alert('Please select at least one file first.');
+    return;
+  }
+  const contractor = $('aucor-contractor') ? $('aucor-contractor').value : (S.corAuto.contractor || S.cor.contractor);
+  S.cor.contractor = contractor;
+  S.cor.service = S.corService;
+  S.cor.cat = S.corCat;
+  S.cor.pix = S.corPix;
+  S.cor.sev = S.corSev;
+  S.cor.qty = selCount;
+  S.tab = 'cor';
+  save();
+  render();
+}
+
+async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
+  oid = String(oid || '').trim().replace(/\D/g, '');
+  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const status = $(statusId);
+  const fetchBtn = $('cor-quick-fetch');
+  const origBtnText = fetchBtn ? fetchBtn.innerHTML : '';
+  if(fetchBtn){
+    fetchBtn.disabled = true;
+    fetchBtn.innerHTML = '<span class="btn-spinner"></span> Fetching...';
+  }
+  if(status){
+    status.textContent = 'Connecting to Tista & fetching dispute...';
+    status.style.color = 'var(--accent)';
+  }
+  showLoading(`Fetching Order #${oid}`, 'Connecting to Tista & calculating Correction chargeback...');
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch?order_id=${oid}`);
+    if(!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    S.auto = data;
+    S.autoId = oid;
+    S.corAutoId = oid;
+    S.corDisputeId = data.dispute_id || '';
+
+    const { f } = analyzeAuto(data);
+    if(f.contractor) S.cor.contractor = f.contractor;
+    if(f.service) S.cor.service = f.service;
+    if(f.cat) S.cor.cat = f.cat;
+    if(f.pix) S.cor.pix = f.pix;
+    if(f.sev) S.cor.sev = f.sev;
+    if(f.qty != null) S.cor.qty = f.qty;
+
+    S.tab = 'cor';
+    save();
+    render();
+
+    const st = $(statusId);
+    if(st){
+      st.textContent = `✓ Fetched & Calculated Order #${oid} successfully!`;
+      st.style.color = '#27ae60';
+    }
+  } catch(err){
+    if(status){
+      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+    const btnAfter = $('cor-quick-fetch');
+    if(btnAfter){
+      btnAfter.disabled = false;
+      btnAfter.innerHTML = origBtnText || '⚡ Fetch & Calculate';
+    }
+  }
+}
+
+async function fetchLiveCorrection(oid, statusId='aucor-status'){
+  oid = String(oid || '').trim().replace(/\D/g, '');
+  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const status = $(statusId);
+  if(status){
+    status.textContent = 'Fetching files from Tista... (please wait)';
+    status.style.color = 'var(--accent)';
+  }
+  showLoading(`Fetching Files for #${oid}`, 'Retrieving files and categories from Tista...');
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch_files?order_id=${oid}`);
+    if(!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    S.corAutoId = oid;
+    S.corAuto = data;
+    S.corSelectedIds = [];
+    S.corService = '';
+    S.corCat = '';
+    if(data.contractor) S.cor.contractor = data.contractor;
+    S.tab = 'autocor';
+    save();
+    render();
+    const st2 = $('aucor-status');
+    if(st2){
+      st2.textContent = `✓ Fetched ${data.total_files || data.files.length} files successfully!`;
+      st2.style.color = 'green';
+    }
+  } catch(err) {
+    if(status){
+      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+  }
+}
+
+async function importFromGoogleSlides(slideUrl){
+  const url = String(slideUrl || ($('bt-slides-url') ? $('bt-slides-url').value : '')).trim();
+  if(!url){
+    alert('Please enter or paste a Google Slides link first.');
+    return;
+  }
+  const statusEl = $('bt-slides-status') || $('bt-status-text');
+  if(statusEl){
+    statusEl.textContent = 'Connecting to Google Slides & parsing report slides...';
+    statusEl.style.color = 'var(--accent)';
+  }
+  showLoading('Fetching Google Slides...', 'Extracting Order IDs, Services, Severities, and File Names from presentation slides...', true);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Failed to fetch slides');
+    
+    if(!data.jobs || !data.jobs.length){
+      throw new Error('No dispute/correction jobs found in this presentation.');
+    }
+
+    const newDisputes = data.jobs.map((job, i) => {
+      const oid = String(job.order_id).replace(/\D/g, '');
+      const rawSvc = String(job.service || 'Clipping path').trim();
+      const allKnown = services();
+      const matchedSvc = allKnown.find(k => k.toLowerCase() === rawSvc.toLowerCase())
+                      || allKnown.find(k => rawSvc.toLowerCase().includes(k.toLowerCase()))
+                      || allKnown.find(k => k.toLowerCase().includes(rawSvc.toLowerCase()))
+                      || rawSvc;
+      const svc = matchedSvc;
+      const availableCats = catsOf(svc).length ? catsOf(svc) : ['Category 1', 'Category 1.5', 'Category 2'];
+      const cat = availableCats.includes('Category 1.5') ? 'Category 1.5' : (availableCats[0] || 'Category 1');
+      const qty = (job.fault_qty != null && job.fault_qty > 0) ? job.fault_qty : ((job.filenames && job.filenames.length) ? job.filenames.length : (job.total_qty || 1));
+
+      let rReason = String(job.reason || job.report_type || 'Correction').trim();
+      if(rReason.toLowerCase().includes('quality')) rReason = 'Quality';
+      else if(rReason.toLowerCase().includes('delay')) rReason = 'Delay';
+      else if(rReason.toLowerCase().includes('revision')) rReason = 'Revision';
+      else if(rReason.toLowerCase().includes('technical')) rReason = 'Technical fault';
+      else if(rReason.toLowerCase().includes('correction')) rReason = 'Correction';
+      else rReason = rReason || 'Correction';
+
+      return {
+        dispute_id: 'SLIDE-' + oid,
+        order_id: '#' + oid,
+        contractor: job.contractor || 'Other',
+        fault_by: job.contractor || 'Other',
+        dispute_reason: rReason,
+        chargeable_to: 'Vendor',
+        fault_at: new Date().toISOString().slice(0, 10),
+        delayed_by: '',
+        delay_seconds: 0,
+        order_duration: '24:00:00',
+        fault_quantity: qty,
+        fault_severity: job.severity || 'Minor',
+        status: 'Awaiting response from vendor',
+        service: svc,
+        cat: cat,
+        pix: '> 5000',
+        is_all_images: !!job.is_all_images,
+        filenames: job.filenames || [],
+        order_services: [svc],
+        order_cats: availableCats
+      };
+    });
+
+    if(!S.batch) S.batch = { filters: {} };
+    if(!S.batch.filters) S.batch.filters = {};
+    const firstReason = newDisputes[0]?.dispute_reason || 'Correction';
+    if(firstReason === 'Quality') S.batch.filters.reason = '4';
+    else if(firstReason === 'Delay') S.batch.filters.reason = '1';
+    else if(firstReason === 'Correction') S.batch.filters.reason = '2';
+    else if(firstReason === 'Revision') S.batch.filters.reason = '3';
+    else if(firstReason === 'Technical fault') S.batch.filters.reason = '5';
+
+    S.batch.disputes = newDisputes;
+    S.batch.slideUrl = url;
+    S.batch.showSlides = true;
+    S.batchStatusText = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
+    S.batchStatusColor = '#27ae60';
+    save();
+    render();
+
+    if(statusEl){
+      statusEl.textContent = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
+      statusEl.style.color = '#27ae60';
+    }
+  } catch(err){
+    if(statusEl){
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = 'var(--danger)';
+    }
+    alert('Google Slides Import Error: ' + err.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+
+const SAMPLE_BATCH_DATA = {
+  "filters": {
+    "reason": "2",
+    "status": "1",
+    "chargeable": "1",
+    "location": "",
+    "query": "",
+    "deep_scan": false
+  },
+  "total_disputes": 16,
+  "disputes": [
+    {
+      "dispute_id": "47359",
+      "order_id": "#458192",
+      "contractor": "Vectorio",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-08",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 1,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Additional copy",
+      "cat": "Category 1",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47400",
+      "order_id": "#457531",
+      "contractor": "Perfect Pixel (GB2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-07",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 5,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47396",
+      "order_id": "#457963",
+      "contractor": "ClippingPix",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-06",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 3,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47357",
+      "order_id": "#457696",
+      "contractor": "Edgebo",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-06",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 7,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Camera reflection removal",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47348",
+      "order_id": "#457593",
+      "contractor": "Edgebo",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-04",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 4,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47371",
+      "order_id": "#457584",
+      "contractor": "Edgebo",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-04",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 17,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47370",
+      "order_id": "#457584",
+      "contractor": "Cutout Edge",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-04",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 2,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47369",
+      "order_id": "#457584",
+      "contractor": "Khandoker Graphics",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-04",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 10,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47356",
+      "order_id": "#457537",
+      "contractor": "ClippingPix",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-04",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 19,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47342",
+      "order_id": "#457492",
+      "contractor": "ClippingPix",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-03",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 2,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47343",
+      "order_id": "#457552",
+      "contractor": "Creative Path (P1)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-03",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 2,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "47341",
+      "order_id": "#457601",
+      "contractor": "Healing Image",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-03",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 3,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "46008",
+      "order_id": "#440225",
+      "contractor": "Khandoker Graphics",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-06-24",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 27,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "46007",
+      "order_id": "#440225",
+      "contractor": "Creative Path (P1)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-06-24",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 40,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "46006",
+      "order_id": "#440225",
+      "contractor": "Perfect Pixel (GB2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-06-24",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 99,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    },
+    {
+      "dispute_id": "38924",
+      "order_id": "#388660",
+      "contractor": "Creative Path (P1)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Correction",
+      "chargeable_to": "Vendor",
+      "fault_at": "2025-06-30",
+      "delayed_by": "",
+      "delay_seconds": 0,
+      "order_duration": "24:00:00",
+      "fault_quantity": 35,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000"
+    }
+  ]
+};
+
+function calcDisputeChargeback(d){
+  const qty = num(d.fault_quantity || 1);
+  const reason = (d.dispute_reason || 'Correction').trim();
+  const svc = d.service || 'Clipping path';
+  const cat = d.cat || 'Category 1.5';
+  const pix = d.pix || '> 5000';
+  const uPrice = price(svc, cat, pix);
+  const pr = uPrice || 0;
+
+  if(reason.toLowerCase() === 'delay'){
+    const durStr = d.order_duration || d.dur || '24:00:00';
+    const durDays = parseDur(durStr) || 1;
+    const sec = num(d.delay_seconds || d.sec || 0);
+    const delayDays = Math.abs(sec) / 86400;
+    const pct = durDays > 0 ? delayDays / durDays : 0;
+    const t = tierFor(pct);
+    const share = t ? t.r : 0;
+    const raw = pr * share * qty;
+    const finalAmount = raw > 0 ? Math.max(2.0, raw) : 0;
+    return {
+      reason: 'Delay',
+      svc, cat, pix, pr, qty,
+      factorLabel: (pct * 100).toFixed(1) + '% (Tier: ' + Math.round(share * 100) + '%)',
+      rawAmount: raw,
+      chargeback: finalAmount,
+      minApplied: raw > 0 && raw < 2.0
+    };
+  } else {
+    // Correction and Quality share the EXACT same rule!
+    const sevRaw = (d.fault_severity || 'Low').toLowerCase();
+    let sevKey = 'Minor';
+    if(sevRaw.includes('med')) sevKey = 'Medium';
+    else if(sevRaw.includes('high') || sevRaw.includes('crit') || sevRaw.includes('maj')) sevKey = 'Major';
+    else if(sevRaw.includes('mult')) sevKey = 'Multiple';
+    else sevKey = 'Minor';
+
+    const mult = SEV[sevKey] || 1.5;
+    const raw = pr * mult * qty;
+    const finalAmount = raw > 0 ? Math.max(2.0, raw) : 0;
+    return {
+      reason: reason,
+      svc, cat, pix, pr, qty,
+      sevKey,
+      factorLabel: sevKey + ' (' + Math.round(mult * 100) + '%)',
+      rawAmount: raw,
+      chargeback: finalAmount,
+      minApplied: raw > 0 && raw < 2.0
+    };
+  }
+}
+
+function paneBatch(){
+  const b = S.batch || { filters: {}, disputes: [] };
+  const f = b.filters || {};
+  const disputes = b.disputes || [];
+  const q = (b.filterQ || '').toLowerCase().trim();
+
+  // Calculate results for all disputes
+  const computedList = disputes.map((d, i) => ({
+    orig: d,
+    idx: i,
+    res: calcDisputeChargeback(d)
+  }));
+
+  const visibleList = computedList.filter(item => {
+    if(!q) return true;
+    const text = [item.orig.order_id, item.orig.dispute_id, item.orig.contractor, item.orig.dispute_reason, item.orig.service, item.orig.status].join(' ').toLowerCase();
+    return text.includes(q);
+  });
+
+  // Aggregations
+  const totalCount = computedList.length;
+  const totalAmount = computedList.reduce((acc, item) => acc + item.res.chargeback, 0);
+  const minAppliedCount = computedList.filter(item => item.res.minApplied).length;
+  const totalQty = computedList.reduce((acc, item) => acc + item.res.qty, 0);
+
+  // Contractor breakdown
+  const contractorTotals = {};
+  computedList.forEach(item => {
+    const c = item.orig.contractor || 'Other';
+    if(!contractorTotals[c]) contractorTotals[c] = { sum: 0, count: 0 };
+    contractorTotals[c].sum += item.res.chargeback;
+    contractorTotals[c].count += 1;
+  });
+
+  return `
+  <div class="card" style="margin-bottom:16px">
+    <h2>Batch Dispute Search & Chargeback</h2>
+
+    <!-- Fault at Date Range directly below heading on the left -->
+    <div style="margin:10px 0 16px;display:flex;align-items:flex-start;flex-wrap:wrap">
+      <div class="f" style="display:block;margin:0;padding:10px 14px;background:var(--bg-subtle,rgba(255,255,255,0.03));border:1px solid var(--line);border-radius:8px">
+        <label style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600">📅 Fault at (Date Range)</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="bt-date-start" value="${esc(f.dateStart||'')}" title="Start Date" style="padding:4px 8px;font-size:12px;width:130px">
+          <span style="color:var(--muted);font-size:12px">to</span>
+          <input type="date" id="bt-date-end" value="${esc(f.dateEnd||'')}" title="End Date" style="padding:4px 8px;font-size:12px;width:130px">
+          <div style="display:inline-flex;gap:4px;margin-left:4px;flex-wrap:wrap">
+            <button class="btn" type="button" id="bt-preset-today" style="padding:2px 7px;font-size:11px">Today</button>
+            <button class="btn" type="button" id="bt-preset-7d" style="padding:2px 7px;font-size:11px">7 Days</button>
+            <button class="btn" type="button" id="bt-preset-14d" style="padding:2px 7px;font-size:11px">14 Days</button>
+            <button class="btn" type="button" id="bt-preset-month" style="padding:2px 7px;font-size:11px">This Month</button>
+            <button class="btn" type="button" id="bt-preset-clear" style="padding:2px 7px;font-size:11px;color:var(--danger)">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end">
+      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Search (Order or Dispute ID)</label>
+        <input id="bt-query" placeholder="e.g. #458192 or blank for all" value="${esc(f.query||'')}">
+      </div>
+      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Dispute Reason</label>
+        <select id="bt-reason">
+          <option value="2"${f.reason==='2'?' selected':''}>Correction</option>
+          <option value="1"${f.reason==='1'?' selected':''}>Delay</option>
+          <option value="4"${f.reason==='4'?' selected':''}>Quality</option>
+          <option value=""${f.reason===''?' selected':''}>All Reasons</option>
+          <option value="3"${f.reason==='3'?' selected':''}>Revision</option>
+          <option value="5"${f.reason==='5'?' selected':''}>Technical fault</option>
+        </select>
+      </div>
+      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Status</label>
+        <select id="bt-status">
+          <option value="1"${f.status==='1'?' selected':''}>Awaiting response from vendor</option>
+          <option value="2"${f.status==='2'?' selected':''}>Under review</option>
+          <option value=""${f.status===''?' selected':''}>All statuses</option>
+        </select>
+      </div>
+      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Location</label>
+        <select id="bt-location">
+          <option value="">All locations</option>
+          <option value="1"${f.location==='1'?' selected':''}>Path</option>
+          <option value="48"${f.location==='48'?' selected':''}>Creative Path (P1)</option>
+          <option value="47"${f.location==='47'?' selected':''}>Pixel Path (P2)</option>
+          <option value="46"${f.location==='46'?' selected':''}>Perfect Pixel (GB2)</option>
+          <option value="91"${f.location==='91'?' selected':''}>Vectorio</option>
+          <option value="96"${f.location==='96'?' selected':''}>Cutout Edge</option>
+          <option value="100"${f.location==='100'?' selected':''}>Edgebo</option>
+          <option value="135"${f.location==='135'?' selected':''}>ClippingPix</option>
+          <option value="50"${f.location==='50'?' selected':''}>Khandoker Graphics</option>
+          <option value="53"${f.location==='53'?' selected':''}>Graphics Picture</option>
+          <option value="7"${f.location==='7'?' selected':''}>Grasigner Kitchen</option>
+          <option value="101"${f.location==='101'?' selected':''}>Healing Image</option>
+          <option value="2"${f.location==='2'?' selected':''}>Subs</option>
+        </select>
+      </div>
+      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Chargeable to</label>
+        <select id="bt-chargeable">
+          <option value="1"${f.chargeable==='1'?' selected':''}>Vendor</option>
+          <option value=""${f.chargeable===''?' selected':''}>All</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="bt-deep" style="width:16px;height:16px" ${f.deepScan?'checked':''}>
+        <span><strong>Deep Scan:</strong> Navigate into each order and extract exact services & complexity</span>
+      </label>
+    </div>
+
+    <div class="tools" style="margin-top:14px">
+      <button class="btn pri" id="bt-search">⚡ SEARCH & CALCULATE (LIVE TISTA)</button>
+      <button class="btn" id="bt-sample">Load Sample (16 Disputes)</button>
+      <button class="btn" id="bt-toggle-paste">Paste Multiple IDs</button>
+      <button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>
+      <button class="btn pri" id="bt-close-all" style="background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">🔒 Charge & Close All Visible (${visibleList.length})</button>
+      <span id="bt-status-text" class="sub" style="font-weight:500;color:${esc(S.batchStatusColor||'inherit')}">${esc(S.batchStatusText||'')}</span>
+    </div>
+
+    <div id="bt-paste-drawer" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;${b.showPaste?'':'display:none'}">
+      <div class="f" style="display:block"><label style="display:block;margin-bottom:4px">Paste Order IDs (separated by commas, spaces, or lines):</label>
+        <textarea id="bt-paste-input" rows="3" style="width:100%;font-family:var(--font-mono);font-size:12.5px" placeholder="458192, 457531, 457963, 457696..."></textarea>
+      </div>
+      <div class="tools"><button class="btn pri" id="bt-paste-go">Search & Calculate Pasted IDs</button></div>
+    </div>
+
+    <div id="bt-slides-drawer" style="margin-top:14px;border-top:1px solid var(--line);padding:14px 16px;background:var(--soft);border-radius:8px;${b.showSlides?'':'display:none'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <strong style="font-size:13.5px;color:var(--ink)">📊 Import from Google Slides (Correction Report):</strong>
+        <span class="sub" style="font-size:12px">স্লাইড থেকে Order ID, Service, এবং File Names অটো নিয়ে চার্জব্যাক হিসেব করবে</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="bt-slides-url" placeholder="Paste Google Slides Link (e.g. https://docs.google.com/presentation/d/...)" style="flex:1;min-width:280px;font-family:var(--font-mono);font-size:12.5px;padding:7px 10px" value="${esc(b.slideUrl||'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing')}">
+        <button class="btn pri" id="bt-slides-go" style="padding:7px 16px;font-weight:600">⚡ Fetch Slides & Calculate</button>
+      </div>
+      <div id="bt-slides-status" class="sub" style="margin-top:8px;font-weight:600"></div>
+    </div>
+  </div>
+
+  ${disputes.length === 0 ? `
+    <div class="card" style="text-align:center;padding:45px 20px">
+      <div style="font-size:36px;margin-bottom:10px">📋</div>
+      <h3 style="font-family:var(--font-head);margin:0 0 8px">No batch disputes loaded</h3>
+      <p class="sub" style="max-width:560px;margin:0 auto 16px">Click <strong>⚡ SEARCH & CALCULATE</strong> to fetch live disputes matching the filters from Tista, or click <strong>Load Sample (16 Disputes)</strong> to test immediately.</p>
+    </div>
+  ` : `
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-val">${totalCount}</div><div class="kpi-lbl">Total Disputes</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent)">${money(totalAmount)}</div><div class="kpi-lbl">Total Chargeback Amount</div></div>
+      <div class="kpi-card"><div class="kpi-val">${minAppliedCount}</div><div class="kpi-lbl">Min $2.00 Rule Applied</div></div>
+      <div class="kpi-card"><div class="kpi-val">${totalQty}</div><div class="kpi-lbl">Total Fault Units</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="font-size:14px;font-family:var(--font-head);margin:0 0 8px">Contractor Breakdown:</h3>
+      <div>
+        ${Object.keys(contractorTotals).map(c=>`
+          <span class="contractor-pill">
+            <span>${esc(c)}:</span>
+            <strong>${money(contractorTotals[c].sum)}</strong>
+            <span style="color:var(--muted);font-size:11px">(${contractorTotals[c].count} orders)</span>
+          </span>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+        <div>
+          <h2 style="margin:0 0 4px">Dispute Chargeback List (${visibleList.length} of ${totalCount})</h2>
+          <p class="sub" style="margin:0">Calculated list with individual dispute details and one-click calculator links:</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="bt-filter-table" value="${esc(b.filterQ||'')}" placeholder="Filter orders, contractor..." style="max-width:220px;padding:6px 10px">
+          <button class="btn" id="bt-export-csv" style="padding:6px 12px">📥 Export CSV</button>
+          <button class="btn" id="bt-copy-table" style="padding:6px 12px">📋 Copy Table</button>
+        </div>
+      </div>
+
+      <div class="tbl" style="max-height:70vh;overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:35px">#</th>
+              <th>Order ID</th>
+              <th>Fault at</th>
+              <th>Reason</th>
+              <th>Contractor</th>
+              <th>Service</th>
+              <th>Category</th>
+              <th>Severity / Tier</th>
+              <th class="n">Qty</th>
+              <th class="n">Unit Price</th>
+              <th class="n">Chargeback ($)</th>
+              <th>Status</th>
+              <th style="text-align:center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visibleList.map((item, idx) => {
+              const d = item.orig;
+              const r = item.res;
+
+              const orderSvcs = Array.isArray(d.order_services) ? d.order_services : [];
+              const curSvc = d.service || r.svc || 'Clipping path';
+              const allSvcList = [...new Set([...orderSvcs, curSvc, ...services()].filter(Boolean))];
+
+              const orderCats = Array.isArray(d.order_cats) ? d.order_cats : [];
+              const systemCats = [...new Set(S.prices.map(r => r.c))];
+              const curCat = d.cat || r.cat || 'Category 1';
+              const allCatList = [...new Set([...orderCats, ...catsOf(curSvc), ...systemCats, curCat].filter(Boolean))];
+
+              return `
+              <tr>
+                <td style="color:var(--muted);font-size:12px">${idx + 1}</td>
+                <td style="font-family:var(--font-mono);font-weight:600">
+                  <div>${esc(d.order_id)}</div>
+                  ${d.is_all_images ? 
+                    `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${d.fault_quantity||r.qty})</div>` : 
+                    (d.filenames && d.filenames.length ? `
+                      <details style="margin-top:2px;cursor:pointer">
+                        <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none">
+                          ▶ ${d.filenames.length} files (click to view)
+                        </summary>
+                        <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;max-width:260px">
+                          ${d.filenames.map(f => `<span style="font-size:10.5px;font-family:var(--font-mono);background:var(--soft);padding:1px 5px;border-radius:3px;border:1px solid var(--line);">${esc(f)}</span>`).join('')}
+                        </div>
+                      </details>
+                    ` : '')
+                  }
+                </td>
+                <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">${esc(d.fault_at||'—')}</td>
+                <td>
+                  <select class="bt-row-reason badge-reason ${r.reason.includes('Quality')?'Quality':esc(r.reason)}" data-idx="${item.idx}" style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid var(--line);cursor:pointer;outline:none">
+                    <option value="Quality"${(d.dispute_reason==='Quality'||d.dispute_reason==='Quality Audit')?' selected':''}>Quality</option>
+                    <option value="Correction"${d.dispute_reason==='Correction'?' selected':''}>Correction</option>
+                    <option value="Delay"${d.dispute_reason==='Delay'?' selected':''}>Delay</option>
+                    <option value="Revision"${d.dispute_reason==='Revision'?' selected':''}>Revision</option>
+                    <option value="Technical fault"${d.dispute_reason==='Technical fault'?' selected':''}>Technical fault</option>
+                  </select>
+                </td>
+                <td style="font-weight:500">${esc(d.contractor)}</td>
+                <td>
+                  <select class="bt-row-svc" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:170px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
+                    ${allSvcList.map(s => `<option value="${esc(s)}"${s===curSvc?' selected':''}>${esc(s)}</option>`).join('')}
+                  </select>
+                </td>
+                <td>
+                  <select class="bt-row-cat" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:125px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
+                    ${allCatList.map(c => `<option value="${esc(c)}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('')}
+                  </select>
+                </td>
+                <td><span style="font-size:12px">${esc(r.factorLabel)}</span></td>
+                <td class="n" style="font-family:var(--font-mono);font-weight:600">${r.qty}</td>
+                <td class="n" style="font-family:var(--font-mono)">${money(r.pr)}</td>
+                <td class="n" style="font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--accent)">
+                  ${money(r.chargeback)}
+                  ${r.minApplied ? '<span class="badge-min">Min $2</span>' : ''}
+                </td>
+                <td style="font-size:12px;color:var(--muted)">${esc(d.status)}</td>
+                <td style="text-align:center;white-space:nowrap">
+                  <button class="btn" data-bt-open="${item.idx}" style="padding:3px 7px;font-size:11px" title="Open this dispute in calculator">Open</button>
+                  ${(d.status && d.status.toLowerCase().includes('close')) ? 
+                    `<span style="color:#27ae60;font-weight:600;font-size:11px;margin-left:4px">✓ Closed</span>` : 
+                    `<button class="btn pri" data-bt-close="${item.idx}" style="padding:3px 7px;font-size:11px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:4px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
+                  }
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8">Total (${visibleList.length} orders)</td>
+              <td class="n">${visibleList.reduce((acc, it)=>acc+it.res.qty, 0)}</td>
+              <td></td>
+              <td class="n" style="font-size:15px;color:var(--accent)">${money(visibleList.reduce((acc, it)=>acc+it.res.chargeback, 0))}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  `}
+  `;
+}
+
+function setBatchDatePreset(type){
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const end = fmt(now);
+  let start = '';
+  if(type === 'today') {
+    start = end;
+  } else if(type === '7d') {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    start = fmt(d);
+  } else if(type === '14d') {
+    const d = new Date(); d.setDate(d.getDate() - 14);
+    start = fmt(d);
+  } else if(type === 'month') {
+    const d = new Date(now.getFullYear(), now.getMonth(), 1);
+    start = fmt(d);
+  } else if(type === 'clear') {
+    start = '';
+  }
+  if(!S.batch) S.batch = { filters: {} };
+  if(!S.batch.filters) S.batch.filters = {};
+  S.batch.filters.dateStart = start;
+  S.batch.filters.dateEnd = (type === 'clear' ? '' : end);
+  if($('bt-date-start')) $('bt-date-start').value = S.batch.filters.dateStart;
+  if($('bt-date-end')) $('bt-date-end').value = S.batch.filters.dateEnd;
+  save();
+}
+
+async function fetchLiveBatchDisputes(customQuery=null){
+  const statusEl = $('bt-status-text');
+  const b = S.batch || { filters: {} };
+  const f = b.filters || {};
+  
+  const query = customQuery !== null ? customQuery : ($('bt-query') ? $('bt-query').value : (f.query || ''));
+  const reason = $('bt-reason') ? $('bt-reason').value : (f.reason !== undefined ? f.reason : '2');
+  const status = $('bt-status') ? $('bt-status').value : (f.status !== undefined ? f.status : '1');
+  const chargeable = $('bt-chargeable') ? $('bt-chargeable').value : (f.chargeable !== undefined ? f.chargeable : '1');
+  const location = $('bt-location') ? $('bt-location').value : (f.location || '');
+  const dateStart = $('bt-date-start') ? $('bt-date-start').value : (f.dateStart || '');
+  const dateEnd = $('bt-date-end') ? $('bt-date-end').value : (f.dateEnd || '');
+  const deepScan = $('bt-deep') ? $('bt-deep').checked : (f.deepScan || false);
+
+  f.query = query;
+  f.reason = reason;
+  f.status = status;
+  f.chargeable = chargeable;
+  f.location = location;
+  f.dateStart = dateStart;
+  f.dateEnd = dateEnd;
+  f.deepScan = deepScan;
+  save();
+
+  S.batchStatusText = 'Searching disputes on Tista... (please wait)';
+  S.batchStatusColor = 'var(--accent)';
+  if(statusEl){
+    statusEl.textContent = S.batchStatusText;
+    statusEl.style.color = S.batchStatusColor;
+  }
+  showLoading('Searching Batch Disputes...', 'Fetching disputes from Tista according to selected filters...');
+
+  try {
+    const params = {
+      reason, status, chargeable, location, query,
+      start_date: dateStart,
+      end_date: dateEnd,
+      deep_scan: deepScan ? '1' : '0'
+    };
+    const qs = new URLSearchParams(params).toString();
+
+    const res = await fetch(`${API_BASE}/api/fetch_disputes?${qs}`);
+    if(!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    S.batch.disputes = data.disputes || [];
+    S.batchStatusText = `✓ Fetched ${data.total_disputes || data.disputes.length} disputes successfully!`;
+    S.batchStatusColor = 'green';
+    save();
+    render();
+  } catch(err){
+    S.batchStatusText = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+    S.batchStatusColor = 'var(--danger)';
+    save();
+    render();
+  } finally {
+    hideLoading();
+  }
+}
+
+function exportBatchCSV(){
+  const b = S.batch || { disputes: [] };
+  const disputes = b.disputes || [];
+  if(!disputes.length){ alert('No disputes to export.'); return; }
+
+  const headers = ['Index', 'Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Severity/Tier', 'Fault Quantity', 'Unit Price ($)', 'Raw Calculated ($)', 'Final Chargeback ($)', 'Min $2 Applied', 'Status'];
+  const rows = disputes.map((d, i) => {
+    const r = calcDisputeChargeback(d);
+    return [
+      i + 1,
+      `"${d.order_id}"`,
+      `"${d.fault_at||''}"`,
+      `"${r.reason}"`,
+      `"${d.contractor}"`,
+      `"${r.svc}"`,
+      `"${r.cat}"`,
+      `"${r.factorLabel}"`,
+      r.qty,
+      r.pr.toFixed(2),
+      r.rawAmount.toFixed(2),
+      r.chargeback.toFixed(2),
+      r.minApplied ? 'Yes' : 'No',
+      `"${d.status}"`
+    ].join(',');
+  });
+
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Chargeback_Disputes_Summary_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function copyBatchSummary(){
+  const b = S.batch || { disputes: [] };
+  const disputes = b.disputes || [];
+  if(!disputes.length){ alert('No disputes to copy.'); return; }
+
+  const headers = ['Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Quantity', 'Price', 'Chargeback'];
+  const lines = disputes.map(d => {
+    const r = calcDisputeChargeback(d);
+    return [d.order_id, d.fault_at||'', r.reason, d.contractor, r.svc, r.cat, r.qty, '$' + r.pr.toFixed(2), '$' + r.chargeback.toFixed(2)].join('\t');
+  });
+
+  const text = headers.join('\t') + '\n' + lines.join('\n');
+  try {
+    navigator.clipboard.writeText(text).then(() => alert('Summary table copied to clipboard!'), () => alert('Failed to copy.'));
+  } catch(e){}
+}
+
+function openDisputeInCalc(idx){
+  const b = S.batch || { disputes: [] };
+  const d = b.disputes[idx];
+  if(!d) return;
+
+  const raw_oid = d.order_id.replace(/\D/g, '');
+  const r = calcDisputeChargeback(d);
+
+  if(r.reason === 'Delay'){
+    S.del.contractor = d.contractor || S.del.contractor;
+    S.del.service = r.svc;
+    S.del.cat = r.cat;
+    S.del.pix = r.pix;
+    S.del.qty = r.qty;
+    S.del.dur = d.order_duration || '24:00:00';
+    S.del.sec = d.delay_seconds || -6185;
+    S.autoId = raw_oid;
+    S.tab = 'del';
+  } else {
+    S.cor.contractor = d.contractor || S.cor.contractor;
+    S.cor.service = r.svc;
+    S.cor.cat = r.cat;
+    S.cor.pix = r.pix;
+    S.cor.sev = r.sevKey || 'Minor';
+    S.cor.qty = r.qty;
+    S.corAutoId = raw_oid;
+    S.corDisputeId = d.dispute_id || '';
+    if(d.filenames && d.filenames.length){
+      S.corPasteText = d.filenames.join('\n');
+      S.corShowPasteNames = true;
+    }
+    S.tab = 'cor';
+  }
+  save();
+  render();
+}
+
+async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId){
+  const statusEl = $(statusId);
+  const btnEl = $(btnId);
+  const cleanOid = (orderId || '').trim();
+  const cleanDid = (disputeId || '').trim();
+  if(!cleanOid && !cleanDid){
+    alert('Please enter or fetch an Order ID or Dispute ID first.');
+    return;
+  }
+  const amt = Math.max(2.0, num(amount || 2.0));
+
+  if(!confirm(`Are you sure you want to Charge $${amt.toFixed(2)} to Vendor and Close the dispute for ${cleanOid ? 'Order #' + cleanOid : 'Dispute #' + cleanDid} on Tista?`)){
+    return;
+  }
+
+  const origBtnText = btnEl ? btnEl.innerHTML : '';
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.innerHTML = `<span class="btn-spinner"></span> Charging $${amt.toFixed(2)} & Closing...`;
+  }
+  if(statusEl){
+    statusEl.textContent = 'Connecting to Tista & closing dispute...';
+    statusEl.style.color = 'var(--accent)';
+  }
+  showLoading('Closing Dispute on Tista...', `Charging $${amt.toFixed(2)} to vendor & updating status to Closed...`);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/close_dispute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: cleanOid,
+        dispute_id: cleanDid,
+        amount: amt
+      })
+    });
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
+    if(statusEl){
+      statusEl.textContent = `✓ Successfully charged $${data.amount.toFixed(2)} to Vendor & Closed dispute #${data.dispute_id || cleanDid}!`;
+      statusEl.style.color = '#27ae60';
+    }
+    if(S.batch && S.batch.disputes){
+      const match = S.batch.disputes.find(x => (cleanDid && x.dispute_id === cleanDid) || (cleanOid && x.order_id && x.order_id.includes(cleanOid)));
+      if(match){
+        match.status = 'Closed';
+        match.charge = data.amount;
+        save();
+        render();
+      }
+    }
+  } catch(err){
+    if(statusEl){
+      statusEl.textContent = '⚠️ Error: ' + err.message;
+      statusEl.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+    if(btnEl){
+      btnEl.disabled = false;
+      btnEl.innerHTML = origBtnText || '🔒 Charge to Vendor & Close Dispute on Tista';
+    }
+  }
+}
+
+async function closeBatchRow(idx){
+  const b = S.batch || { disputes: [] };
+  const d = b.disputes[idx];
+  if(!d) return;
+  const r = calcDisputeChargeback(d);
+  const amt = r.chargeback || 2.0;
+
+  if(!confirm(`Are you sure you want to Charge $${amt.toFixed(2)} to Vendor and Close Dispute for Order ${d.order_id} on Tista?`)){
+    return;
+  }
+
+  const statusEl = $('bt-status-text');
+  if(statusEl){
+    statusEl.textContent = `Updating Order ${d.order_id} on Tista...`;
+    statusEl.style.color = 'var(--accent)';
+  }
+  showLoading('Closing Dispute on Tista...', `Updating Order ${d.order_id} ($${amt.toFixed(2)})...`);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/close_dispute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dispute_id: d.dispute_id,
+        order_id: d.order_id,
+        amount: amt
+      })
+    });
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Failed to update dispute');
+
+    d.status = 'Closed';
+    d.charge = data.amount;
+    S.batchStatusText = `✓ Successfully charged $${data.amount.toFixed(2)} to Vendor & closed Order ${d.order_id}!`;
+    S.batchStatusColor = '#27ae60';
+    save();
+    render();
+  } catch(err){
+    alert('Error closing dispute: ' + err.message);
+    if(statusEl){
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+  }
+}
+
+async function closeBatchAll(){
+  const b = S.batch || { disputes: [] };
+  const disputes = b.disputes || [];
+  const q = (b.filterQ || '').toLowerCase().trim();
+  const computedList = disputes.map((d, i) => ({ orig: d, idx: i, res: calcDisputeChargeback(d) }));
+  const visibleList = computedList.filter(item => {
+    if(!q) return true;
+    const text = [item.orig.order_id, item.orig.contractor, item.orig.dispute_reason, item.orig.service, item.orig.status].join(' ').toLowerCase();
+    return text.includes(q);
+  });
+
+  const unclosed = visibleList.filter(it => !it.orig.status || !it.orig.status.toLowerCase().includes('close'));
+  if(!unclosed.length){
+    alert('All visible disputes are already closed.');
+    return;
+  }
+
+  const totalAmt = unclosed.reduce((acc, it) => acc + it.res.chargeback, 0);
+  if(!confirm(`Are you sure you want to Charge to Vendor and Close ${unclosed.length} disputes on Tista?\nTotal Chargeback: $${totalAmt.toFixed(2)}`)){
+    return;
+  }
+
+  const statusEl = $('bt-status-text');
+  const btnEl = $('bt-close-all');
+  if(btnEl) btnEl.disabled = true;
+
+  const items = unclosed.map(it => ({
+    dispute_id: it.orig.dispute_id,
+    order_id: it.orig.order_id,
+    amount: it.res.chargeback
+  }));
+
+  if(statusEl){
+    statusEl.textContent = `Batch closing ${items.length} disputes on Tista... (please wait)`;
+    statusEl.style.color = 'var(--accent)';
+  }
+  showLoading('Batch Closing Disputes on Tista...', `Processing ${items.length} visible disputes ($${totalAmt.toFixed(2)}). Please wait...`);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/batch_close_disputes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disputes: items })
+    });
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
+
+    (data.results || []).forEach(r => {
+      if(r.success){
+        const match = disputes.find(x => (r.dispute_id && x.dispute_id === r.dispute_id) || (r.order_id && x.order_id === r.order_id));
+        if(match){
+          match.status = 'Closed';
+          match.charge = r.amount;
+        }
+      }
+    });
+
+    S.batchStatusText = `✓ Successfully charged & closed ${data.closed || 0} of ${data.total || items.length} disputes on Tista!`;
+    S.batchStatusColor = '#27ae60';
+    save();
+    render();
+  } catch(err){
+    if(statusEl){
+      statusEl.textContent = '⚠️ Batch close error: ' + err.message;
+      statusEl.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+    if(btnEl) btnEl.disabled = false;
+  }
+}
+
+// ---------- price list ----------
+function paneCfg(){
+  const f=S.cfgFilter;
+  return `<div class="card"><h2>Price List (Subcontractor price per unit)</h2>
+  <p class="sub" style="margin:-8px 0 12px">Edits change every calculation immediately and stay in this browser.</p>
+  <div class="tools" style="margin:0 0 12px"><input id="cf-q" placeholder="Search service or category" value="${esc(f.q)}" style="max-width:260px"><select id="cf-s" style="max-width:240px">${opts(services(),f.s,'All services')}</select>
+  <button class="btn" id="cf-reset">Reset to Excel prices</button><span id="cf-count" class="sub"></span></div>
+  <div class="tbl" style="max-height:60vh;overflow:auto"><table><thead><tr><th>Service</th><th>Category</th><th>Pixel range</th><th class="n">Price ($)</th><th></th></tr></thead><tbody id="cf-body"></tbody></table></div>
+  <h2 style="margin-top:20px">Add a price</h2>
+  <div class="tools"><input id="nw-s" list="svc" placeholder="Service" style="max-width:220px"><datalist id="svc">${services().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+  <input id="nw-c" placeholder="Category, e.g. Category 2" style="max-width:200px"><select id="nw-p" style="max-width:140px">${opts(PIX,'')}</select>
+  <input id="nw-v" type="number" step="any" min="0" placeholder="Price" style="max-width:110px"><button class="btn pri" id="nw-add">Add</button></div>
+
+  <h2 style="margin-top:26px">Backend API Server (Render / Cloud / Local)</h2>
+  <p class="sub" style="margin:-8px 0 12px">Active API URL: <code style="color:var(--pri);font-weight:600">${esc(API_BASE)}</code></p>
+  <div class="tools" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <input id="cfg-api-url" placeholder="https://your-service.onrender.com" value="${esc(localStorage.getItem('tista_api_base')||'')}" style="flex:1;min-width:260px;max-width:360px">
+    <button class="btn pri" id="cfg-save-api">Save & Connect</button>
+    <button class="btn" id="cfg-reset-api">Use Default</button>
+  </div>
+</div>`;
+}
+function fillCfg(){
+  const f=S.cfgFilter, q=f.q.toLowerCase();
+  const idx=S.prices.map((r,i)=>i).filter(i=>{const r=S.prices[i];return (!f.s||r.s===f.s)&&(!q||(r.s+' '+r.c).toLowerCase().includes(q));});
+  $('cf-count').textContent=idx.length+' of '+S.prices.length+' rows';
+  $('cf-body').innerHTML=idx.map(i=>{const r=S.prices[i];return `<tr data-i="${i}"><td>${esc(r.s)}</td><td>${esc(r.c)}</td><td>${esc(r.p)}</td><td><input type="number" step="any" min="0" data-pv="1" value="${r.v}" style="max-width:110px;text-align:right"></td><td><button class="btn x" data-cdel="1" aria-label="Delete price">✕</button></td></tr>`;}).join('');
+}
+
+// ---------- render + events ----------
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  const pane=$('pane');
+  pane.innerHTML = S.tab==='cor'?paneCor():S.tab==='del'?paneDel():S.tab==='auto'?paneAuto():S.tab==='autocor'?paneAutoCor():S.tab==='batch'?paneBatch():paneCfg();
+  if(S.tab==='cor')refreshCor(); else if(S.tab==='del')refreshDel(); else if(S.tab==='auto')setCmd(); else if(S.tab==='autocor'||S.tab==='batch'){} else fillCfg();
+}
+const refresh=()=>{ save(); if(S.tab==='cor')refreshCor(); else if(S.tab==='del')refreshDel(); };
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){S.tab=b.dataset.tab;save();render();}});
+const pane=$('pane');
+function onChange(e){
+  const t=e.target;
+  if(t.dataset.k&&t.dataset.f){ // main inputs
+    const d=S[t.dataset.k]; d[t.dataset.f]=t.value;
+    if(t.dataset.f==='service'){ const cats=catsOf(t.value); if(!cats.includes(d.cat)) d.cat=cats[0]||''; }
+    if(t.dataset.rerender){ save(); render(); return; }
+    refresh(); return;
+  }
+  const tr=t.closest('tr[data-w]');
+  if(tr&&t.dataset.rf){ const row=S[tr.dataset.k][tr.dataset.w][+tr.dataset.i]; row[t.dataset.rf]=t.value;
+    if(t.dataset.rf==='s'){ row.c=''; save(); render(); return; }
+    refresh(); return; }
+  if(t.dataset.pv){ const i=+t.closest('tr').dataset.i; S.prices[i].v=num(t.value); save(); return; }
+  if(t.id==='cf-s'){ S.cfgFilter.s=t.value; fillCfg(); }
+}
+pane.addEventListener('input',e=>{ const t=e.target; if(t.id==='au-id'||t.id==='del-quick-id'||t.id==='aucor-id'||t.id==='cor-quick-id'){ if(t.id==='aucor-id'||t.id==='cor-quick-id'){ S.corAutoId=t.value.replace(/\D/g,''); save(); return; } S.autoId=t.value.replace(/\D/g,''); save(); setCmd(); return; }
+  if(t.id==='aucor-filter-q'){ S.corFilterQ=t.value; save(); render(); return; }
+  if(t.id==='aucor-paste-names'){ S.corPasteText=t.value; save(); return; }
+  if(t.id==='bt-filter-table'){ S.batch.filterQ=t.value; save(); render(); return; }
+  if(t.id==='bt-query'){ S.batch.filters.query=t.value; save(); return; }
+  if(t.id==='au-id'||t.id==='del-quick-id'){S.autoId=t.value.replace(/\D/g,'');save();setCmd();return;} if(t.id==='au-json') return; if(t.tagName==='INPUT'&&(t.type==='number'||t.type==='text')&&!t.dataset.pv&&t.id!=='cf-q'&&!t.id.startsWith('nw-')) onChange(e); if(t.id==='cf-q'){S.cfgFilter.q=t.value;fillCfg();} if(t.dataset.pv) onChange(e); });
+pane.addEventListener('change',e=>{
+  if(e.target.classList.contains('bt-row-reason')){
+    const idx = +e.target.dataset.idx;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      S.batch.disputes[idx].dispute_reason = e.target.value;
+      save();
+      render();
+    }
+    return;
+  }
+  if(e.target.classList.contains('bt-row-svc')){
+    const idx = +e.target.dataset.idx;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      const newSvc = e.target.value;
+      S.batch.disputes[idx].service = newSvc;
+      const validCats = catsOf(newSvc);
+      if(validCats.length && !validCats.includes(S.batch.disputes[idx].cat)){
+        S.batch.disputes[idx].cat = validCats[0];
+      }
+      save();
+      render();
+    }
+    return;
+  }
+  if(e.target.classList.contains('bt-row-cat')){
+    const idx = +e.target.dataset.idx;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      S.batch.disputes[idx].cat = e.target.value;
+      save();
+      render();
+    }
+    return;
+  }
+
+  const id = e.target.id;
+  if(id && id.startsWith('bt-')){
+    if(!S.batch) S.batch = { filters: {} };
+    if(!S.batch.filters) S.batch.filters = {};
+    if(id === 'bt-reason'){
+      S.batch.filters.reason = e.target.value;
+      const valMap = { '1': 'Delay', '2': 'Correction', '4': 'Quality', '3': 'Revision', '5': 'Technical fault' };
+      const selReason = valMap[e.target.value];
+      if(selReason && S.batch.disputes && S.batch.disputes.length){
+        S.batch.disputes.forEach(d => { d.dispute_reason = selReason; });
+        save();
+        render();
+        return;
+      }
+    }
+    else if(id === 'bt-severity') S.batch.filters.severity = e.target.value;
+    else if(id === 'bt-status') S.batch.filters.status = e.target.value;
+    else if(id === 'bt-location') S.batch.filters.location = e.target.value;
+    else if(id === 'bt-chargeable') S.batch.filters.chargeable = e.target.value;
+    else if(id === 'bt-deep') S.batch.filters.deepScan = e.target.checked;
+    else if(id === 'bt-date-start') S.batch.filters.dateStart = e.target.value;
+    else if(id === 'bt-date-end') S.batch.filters.dateEnd = e.target.value;
+    save();
+    return;
+  }
+  if(e.target.tagName==='SELECT'){
+    if(e.target.id==='aucor-service'){ S.corService=e.target.value; S.corCatManual=false; S.corCat=''; save(); render(); return; }
+    if(e.target.id==='aucor-cat'){ S.corCat=e.target.value; S.corCatManual=true; save(); render(); return; }
+    if(e.target.id==='aucor-pix'){ S.corPix=e.target.value; save(); render(); return; }
+    if(e.target.id==='aucor-sev'){ S.corSev=e.target.value; save(); render(); return; }
+    if(e.target.id==='aucor-contractor'){ S.cor.contractor=e.target.value; save(); render(); return; }
+    onChange(e);
+  }
+  if(e.target.id==='aucor-file'&&e.target.files[0]){ const r=new FileReader(); r.onload=()=>importAutoCor(String(r.result)); r.readAsText(e.target.files[0]); }
+  if(e.target.id==='au-file'&&e.target.files[0]){ const r=new FileReader(); r.onload=()=>importAuto(String(r.result)); r.readAsText(e.target.files[0]); } });
+pane.addEventListener('click',e=>{
+  
+  const trFile = e.target.closest('tr[data-fid]');
+  if(trFile && !e.target.closest('button')){
+    const fid = +trFile.dataset.fid;
+    const idx = S.corSelectedIds.indexOf(fid);
+    if(idx >= 0) S.corSelectedIds.splice(idx, 1);
+    else S.corSelectedIds.push(fid);
+    S.corCatManual = false;
+    save(); render(); return;
+  }
+
+  const t=e.target.closest('button'); if(!t) return;
+  const tr=t.closest('tr[data-w]');
+  if(t.dataset.del&&tr){ S[tr.dataset.k][tr.dataset.w].splice(+tr.dataset.i,1); save(); render(); }
+  else if(t.dataset.add){ const [k,w]=t.dataset.add.split(':'); S[k][w].push({s:'',c:'',p:'',q:''}); save(); render(); }
+  else if(t.dataset.clear){ const [k,w]=t.dataset.clear.split(':'); S[k][w]=blank(6); save(); render(); }
+  else if(t.dataset.cdel){ S.prices.splice(+t.closest('tr').dataset.i,1); save(); fillCfg(); }
+  else if(t.id==='au-import'){ const v=$('au-json').value.trim(); if(v) importAuto(v); else $('au-err').textContent='Choose a file or paste the JSON.'; }
+  else if(t.id==='au-fetch-live') fetchLiveTista('au-id','au-status',false);
+  else if(t.id==='del-quick-fetch') fetchLiveTista('del-quick-id','del-quick-status',true);
+  else if(t.id==='del-link-extract-btn') extractFilesFromDelLink();
+  else if(t.id==='cor-quick-fetch') fetchQuickCorrectionTab($('cor-quick-id').value, 'cor-quick-status');
+  else if(t.id==='cor-quick-files') fetchLiveCorrection($('cor-quick-id').value, 'cor-quick-status');
+  else if(t.id==='aucor-fetch-live') fetchLiveCorrection($('aucor-id').value, 'aucor-status');
+  else if(t.id==='aucor-import-toggle'){ S.corShowImport=!S.corShowImport; render(); }
+  else if(t.id==='aucor-import-btn'){ const v=$('aucor-json').value.trim(); if(v) importAutoCor(v); else if($('aucor-err')) $('aucor-err').textContent='Choose a file or paste JSON.'; }
+  else if(t.id==='aucor-load-sample'){ S.corAuto=SAMPLE_COR_457696; S.corSelectedIds=[]; S.corAutoId='457696'; S.corCatManual=false; save(); render(); }
+  else if(t.id==='aucor-select-all'){ S.corSelectedIds=(S.corAuto.files||[]).map(f=>f.id); S.corCatManual=false; save(); render(); }
+  else if(t.id==='aucor-deselect-all'){ S.corSelectedIds=[]; S.corCatManual=false; save(); render(); }
+  else if(t.id==='aucor-toggle-paste'){ S.corShowPasteNames = (S.corShowPasteNames === false ? true : false); save(); render(); }
+  else if(t.id==='aucor-btn-match-select'){ matchAndSelectFiles($('aucor-paste-names') ? $('aucor-paste-names').value : '', 'replace'); }
+  else if(t.id==='aucor-btn-match-add'){ matchAndSelectFiles($('aucor-paste-names') ? $('aucor-paste-names').value : '', 'add'); }
+  else if(t.id==='aucor-btn-paste-clear'){ if($('aucor-paste-names')) $('aucor-paste-names').value = ''; S.corPasteText = ''; if($('aucor-match-status')) $('aucor-match-status').textContent = ''; save(); }
+  else if(t.id==='aucor-apply') applyAutoCor();
+  else if(t.id==='aucor-chk-all'){
+    const all = (S.corAuto.files||[]).map(f=>f.id);
+    S.corSelectedIds = (S.corSelectedIds.length === all.length) ? [] : all;
+    S.corCatManual=false;
+    save(); render();
+  }
+  else if(t.id==='au-apply') applyAuto();
+  else if(t.id==='au-apply-cor') applyAutoCorDirect();
+  else if(t.id==='au-copy'){ const c=$('au-cmd').textContent; try{ navigator.clipboard.writeText(c).then(()=>t.textContent='Copied',()=>{}); }catch(x){} }
+  else if(t.id==='bt-preset-today') setBatchDatePreset('today');
+  else if(t.id==='bt-preset-7d') setBatchDatePreset('7d');
+  else if(t.id==='bt-preset-14d') setBatchDatePreset('14d');
+  else if(t.id==='bt-preset-month') setBatchDatePreset('month');
+  else if(t.id==='bt-preset-clear') setBatchDatePreset('clear');
+  else if(t.id==='bt-search') fetchLiveBatchDisputes();
+  else if(t.id==='bt-sample'){ S.batch.disputes = SAMPLE_BATCH_DATA.disputes || []; save(); render(); }
+  else if(t.id==='bt-toggle-paste'){ S.batch.showPaste = !S.batch.showPaste; render(); }
+  else if(t.id==='bt-toggle-slides'){ S.batch.showSlides = !S.batch.showSlides; render(); }
+  else if(t.id==='bt-slides-go'){
+    const v = $('bt-slides-url') ? $('bt-slides-url').value.trim() : '';
+    if(v) importFromGoogleSlides(v);
+  }
+  else if(t.id==='bt-paste-go'){
+    const v = $('bt-paste-input') ? $('bt-paste-input').value.trim() : '';
+    if(v) fetchLiveBatchDisputes(v);
+  }
+  else if(t.id==='bt-export-csv') exportBatchCSV();
+  else if(t.id==='bt-copy-table') copyBatchSummary();
+  else if(t.dataset.btOpen !== undefined) openDisputeInCalc(+t.dataset.btOpen);
+  else if(t.dataset.btClose !== undefined) closeBatchRow(+t.dataset.btClose);
+  else if(t.id==='bt-close-all') closeBatchAll();
+  else if(t.id==='cor-close-btn'){
+    const d=S.cor;
+    const p=price(d.service,d.cat,d.pix)||0;
+    const m=SEV[d.sev]||0;
+    const q=num(d.qty);
+    const calcTot=p*m*q;
+    const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
+    const oid = S.corAutoId || ($('cor-quick-id') ? $('cor-quick-id').value : '');
+    closeDisputeLive(oid, '', tot, 'cor-close-status', 'cor-close-btn');
+  }
+  else if(t.id==='del-close-btn'){
+    const d=S.del;
+    const p=price(d.service,d.cat,d.pix)||0;
+    const days=parseDur(d.dur);
+    const delayDays=Math.abs(num(d.sec))/3600/24;
+    const pct=days>0?delayDays/days:0;
+    const tr=tierFor(pct);
+    const r=tr?tr.r:0;
+    const q=num(d.qty);
+    const calcTot=p*r*q;
+    const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
+    const oid = S.autoId || ($('del-quick-id') ? $('del-quick-id').value : '');
+    closeDisputeLive(oid, '', tot, 'del-close-status', 'del-close-btn');
+  }
+  else if(t.id==='cf-reset'){ S.prices=DEF().prices; save(); render(); }
+  else if(t.id==='cfg-save-api'){
+    const val = ($('cfg-api-url') ? $('cfg-api-url').value.trim() : '');
+    if(val) {
+      localStorage.setItem('tista_api_base', val.replace(/\/+$/, ''));
+      alert('Backend API URL saved! Reloading calculator...');
+      window.location.reload();
+    }
+  }
+  else if(t.id==='cfg-reset-api'){
+    localStorage.removeItem('tista_api_base');
+    alert('Reset to default API detection! Reloading calculator...');
+    window.location.reload();
+  }
+  else if(t.id==='nw-add'){ const s=$('nw-s').value.trim(),c=$('nw-c').value.trim(),p=$('nw-p').value,v=num($('nw-v').value);
+    if(!s||!c||!$('nw-v').value) return;
+    const ex=S.prices.find(r=>r.s===s&&r.c===c&&r.p===p); if(ex) ex.v=v; else S.prices.push({s,c,p,v});
+    save(); render(); }
+});
+render();
+
+// ---------- Tista Login Helper & Live Status ----------
+async function checkTistaLoginStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/login_status`);
+    if(!res.ok) return;
+    const data = await res.json();
+    const txt = $('tista-status-text');
+    const dot = $('tista-status-dot');
+    if(data.logged_in) {
+      if(txt) txt.textContent = '🟢 Tista Logged In';
+      if(dot) dot.style.background = '#2ecc71';
+    } else {
+      if(txt) txt.textContent = '🔑 Tista Login';
+      if(dot) dot.style.background = '#e3b341';
+    }
+  } catch(e) {
+    // Offline / serverless mode
+  }
+}
+
+async function triggerTistaLogin() {
+  const btn = $('btn-tista-login');
+  const txt = $('tista-status-text');
+  const dot = $('tista-status-dot');
+  if(txt) txt.textContent = 'Opening Tista...';
+  showLoading('Opening Tista Login...', 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+  try {
+    const res = await fetch(`${API_BASE}/api/login`);
+    const data = await res.json();
+    if(data.status === 'success') {
+      if(txt) txt.textContent = '🟢 Tista Logged In';
+      if(dot) dot.style.background = '#2ecc71';
+      alert('✓ Tista Login Successful! Your session has been permanently saved.');
+    } else {
+      throw new Error(data.error || 'Login was not completed.');
+    }
+  } catch(err) {
+    alert('Tista Login Helper: ' + err.message + '\n\nNote: You can also use LOGIN_TISTA.bat or log in directly on tista.app in your browser.');
+  } finally {
+    hideLoading();
+    checkTistaLoginStatus();
+  }
+}
+
+if($('btn-tista-login')) {
+  $('btn-tista-login').addEventListener('click', triggerTistaLogin);
+}
+checkTistaLoginStatus();
+</script>
+
+</body></html>
