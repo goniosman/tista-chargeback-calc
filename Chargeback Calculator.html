@@ -663,7 +663,7 @@ async function fetchLiveTista(idInputId='au-id', statusId='au-status', autoApply
     }
   } catch (err) {
     if(status){
-      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.textContent = '⚠️ ' + (err.message || 'Could not connect to helper.');
       status.style.color = 'var(--danger)';
     }
   } finally {
@@ -1326,7 +1326,7 @@ async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
     }
   } catch(err){
     if(status){
-      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.textContent = '⚠️ ' + (err.message || 'Could not connect to helper.');
       status.style.color = 'var(--danger)';
     }
   } finally {
@@ -1369,7 +1369,7 @@ async function fetchLiveCorrection(oid, statusId='aucor-status'){
     }
   } catch(err) {
     if(status){
-      status.textContent = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+      status.textContent = '⚠️ ' + (err.message || 'Could not connect to helper.');
       status.style.color = 'var(--danger)';
     }
   } finally {
@@ -2198,7 +2198,7 @@ async function fetchLiveBatchDisputes(customQuery=null){
     save();
     render();
   } catch(err){
-    S.batchStatusText = '⚠️ Could not connect to helper. Run Chargeback_Calculator.exe or use Chrome Extension for serverless mode.';
+    S.batchStatusText = '⚠️ ' + (err.message || 'Could not connect to helper.');
     S.batchStatusColor = 'var(--danger)';
     save();
     render();

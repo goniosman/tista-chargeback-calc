@@ -138,6 +138,9 @@ def ensure_logged_in(page):
                 print(f"[!] Auto-login exception: {e}")
 
         if "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
+            if DEFAULT_HEADLESS:
+                raise RuntimeError("Not logged into Tista. Please click '🔑 Tista Login' in the calculator or set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables.")
+
             print("\n" + "=" * 60)
             print("[!] TISTA LOGIN REQUIRED:")
             print("    Please log in to Tista in the browser window.")
@@ -1325,10 +1328,15 @@ def perform_tista_login(email=None, password=None):
                     rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
                     if rem.count() > 0 and not rem.is_checked():
                         rem.check()
-                    submit_btn = page.locator('input[type="submit"], button[type="submit"]').first
+                    submit_btn = page.locator('input[type="submit"], button[type="submit"], input[value*="Log in"], input[value*="Sign in"]').first
                     if submit_btn.count() > 0:
                         submit_btn.click()
-                    page.wait_for_load_state("networkidle", timeout=15000)
+                    else:
+                        pass_input.press("Enter")
+                    try:
+                        page.wait_for_load_state("domcontentloaded", timeout=12000)
+                    except Exception:
+                        pass
                     time.sleep(2)
             except Exception as e:
                 print(f" [!] Login submission error: {e}")
@@ -1342,6 +1350,16 @@ def perform_tista_login(email=None, password=None):
                 time.sleep(1)
 
         is_logged_in = "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0
+
+        err_msg = ""
+        if not is_logged_in:
+            try:
+                alerts = page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback, .flash-message')
+                if alerts.count() > 0:
+                    err_msg = alerts.first.inner_text().strip()
+            except Exception:
+                pass
+
         time.sleep(1)
         ctx.close()
 
@@ -1349,7 +1367,8 @@ def perform_tista_login(email=None, password=None):
         print("[✓] Login flow completed. Session saved to profile.\n")
         return {"status": "success", "message": "Login completed successfully"}
     else:
-        return {"status": "error", "error": "Login failed. Please verify your Tista Email and Password."}
+        detail = f": {err_msg}" if err_msg else ". Please verify your Tista Email and Password."
+        return {"status": "error", "error": f"Login failed{detail}"}
 
 def clean_html_block(html):
     t = re.sub(r'<br\s*/?>', '\n', html, flags=re.I)
