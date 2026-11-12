@@ -1284,43 +1284,72 @@ def check_tista_login_status():
     has_default = (profile_dir / "Default").exists() or (profile_dir / "Cookies").exists()
     return {"logged_in": has_default}
 
-def perform_tista_login():
-    """Opens a visible browser for user to log in and saves session permanently."""
-    print("\n" + "=" * 60)
-    print(" [*] Opening Tista Login Window in browser...")
-    print(" Please enter your email and password, check 'Remember me', and click 'Sign in'.")
-    print("=" * 60 + "\n")
-
+def perform_tista_login(email=None, password=None):
+    """Logs in to Tista. In headless / cloud mode, uses provided credentials or env vars; locally opens visible browser."""
     profile_dir = USER_DATA_DIR
     profile_dir.mkdir(parents=True, exist_ok=True)
+
+    email = (email or os.environ.get("TISTA_EMAIL", "")).strip()
+    password = (password or os.environ.get("TISTA_PASSWORD", "")).strip()
+
+    headless = DEFAULT_HEADLESS
+    if headless and not (email and password):
+        return {
+            "status": "error",
+            "error": "Tista credentials missing. Please set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables, or enter your credentials when logging in."
+        }
+
+    print("\n" + "=" * 60)
+    print(f" [*] Logging in to Tista (Headless: {headless})...")
+    print("=" * 60 + "\n")
+
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(
             str(profile_dir),
-            headless=False,
+            headless=headless,
             viewport={"width": 1360, "height": 880}
         )
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         page.goto("https://tista.app/users/sign_in")
+        page.wait_for_load_state("domcontentloaded")
+        time.sleep(1)
 
-        try:
-            rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
-            if rem.count() > 0:
-                rem.check()
-        except Exception:
-            pass
+        if email and password:
+            print(" [✓] Submitting login credentials...")
+            try:
+                email_input = page.locator('#user_email, input[type="email"], input[name*="email"]').first
+                pass_input = page.locator('#user_password, input[type="password"], input[name*="password"]').first
+                if email_input.count() > 0 and pass_input.count() > 0:
+                    email_input.fill(email)
+                    pass_input.fill(password)
+                    rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
+                    if rem.count() > 0 and not rem.is_checked():
+                        rem.check()
+                    submit_btn = page.locator('input[type="submit"], button[type="submit"]').first
+                    if submit_btn.count() > 0:
+                        submit_btn.click()
+                    page.wait_for_load_state("networkidle", timeout=15000)
+                    time.sleep(2)
+            except Exception as e:
+                print(f" [!] Login submission error: {e}")
 
-        # Wait until user signs in (URL leaves sign_in or no password box)
-        start_t = time.time()
-        while time.time() - start_t < 180:
-            if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
-                break
-            time.sleep(1)
+        if not headless:
+            # Wait until user signs in (URL leaves sign_in or no password box)
+            start_t = time.time()
+            while time.time() - start_t < 180:
+                if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
+                    break
+                time.sleep(1)
 
-        time.sleep(2)
+        is_logged_in = "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0
+        time.sleep(1)
         ctx.close()
 
-    print("[✓] Login flow completed. Session saved to profile.\n")
-    return {"status": "success", "message": "Login completed successfully"}
+    if is_logged_in:
+        print("[✓] Login flow completed. Session saved to profile.\n")
+        return {"status": "success", "message": "Login completed successfully"}
+    else:
+        return {"status": "error", "error": "Login failed. Please verify your Tista Email and Password."}
 
 def clean_html_block(html):
     t = re.sub(r'<br\s*/?>', '\n', html, flags=re.I)
@@ -1818,8 +1847,8 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
         if parsed.path in ("/api/login", "/api/tista_login"):
             try:
-                res = perform_tista_login()
-                self.send_response(200)
+                res = perform_tista_login(email=data.get("email"), password=data.get("password"))
+                self.send_response(200 if res.get("status") == "success" else 400)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))

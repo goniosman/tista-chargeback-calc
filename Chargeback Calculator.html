@@ -2746,10 +2746,29 @@ async function triggerTistaLogin() {
   const btn = $('btn-tista-login');
   const txt = $('tista-status-text');
   const dot = $('tista-status-dot');
-  if(txt) txt.textContent = 'Opening Tista...';
-  showLoading('Opening Tista Login...', 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+
+  const isRemote = API_BASE.includes('onrender.com') || (window.location.protocol.startsWith('http') && !API_BASE.includes('127.0.0.1') && !API_BASE.includes('localhost'));
+  let bodyData = null;
+
+  if (isRemote) {
+    const email = prompt('Enter your Tista Email:');
+    if (!email) return;
+    const password = prompt('Enter your Tista Password:');
+    if (!password) return;
+    bodyData = JSON.stringify({ email: email.trim(), password: password.trim() });
+  }
+
+  if(txt) txt.textContent = 'Logging in...';
+  showLoading('Connecting to Tista...', isRemote ? 'Submitting credentials to save session on cloud server...' : 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+
   try {
-    const res = await fetch(`${API_BASE}/api/login`);
+    const opts = bodyData ? {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyData
+    } : { method: 'GET' };
+
+    const res = await fetch(`${API_BASE}/api/login`, opts);
     const data = await res.json();
     if(data.status === 'success') {
       if(txt) txt.textContent = '🟢 Tista Logged In';
@@ -2759,7 +2778,7 @@ async function triggerTistaLogin() {
       throw new Error(data.error || 'Login was not completed.');
     }
   } catch(err) {
-    alert('Tista Login Helper: ' + err.message + '\n\nNote: You can also use LOGIN_TISTA.bat or log in directly on tista.app in your browser.');
+    alert('Tista Login Helper: ' + err.message + '\n\nNote: You can also set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables.');
   } finally {
     hideLoading();
     checkTistaLoginStatus();
