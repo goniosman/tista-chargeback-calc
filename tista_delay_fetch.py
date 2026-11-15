@@ -1027,9 +1027,24 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             qty = int(re.sub(r"\D", "", r["fault_quantity"]) or 1)
             reason_name = r["dispute_reason"] or "Correction"
 
+            # Skip Revision disputes completely per user rules (no chargeback for revision)
+            if "revision" in reason_name.lower():
+                print(f"[*] Skipping Revision dispute #{r.get('dispute_id')} (No chargeback for revision)")
+                continue
+
             cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
             if not cached_corr.exists():
                 cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+
+            if not cached_corr.exists() and raw_oid and (single_clean_id or (deep_scan and len(rows) <= 5)):
+                try:
+                    fetch_order_files_from_tista(raw_oid, headless=headless)
+                    if (DATA_DIR / f"tista_correction_{raw_oid}.json").exists():
+                        cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
+                    elif (APP_DIR / f"tista_correction_{raw_oid}.json").exists():
+                        cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+                except Exception as ef:
+                    print(f"[*] Auto-fetching order files for #{raw_oid} note: {ef}")
 
             cached_delay = DATA_DIR / f"tista_{raw_oid}.json"
             if not cached_delay.exists():
@@ -1042,14 +1057,26 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
 
             order_svcs = []
             order_cats = []
+            order_file_details = []
 
             if cached_corr.exists():
                 try:
                     cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
                     for f0 in cdata.get("files", []):
-                        for s0 in f0.get("services", []):
-                            s_name = s0.get("service")
-                            c_name = s0.get("category")
+                        fn = f0.get("filename", "")
+                        svcs0 = f0.get("services", [])
+                        s0 = svcs0[0] if svcs0 else {}
+                        cat_val = s0.get("category") or ""
+                        if not cat_val and s0.get("complexity"):
+                            cat_val = f"Category {re.sub(r'^[Cc]', '', s0.get('complexity')).strip()}"
+                        order_file_details.append({
+                            "filename": fn,
+                            "category": cat_val,
+                            "service": s0.get("service") or ""
+                        })
+                        for s_item in svcs0:
+                            s_name = s_item.get("service")
+                            c_name = s_item.get("category")
                             if s_name and s_name not in order_svcs:
                                 order_svcs.append(s_name)
                             if c_name and c_name not in order_cats:
@@ -1174,8 +1201,9 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 "order_cats": order_cats,
                 "comment": disp_comment,
                 "comment_link": disp_link,
-                "filenames": disp_files,
-                "filenames_count": len(disp_files)
+                "filenames": [f["filename"] for f in order_file_details] if order_file_details else disp_files,
+                "file_details": order_file_details,
+                "filenames_count": len(order_file_details) if order_file_details else len(disp_files)
             })
 
         ctx.close()
