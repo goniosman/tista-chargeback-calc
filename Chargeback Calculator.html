@@ -1255,19 +1255,44 @@ tfoot td {
 <script>
 const DEFAULT_CFG = {"contractors": ["Creative Path (P1)", "Pixel Path (P2)", "Perfect Pixel (GB2)", "Path", "Grasigner Kitchen", "Khandoker Graphics", "Graphics Picture", "Vectorio", "Cutout Edge", "Edgebo", "Healing Image", "Photo Fix Zone", "ClippingPix", "Subs"], "status": ["Completed", "Under Dispute", "Completed but Charged Back", "Require Pertial Revision", "Pending", "Completed but Delayed", "Charged Back with Pertial Revision", "In Progress", "Under Review"], "severity": ["Minor", "Medium", "Major"], "prices": [["Clipping path", "Category 1", "< 1000", 0.05], ["Clipping path", "Category 1", "1001-2000", 0.07], ["Clipping path", "Category 1", "2001-3000", 0.09], ["Clipping path", "Category 1", "3001-4000", 0.11], ["Clipping path", "Category 1", "4001-5000", 0.12], ["Clipping path", "Category 1", "> 5000", 0.14], ["Clipping path", "Category 1.5", "< 1000", 0.08], ["Clipping path", "Category 1.5", "1001-2000", 0.11], ["Clipping path", "Category 1.5", "2001-3000", 0.14], ["Clipping path", "Category 1.5", "3001-4000", 0.16], ["Clipping path", "Category 1.5", "4001-5000", 0.19], ["Clipping path", "Category 1.5", "> 5000", 0.21], ["Clipping path", "Category 2", "< 1000", 0.11], ["Clipping path", "Category 2", "1001-2000", 0.15], ["Clipping path", "Category 2", "2001-3000", 0.18], ["Clipping path", "Category 2", "3001-4000", 0.22], ["Clipping path", "Category 2", "4001-5000", 0.25], ["Clipping path", "Category 2", "> 5000", 0.27], ["Clipping path", "Category 2.25", "< 1000", 0.0], ["Clipping path", "Category 2.25", "1001-2000", 0.0], ["Clipping path", "Category 2.25", "2001-3000", 0.0], ["Clipping path", "Category 2.25", "3001-4000", 0.0], ["Clipping path", "Category 2.25", "4001-5000", 0.0], ["Clipping path", "Category 2.25", "> 5000", 0.0], ["Clipping path", "Category 2.5", "< 1000", 0.12], ["Clipping path", "Category 2.5", "1001-2000", 0.17], ["Clipping path", "Category 2.5", "2001-3000", 0.2], ["Clipping path", "Category 2.5", "3001-4000", 0.23], ["Clipping path", "Category 2.5", "4001-5000", 0.27], ["Clipping path", "Category 2.5", "> 5000", 0.3], ["Clipping path", "Category 2.75", "< 1000", 0.0], ["Clipping path", "Category 2.75", "1001-2000", 0.0], ["Clipping path", "Category 2.75", "2001-3000", 0.0], ["Clipping path", "Category 2.75", "3001-4000", 0.0], ["Clipping path", "Category 2.75", "4001-5000", 0.0], ["Clipping path", "Category 2.75", "> 5000", 0.0], ["Clipping path", "Category 3", "< 1000", 0.16], ["Clipping path", "Category 3", "1001-2000", 0.22], ["Clipping path", "Category 3", "2001-3000", 0.26], ["Clipping path", "Category 3", "3001-4000", 0.3], ["Clipping path", "Category 3", "4001-5000", 0.35], ["Clipping path", "Category 3", "> 5000", 0.39], ["Clipping path", "Category 3.25", "< 1000", 0.0], ["Clipping path", "Category 3.25", "1001-2000", 0.0], ["Clipping path", "Category 3.25", "2001-3000", 0.0], ["Clipping path", "Category 3.25", "3001-4000", 0.0], ["Clipping path", "Category 3.25", "4001-5000", 0.0], ["Clipping path", "Category 3.25", "> 5000", 0.0], ["Clipping path", "Category 3.5", "< 1000", 0.31], ["Clipping path", "Category 3.5", "1001-2000", 0.37], ["Clipping path", "Category 3.5", "2001-3000", 0.43], ["Clipping path", "Category 3.5", "3001-4000", 0.5], ["Clipping path", "Category 3.5", "4001-5000", 0.58], ["Clipping path", "Category 3.5", "> 5000", 0.62], ["Clipping path", "Category 3.75", "< 1000", 0.0], ["Clipping path", "Category 3.75", "1001-2000", 0.0], ["Clipping path", "Category 3.75", "2001-3000", 0.0], ["Clipping path", "Category 3.75", "3001-4000", 0.0], ["Clipping path", "Category 3.75", "4001-5000", 0.0], ["Clipping path", "Category 3.75", "> 5000", 0.0], ["Clipping path", "Category 4", "< 1000", 0.46], ["Clipping path", "Category 4", "1001-2000", 0.52], ["Clipping path", "Category 4", "2001-3000", 0.6], ["Clipping path", "Category 4", "3001-4000", 0.7], ["Clipping path", "Category 4", "4001-5000", 0.82], ["Clipping path", "Category 4", "> 5000", 0.86], ["Clipping path", "Category 4.25", "< 1000", 0.0], ["Clipping path", "Category 4.25", "1001-2000", 0.0], ["Clipping path", "Category 4.25", "2001-3000", 0.0], ["Clipping path", "Category 4.25", "3001-4000", 0.0], ["Clipping path", "Category 4.25", "4001-5000", 0.0], ["Clipping path", "Category 4.25", "> 5000", 0.0], ["Clipping path", "Category 4.5", "< 1000", 0.91], ["Clipping path", "Category 4.5", "1001-2000", 1.18], ["Clipping path", "Category 4.5", "2001-3000", 1.53], ["Clipping path", "Category 4.5", "3001-4000", 1.85], ["Clipping path", "Category 4.5", "4001-5000", 1.95], ["Clipping path", "Category 4.5", "> 5000", 2.15], ["Clipping path", "Category 4.75", "< 1000", 0.0], ["Clipping path", "Category 4.75", "1001-2000", 0.0], ["Clipping path", "Category 4.75", "2001-3000", 0.0], ["Clipping path", "Category 4.75", "3001-4000", 0.0], ["Clipping path", "Category 4.75", "4001-5000", 0.0], ["Clipping path", "Category 4.75", "> 5000", 0.0], ["Clipping path", "Category 5", "< 1000", 1.36], ["Clipping path", "Category 5", "1001-2000", 1.84], ["Clipping path", "Category 5", "2001-3000", 2.45], ["Clipping path", "Category 5", "3001-4000", 3.0], ["Clipping path", "Category 5", "4001-5000", 3.08], ["Clipping path", "Category 5", "> 5000", 3.45], ["Clipping path", "Category 5.5", "< 1000", 2.23], ["Clipping path", "Category 5.5", "1001-2000", 2.72], ["Clipping path", "Category 5.5", "2001-3000", 3.61], ["Clipping path", "Category 5.5", "3001-4000", 4.38], ["Clipping path", "Category 5.5", "4001-5000", 4.7], ["Clipping path", "Category 5.5", "> 5000", 5.1], ["Clipping path", "Category 6", "< 1000", 3.09], ["Clipping path", "Category 6", "1001-2000", 3.6], ["Clipping path", "Category 6", "2001-3000", 4.78], ["Clipping path", "Category 6", "3001-4000", 5.77], ["Clipping path", "Category 6", "4001-5000", 6.33], ["Clipping path", "Category 6", "> 5000", 6.75], ["Multi-clipping path", "Category 1", "< 1000", 0.17], ["Multi-clipping path", "Category 1", "1001-2000", 0.23], ["Multi-clipping path", "Category 1", "2001-3000", 0.29], ["Multi-clipping path", "Category 1", "3001-4000", 0.37], ["Multi-clipping path", "Category 1", "4001-5000", 0.38], ["Multi-clipping path", "Category 1", "> 5000", 0.42], ["Multi-clipping path", "Category 2", "< 1000", 0.53], ["Multi-clipping path", "Category 2", "1001-2000", 0.56], ["Multi-clipping path", "Category 2", "2001-3000", 0.65], ["Multi-clipping path", "Category 2", "3001-4000", 0.73], ["Multi-clipping path", "Category 2", "4001-5000", 0.75], ["Multi-clipping path", "Category 2", "> 5000", 1.03], ["Multi-clipping path", "Category 2.5", "< 1000", 0.87], ["Multi-clipping path", "Category 2.5", "1001-2000", 1.29], ["Multi-clipping path", "Category 2.5", "2001-3000", 1.38], ["Multi-clipping path", "Category 2.5", "3001-4000", 1.46], ["Multi-clipping path", "Category 2.5", "4001-5000", 1.7], ["Multi-clipping path", "Category 2.5", "> 5000", 1.96], ["Multi-clipping path", "Category 3", "< 1000", 1.2], ["Multi-clipping path", "Category 3", "1001-2000", 2.03], ["Multi-clipping path", "Category 3", "2001-3000", 2.11], ["Multi-clipping path", "Category 3", "3001-4000", 2.19], ["Multi-clipping path", "Category 3", "4001-5000", 2.64], ["Multi-clipping path", "Category 3", "> 5000", 2.89], ["Multi-clipping path", "Category 3.5", "< 1000", 1.59], ["Multi-clipping path", "Category 3.5", "1001-2000", 2.22], ["Multi-clipping path", "Category 3.5", "2001-3000", 2.56], ["Multi-clipping path", "Category 3.5", "3001-4000", 3.0], ["Multi-clipping path", "Category 3.5", "4001-5000", 3.3], ["Multi-clipping path", "Category 3.5", "> 5000", 4.22], ["Multi-clipping path", "Category 4", "< 1000", 1.97], ["Multi-clipping path", "Category 4", "1001-2000", 2.42], ["Multi-clipping path", "Category 4", "2001-3000", 3.01], ["Multi-clipping path", "Category 4", "3001-4000", 3.8], ["Multi-clipping path", "Category 4", "4001-5000", 3.96], ["Multi-clipping path", "Category 4", "> 5000", 5.54], ["Image masking", "Category 1", "< 1000", 0.28], ["Image masking", "Category 1", "1001-2000", 0.37], ["Image masking", "Category 1", "2001-3000", 0.4], ["Image masking", "Category 1", "3001-4000", 0.42], ["Image masking", "Category 1", "4001-5000", 0.48], ["Image masking", "Category 1", "> 5000", 0.51], ["Image masking", "Category 2", "< 1000", 0.5], ["Image masking", "Category 2", "1001-2000", 0.55], ["Image masking", "Category 2", "2001-3000", 0.7], ["Image masking", "Category 2", "3001-4000", 0.73], ["Image masking", "Category 2", "4001-5000", 0.75], ["Image masking", "Category 2", "> 5000", 0.78], ["Image masking", "Category 2.5", "< 1000", 0.75], ["Image masking", "Category 2.5", "1001-2000", 0.77], ["Image masking", "Category 2.5", "2001-3000", 0.88], ["Image masking", "Category 2.5", "3001-4000", 0.92], ["Image masking", "Category 2.5", "4001-5000", 0.95], ["Image masking", "Category 2.5", "> 5000", 0.97], ["Image masking", "Category 3", "< 1000", 0.99], ["Image masking", "Category 3", "1001-2000", 1.0], ["Image masking", "Category 3", "2001-3000", 1.06], ["Image masking", "Category 3", "3001-4000", 1.1], ["Image masking", "Category 3", "4001-5000", 1.14], ["Image masking", "Category 3", "> 5000", 1.16], ["Image masking", "Category 3.25", "< 1000", 0.0], ["Image masking", "Category 3.25", "1001-2000", 0.0], ["Image masking", "Category 3.25", "2001-3000", 0.0], ["Image masking", "Category 3.25", "3001-4000", 0.0], ["Image masking", "Category 3.25", "4001-5000", 0.0], ["Image masking", "Category 3.25", "> 5000", 0.0], ["Image masking", "Category 3.5", "< 1000", 1.2], ["Image masking", "Category 3.5", "1001-2000", 1.44], ["Image masking", "Category 3.5", "2001-3000", 1.54], ["Image masking", "Category 3.5", "3001-4000", 1.63], ["Image masking", "Category 3.5", "4001-5000", 1.74], ["Image masking", "Category 3.5", "> 5000", 1.85], ["Image masking", "Category 3.75", "< 1000", 0.0], ["Image masking", "Category 3.75", "1001-2000", 0.0], ["Image masking", "Category 3.75", "2001-3000", 0.0], ["Image masking", "Category 3.75", "3001-4000", 0.0], ["Image masking", "Category 3.75", "4001-5000", 0.0], ["Image masking", "Category 3.75", "> 5000", 0.0], ["Image masking", "Category 4", "< 1000", 1.25], ["Image masking", "Category 4", "1001-2000", 1.71], ["Image masking", "Category 4", "2001-3000", 1.84], ["Image masking", "Category 4", "3001-4000", 1.98], ["Image masking", "Category 4", "4001-5000", 2.15], ["Image masking", "Category 4", "> 5000", 2.33], ["Image masking", "Category 4.5", "< 1000", 1.57], ["Image masking", "Category 4.5", "1001-2000", 1.99], ["Image masking", "Category 4.5", "2001-3000", 2.56], ["Image masking", "Category 4.5", "3001-4000", 2.7], ["Image masking", "Category 4.5", "4001-5000", 2.87], ["Image masking", "Category 4.5", "> 5000", 3.21], ["Image masking", "Category 5", "< 1000", 1.89], ["Image masking", "Category 5", "1001-2000", 2.26], ["Image masking", "Category 5", "2001-3000", 3.28], ["Image masking", "Category 5", "3001-4000", 3.42], ["Image masking", "Category 5", "4001-5000", 3.6], ["Image masking", "Category 5", "> 5000", 4.08], ["Drop shadow", "Category 1", "< 1000", 0.06], ["Drop shadow", "Category 1", "1001-2000", 0.06], ["Drop shadow", "Category 1", "2001-3000", 0.09], ["Drop shadow", "Category 1", "3001-4000", 0.1], ["Drop shadow", "Category 1", "4001-5000", 0.11], ["Drop shadow", "Category 1", "> 5000", 0.11], ["Existing shadow", "Category 1", "< 1000", 0.15], ["Existing shadow", "Category 1", "1001-2000", 0.16], ["Existing shadow", "Category 1", "2001-3000", 0.17], ["Existing shadow", "Category 1", "3001-4000", 0.18], ["Existing shadow", "Category 1", "4001-5000", 0.2], ["Existing shadow", "Category 1", "> 5000", 0.22], ["Natural shadow", "Category 1", "< 1000", 0.15], ["Natural shadow", "Category 1", "1001-2000", 0.18], ["Natural shadow", "Category 1", "2001-3000", 0.2], ["Natural shadow", "Category 1", "3001-4000", 0.21], ["Natural shadow", "Category 1", "4001-5000", 0.21], ["Natural shadow", "Category 1", "> 5000", 0.22], ["Natural shadow", "Category 2", "< 1000", 0.25], ["Natural shadow", "Category 2", "1001-2000", 0.28], ["Natural shadow", "Category 2", "2001-3000", 0.35], ["Natural shadow", "Category 2", "3001-4000", 0.36], ["Natural shadow", "Category 2", "4001-5000", 0.37], ["Natural shadow", "Category 2", "> 5000", 0.39], ["Natural shadow", "Category 3", "< 1000", 0.67], ["Natural shadow", "Category 3", "1001-2000", 0.73], ["Natural shadow", "Category 3", "2001-3000", 0.81], ["Natural shadow", "Category 3", "3001-4000", 0.85], ["Natural shadow", "Category 3", "4001-5000", 0.88], ["Natural shadow", "Category 3", "> 5000", 0.92], ["Floating shadow", "Category 1", "< 1000", 0.05], ["Floating shadow", "Category 1", "1001-2000", 0.05], ["Floating shadow", "Category 1", "2001-3000", 0.05], ["Floating shadow", "Category 1", "3001-4000", 0.06], ["Floating shadow", "Category 1", "4001-5000", 0.06], ["Floating shadow", "Category 1", "> 5000", 0.06], ["Reflection shadow", "Category 1", "< 1000", 0.17], ["Reflection shadow", "Category 1", "1001-2000", 0.18], ["Reflection shadow", "Category 1", "2001-3000", 0.19], ["Reflection shadow", "Category 1", "3001-4000", 0.19], ["Reflection shadow", "Category 1", "4001-5000", 0.2], ["Reflection shadow", "Category 1", "> 5000", 0.2], ["Reflection shadow", "Category 2", "< 1000", 0.33], ["Reflection shadow", "Category 2", "1001-2000", 0.37], ["Reflection shadow", "Category 2", "2001-3000", 0.38], ["Reflection shadow", "Category 2", "3001-4000", 0.38], ["Reflection shadow", "Category 2", "4001-5000", 0.47], ["Reflection shadow", "Category 2", "> 5000", 0.49], ["Reflection shadow", "Category 3", "< 1000", 0.91], ["Reflection shadow", "Category 3", "1001-2000", 1.04], ["Reflection shadow", "Category 3", "2001-3000", 1.16], ["Reflection shadow", "Category 3", "3001-4000", 1.21], ["Reflection shadow", "Category 3", "4001-5000", 1.29], ["Reflection shadow", "Category 3", "> 5000", 1.46], ["Ghost mannequin", "Category 1", "< 1000", 0.21], ["Ghost mannequin", "Category 1", "1001-2000", 0.23], ["Ghost mannequin", "Category 1", "2001-3000", 0.24], ["Ghost mannequin", "Category 1", "3001-4000", 0.26], ["Ghost mannequin", "Category 1", "4001-5000", 0.28], ["Ghost mannequin", "Category 1", "> 5000", 0.35], ["Ghost mannequin", "Category 2", "< 1000", 0.44], ["Ghost mannequin", "Category 2", "1001-2000", 0.62], ["Ghost mannequin", "Category 2", "2001-3000", 0.76], ["Ghost mannequin", "Category 2", "3001-4000", 0.86], ["Ghost mannequin", "Category 2", "4001-5000", 0.89], ["Ghost mannequin", "Category 2", "> 5000", 0.91], ["Dust, spot and scratch removal", "Category 1", "< 1000", 0.13], ["Dust, spot and scratch removal", "Category 1", "1001-2000", 0.13], ["Dust, spot and scratch removal", "Category 1", "2001-3000", 0.24], ["Dust, spot and scratch removal", "Category 1", "3001-4000", 0.26], ["Dust, spot and scratch removal", "Category 1", "4001-5000", 0.3], ["Dust, spot and scratch removal", "Category 1", "> 5000", 0.35], ["Dust, spot and scratch removal", "Category 1.5", "< 1000", 0.52], ["Dust, spot and scratch removal", "Category 1.5", "1001-2000", 0.59], ["Dust, spot and scratch removal", "Category 1.5", "2001-3000", 0.73], ["Dust, spot and scratch removal", "Category 1.5", "3001-4000", 0.8], ["Dust, spot and scratch removal", "Category 1.5", "4001-5000", 0.88], ["Dust, spot and scratch removal", "Category 1.5", "> 5000", 0.92], ["Dust, spot and scratch removal", "Category 2", "< 1000", 1.03], ["Dust, spot and scratch removal", "Category 2", "1001-2000", 1.18], ["Dust, spot and scratch removal", "Category 2", "2001-3000", 1.36], ["Dust, spot and scratch removal", "Category 2", "3001-4000", 1.5], ["Dust, spot and scratch removal", "Category 2", "4001-5000", 1.64], ["Dust, spot and scratch removal", "Category 2", "> 5000", 1.69], ["Wrinkle on clothing", "Category 1", "< 1000", 0.33], ["Wrinkle on clothing", "Category 1", "1001-2000", 0.33], ["Wrinkle on clothing", "Category 1", "2001-3000", 0.33], ["Wrinkle on clothing", "Category 1", "3001-4000", 0.33], ["Wrinkle on clothing", "Category 1", "4001-5000", 0.33], ["Wrinkle on clothing", "Category 1", "> 5000", 0.33], ["Beauty airbrushing", "Category 1", "< 1000", 0.31], ["Beauty airbrushing", "Category 1", "1001-2000", 0.31], ["Beauty airbrushing", "Category 1", "2001-3000", 0.31], ["Beauty airbrushing", "Category 1", "3001-4000", 0.31], ["Beauty airbrushing", "Category 1", "4001-5000", 0.31], ["Beauty airbrushing", "Category 1", "> 5000", 0.31], ["Beauty airbrushing", "Category 2", "< 1000", 0.31], ["Beauty airbrushing", "Category 2", "1001-2000", 0.47], ["Beauty airbrushing", "Category 2", "2001-3000", 0.67], ["Beauty airbrushing", "Category 2", "3001-4000", 0.67], ["Beauty airbrushing", "Category 2", "4001-5000", 0.75], ["Beauty airbrushing", "Category 2", "> 5000", 0.87], ["Camera reflection removal", "Category 1", "< 1000", 0.27], ["Camera reflection removal", "Category 1", "1001-2000", 0.35], ["Camera reflection removal", "Category 1", "2001-3000", 0.4], ["Camera reflection removal", "Category 1", "3001-4000", 0.44], ["Camera reflection removal", "Category 1", "4001-5000", 0.49], ["Camera reflection removal", "Category 1", "> 5000", 0.53], ["Camera reflection removal", "Category 1.5", "< 1000", 0.93], ["Camera reflection removal", "Category 1.5", "1001-2000", 1.14], ["Camera reflection removal", "Category 1.5", "2001-3000", 1.24], ["Camera reflection removal", "Category 1.5", "3001-4000", 1.43], ["Camera reflection removal", "Category 1.5", "4001-5000", 1.56], ["Camera reflection removal", "Category 1.5", "> 5000", 1.6], ["Camera reflection removal", "Category 2", "< 1000", 1.78], ["Camera reflection removal", "Category 2", "1001-2000", 2.16], ["Camera reflection removal", "Category 2", "2001-3000", 2.34], ["Camera reflection removal", "Category 2", "3001-4000", 2.73], ["Camera reflection removal", "Category 2", "4001-5000", 2.95], ["Camera reflection removal", "Category 2", "> 5000", 3.0], ["Color variants", "Category 1", "< 1000", 0.15], ["Color variants", "Category 1", "1001-2000", 0.16], ["Color variants", "Category 1", "2001-3000", 0.18], ["Color variants", "Category 1", "3001-4000", 0.23], ["Color variants", "Category 1", "4001-5000", 0.29], ["Color variants", "Category 1", "> 5000", 0.36], ["Logo", "Category 1", "< 1000", 0.6], ["Logo", "Category 1", "1001-2000", 0.61], ["Logo", "Category 1", "2001-3000", 0.61], ["Logo", "Category 1", "3001-4000", 0.61], ["Logo", "Category 1", "4001-5000", 0.61], ["Logo", "Category 1", "> 5000", 0.61], ["Logo", "Category 1.5", "< 1000", 1.02], ["Logo", "Category 1.5", "1001-2000", 1.02], ["Logo", "Category 1.5", "2001-3000", 1.02], ["Logo", "Category 1.5", "3001-4000", 1.02], ["Logo", "Category 1.5", "4001-5000", 1.02], ["Logo", "Category 1.5", "> 5000", 1.02], ["Logo", "Category 2", "< 1000", 2.19], ["Logo", "Category 2", "1001-2000", 2.2], ["Logo", "Category 2", "2001-3000", 2.2], ["Logo", "Category 2", "3001-4000", 2.2], ["Logo", "Category 2", "4001-5000", 2.2], ["Logo", "Category 2", "> 5000", 2.2], ["Logo", "Category 2.5", "< 1000", 4.17], ["Logo", "Category 2.5", "1001-2000", 4.18], ["Logo", "Category 2.5", "2001-3000", 4.18], ["Logo", "Category 2.5", "3001-4000", 4.18], ["Logo", "Category 2.5", "4001-5000", 4.18], ["Logo", "Category 2.5", "> 5000", 4.18], ["Logo", "Category 3", "< 1000", 7.94], ["Logo", "Category 3", "1001-2000", 7.95], ["Logo", "Category 3", "2001-3000", 7.95], ["Logo", "Category 3", "3001-4000", 7.95], ["Logo", "Category 3", "4001-5000", 7.95], ["Logo", "Category 3", "> 5000", 7.95], ["Artwork", "Category 1", "< 1000", 3.43], ["Artwork", "Category 1", "1001-2000", 3.44], ["Artwork", "Category 1", "2001-3000", 3.44], ["Artwork", "Category 1", "3001-4000", 3.44], ["Artwork", "Category 1", "4001-5000", 3.44], ["Artwork", "Category 1", "> 5000", 3.44], ["Artwork", "Category 2", "< 1000", 9.04], ["Artwork", "Category 2", "1001-2000", 9.05], ["Artwork", "Category 2", "2001-3000", 9.05], ["Artwork", "Category 2", "3001-4000", 9.05], ["Artwork", "Category 2", "4001-5000", 9.05], ["Artwork", "Category 2", "> 5000", 9.05], ["Artwork", "Category 3", "< 1000", 23.78], ["Artwork", "Category 3", "1001-2000", 23.79], ["Artwork", "Category 3", "2001-3000", 23.79], ["Artwork", "Category 3", "3001-4000", 23.79], ["Artwork", "Category 3", "4001-5000", 23.79], ["Artwork", "Category 3", "> 5000", 23.79], ["Line drawing", "Category 1", "< 1000", 2.1], ["Line drawing", "Category 1", "1001-2000", 2.11], ["Line drawing", "Category 1", "2001-3000", 2.11], ["Line drawing", "Category 1", "3001-4000", 2.11], ["Line drawing", "Category 1", "4001-5000", 2.11], ["Line drawing", "Category 1", "> 5000", 2.11], ["Line drawing", "Category 2", "< 1000", 7.8], ["Line drawing", "Category 2", "1001-2000", 7.81], ["Line drawing", "Category 2", "2001-3000", 7.81], ["Line drawing", "Category 2", "3001-4000", 7.81], ["Line drawing", "Category 2", "4001-5000", 7.81], ["Line drawing", "Category 2", "> 5000", 7.81], ["Illustration", "Category 1", "< 1000", 0.5], ["Illustration", "Category 1", "1001-2000", 0.51], ["Illustration", "Category 1", "2001-3000", 0.51], ["Illustration", "Category 1", "3001-4000", 0.51], ["Illustration", "Category 1", "4001-5000", 0.51], ["Illustration", "Category 1", "> 5000", 0.51], ["Illustration", "Category 2", "< 1000", 2.04], ["Illustration", "Category 2", "1001-2000", 2.05], ["Illustration", "Category 2", "2001-3000", 2.05], ["Illustration", "Category 2", "3001-4000", 2.05], ["Illustration", "Category 2", "4001-5000", 2.05], ["Illustration", "Category 2", "> 5000", 2.05], ["Illustration", "Category 3", "< 1000", 8.19], ["Illustration", "Category 3", "1001-2000", 8.2], ["Illustration", "Category 3", "2001-3000", 8.2], ["Illustration", "Category 3", "3001-4000", 8.2], ["Illustration", "Category 3", "4001-5000", 8.2], ["Illustration", "Category 3", "> 5000", 8.2], ["Additional copy", "Category 1", "< 1000", 0.02], ["Additional copy", "Category 1", "1001-2000", 0.02], ["Additional copy", "Category 1", "2001-3000", 0.02], ["Additional copy", "Category 1", "3001-4000", 0.02], ["Additional copy", "Category 1", "4001-5000", 0.02], ["Additional copy", "Category 1", "> 5000", 0.02], ["File format change", "Category 1", "< 1000", 0.0], ["File format change", "Category 1", "1001-2000", 0.0], ["File format change", "Category 1", "2001-3000", 0.0], ["File format change", "Category 1", "3001-4000", 0.0], ["File format change", "Category 1", "4001-5000", 0.0], ["File format change", "Category 1", "> 5000", 0.0], ["Straighten, crop and set margin", "Category 1", "< 1000", 0.0], ["Straighten, crop and set margin", "Category 1", "1001-2000", 0.0], ["Straighten, crop and set margin", "Category 1", "2001-3000", 0.0], ["Straighten, crop and set margin", "Category 1", "3001-4000", 0.0], ["Straighten, crop and set margin", "Category 1", "4001-5000", 0.0], ["Straighten, crop and set margin", "Category 1", "> 5000", 0.0], ["Resize", "Category 1", "< 1000", 0.0], ["Resize", "Category 1", "1001-2000", 0.0], ["Resize", "Category 1", "2001-3000", 0.0], ["Resize", "Category 1", "3001-4000", 0.0], ["Resize", "Category 1", "4001-5000", 0.0], ["Resize", "Category 1", "> 5000", 0.0], ["Renaming", "Category 1", "< 1000", 0.0], ["Renaming", "Category 1", "1001-2000", 0.0], ["Renaming", "Category 1", "2001-3000", 0.0], ["Renaming", "Category 1", "3001-4000", 0.0], ["Renaming", "Category 1", "4001-5000", 0.0], ["Renaming", "Category 1", "> 5000", 0.0], ["Symmetrical edit", "Category 1", "< 1000", 0.82], ["Symmetrical edit", "Category 1", "1001-2000", 0.89], ["Symmetrical edit", "Category 1", "2001-3000", 0.99], ["Symmetrical edit", "Category 1", "3001-4000", 1.05], ["Symmetrical edit", "Category 1", "4001-5000", 1.16], ["Symmetrical edit", "Category 1", "> 5000", 1.3], ["Background removal", "Category 1", "< 1000", 0.3], ["Background removal", "Category 1", "1001-2000", 0.3], ["Background removal", "Category 1", "2001-3000", 0.3], ["Background removal", "Category 1", "3001-4000", 0.3], ["Background removal", "Category 1", "4001-5000", 0.3], ["Background removal", "Category 1", "> 5000", 0.3]]};
 const PIX = ['< 1000','1001-2000','2001-3000','3001-4000','4001-5000','> 5000'];
-const SEV = {Major:2.5, Medium:2.0, Minor:1.5, Multiple:4.0};
+const FAULT_SEVERITIES = ['Not applicable', 'Low', 'Medium', 'High', 'Critical'];
+const SEV = {
+  'Not applicable': 1.0,
+  'Low': 1.5,
+  'Medium': 2.0,
+  'High': 2.5,
+  'Critical': 4.0,
+  'Minor': 1.5,
+  'Major': 2.5,
+  'Multiple': 4.0
+};
+function canonicalSeverity(sev) {
+  if (!sev) return 'Low';
+  const s = String(sev).trim();
+  if (FAULT_SEVERITIES.includes(s)) return s;
+  const low = s.toLowerCase();
+  if (low.includes('crit')) return 'Critical';
+  if (low.includes('high') || low.includes('maj')) return 'High';
+  if (low.includes('med')) return 'Medium';
+  if (low.includes('not') || low.includes('n/a')) return 'Not applicable';
+  if (low.includes('low') || low.includes('min')) return 'Low';
+  return 'Low';
+}
+function getSeverityMultiplier(sev) {
+  return SEV[canonicalSeverity(sev)] || 1.5;
+}
 const TIERS = [ // delay % (lower, upper] -> share of service price
   {lo:0, hi:.05, r:.2},{lo:.05,hi:.15,r:.4},{lo:.15,hi:.30,r:.6},{lo:.30,hi:.50,r:.8},{lo:.50,hi:Infinity,r:1}];
 const blank = n => Array.from({length:n},()=>({s:'',c:'',p:'',q:''}));
 const DEF = () => ({
   tab:'cor', prices: DEFAULT_CFG.prices.map(r=>({s:r[0],c:r[1],p:r[2],v:r[3]})),
   autoId:'458305', auto:null,
-  corAutoId:'457696', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Minor', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:true, corPasteText:'',
+  corAutoId:'457696', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:true, corPasteText:'',
   batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', showPaste: false, showSlides: false, slideUrl: 'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing' }, 
-  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',sev:'Minor',qty:4,
+  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:4,
     order:[['Clipping path','Category 1','> 5000',56],['Clipping path','Category 1','4001-5000'],['Clipping path','Category 4','> 5000'],['Clipping path','Category 3.5','4001-5000'],['Clipping path','Category 1.5','4001-5000'],['Clipping path','Category 2','4001-5000'],['Clipping path','Category 4','4001-5000'],['Clipping path','Category 3.5','> 5000'],['Clipping path','Category 2.5','3001-4000'],['Image masking','Category 2.5','4001-5000'],['Image masking','Category 2','4001-5000']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
     cb:[['Clipping path','Category 1.5','> 5000'],['Multi-clipping path','Category 2','> 5000'],['Image masking','','> 5000'],['Clipping path','','4001-5000'],['',' ',''],['','','']].map(a=>({s:a[0],c:a[1].trim(),p:a[2],q:''}))},
-  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',qty:10,dur:'24:00:00',sec:-82273.432024749,
+  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',fault_severity:'Low',qty:10,dur:'24:00:00',sec:-82273.432024749,
     order:[['Image masking','Category 3','> 5000',2],['Dust, spot and scratch removal','Category 1','> 5000',141],['Beauty airbrushing','Category 1','> 5000',141],['Wrinkle on clothing','Category 1','> 5000',141],['Multi-clipping path','Category 2.5','> 5000'],['Image masking','Category 2','> 5000'],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
     cb:[['Clipping path','Category 2.5','1001-2000'],['','',''],['','',''],['','',''],['','',''],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:''}))},
   cfgFilter:{q:'',s:''}
@@ -1423,9 +1448,9 @@ function paneCor(){
           <div class="field-helper">Total affected pixels in image(s)</div>
         </div>
         <div class="field-group">
-          <label>Severity</label>
-          <select data-k="cor" data-f="sev">${opts(Object.keys(SEV),d.sev)}</select>
-          <div class="field-helper">Issue severity level</div>
+          <label>Fault severity</label>
+          <select data-k="cor" data-f="fault_severity">${opts(FAULT_SEVERITIES, canonicalSeverity(d.fault_severity || d.sev || 'Low'))}</select>
+          <div class="field-helper">Dispute fault severity level</div>
         </div>
         <div class="field-group">
           <label>Quantity</label>
@@ -1541,6 +1566,11 @@ function paneDel(){
           <div class="field-helper">Total affected pixels in image(s)</div>
         </div>
         <div class="field-group">
+          <label>Fault severity</label>
+          <select data-k="del" data-f="fault_severity">${opts(FAULT_SEVERITIES, canonicalSeverity(d.fault_severity || 'Low'))}</select>
+          <div class="field-helper">Dispute fault severity level</div>
+        </div>
+        <div class="field-group">
           <label>Quantity</label>
           <input type="number" min="0" step="any" data-k="del" data-f="qty" value="${esc(d.qty)}">
           <div class="field-helper">Number of delayed items</div>
@@ -1550,7 +1580,7 @@ function paneDel(){
           <input type="text" inputmode="numeric" data-k="del" data-f="dur" value="${esc(d.dur)}" placeholder="hh:mm:ss">
           <div class="field-helper">Total order duration (hh:mm:ss)</div>
         </div>
-        <div class="field-group" style="grid-column:span 2">
+        <div class="field-group">
           <label>Delay time difference (Seconds)</label>
           <input type="number" step="any" data-k="del" data-f="sec" value="${esc(d.sec)}">
           <div class="field-helper">Delivery time diff from fulfillment history (negative = delayed)</div>
@@ -1632,14 +1662,17 @@ function updLines(k,pre){
   }
 }
 function refreshCor(){
-  const d=S.cor, p=price(d.service,d.cat,d.pix), pr=p||0, m=SEV[d.sev]||0, q=num(d.qty);
+  const d=S.cor, p=price(d.service,d.cat,d.pix), pr=p||0;
+  const sevKey = canonicalSeverity(d.fault_severity || d.sev || 'Low');
+  const m = getSeverityMultiplier(sevKey);
+  const q = num(d.qty);
   const pEl = $('c-price'); if(pEl) pEl.textContent = p===null?'Not in price list':money(p);
   const calcTot=pr*m*q;
   const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
   const totEl = $('c-total'); if(totEl) totEl.textContent=money(tot);
   let steps = `
     <div class="summary-row"><span>Service price</span><strong>${money(pr)}</strong></div>
-    <div class="summary-row"><span>Severity</span><strong>${Math.round(m*100)}%</strong></div>
+    <div class="summary-row"><span>Fault severity</span><strong>${sevKey} (${Math.round(m*100)}%)</strong></div>
     <div class="summary-row"><span>Quantity</span><strong>${q}</strong></div>
   `;
   if(calcTot > 0 && calcTot < 2.0){
@@ -1654,6 +1687,7 @@ function refreshDel(){
   const d=S.del, p=price(d.service,d.cat,d.pix), pr=p||0, q=num(d.qty);
   const days=parseDur(d.dur), delayDays=Math.abs(num(d.sec))/3600/24, pct=days>0?delayDays/days:0;
   const t=tierFor(pct), r=t?t.r:0;
+  const sevKey = canonicalSeverity(d.fault_severity || 'Low');
   const pEl = $('d-price'); if(pEl) pEl.textContent = p===null?'Not in price list':money(p);
   const pctEl = $('d-pct'); if(pctEl) pctEl.textContent=(pct*100).toFixed(2)+'%';
   const w=$('d-warn'); if(w){ w.hidden = days>0; w.textContent='Order duration must be greater than zero (hh:mm:ss).'; }
@@ -1662,8 +1696,9 @@ function refreshDel(){
   const totEl = $('d-total'); if(totEl) totEl.textContent=money(tot);
   let steps = `
     <div class="summary-row"><span>Service price</span><strong>${money(pr)}</strong></div>
+    <div class="summary-row"><span>Fault severity</span><strong>${sevKey}</strong></div>
     <div class="summary-row"><span>Delay %</span><strong>${(pct*100).toFixed(2)}%</strong></div>
-    <div class="summary-row"><span>Severity / Share</span><strong>${Math.round(r*100)}%</strong></div>
+    <div class="summary-row"><span>Severity / Tier</span><strong>${Math.round(r*100)}%</strong></div>
     <div class="summary-row"><span>Quantity</span><strong>${q}</strong></div>
   `;
   if(calcTot > 0 && calcTot < 2.0){
@@ -2272,7 +2307,7 @@ function paneAutoCor(){
   const contractor = (auto && auto.contractor) || (selectedFiles[0] ? selectedFiles[0].location : '') || S.cor.contractor || 'Edgebo';
   const uPrice = price(S.corService, S.corCat, S.corPix);
   const pr = uPrice || 0;
-  const sevMult = SEV[S.corSev] || 1.5;
+  const sevMult = getSeverityMultiplier(S.corSev);
   const calcTot = pr * sevMult * selCount;
   const finalTot = selCount > 0 ? (calcTot > 0 ? Math.max(2.0, calcTot) : 0) : 0;
 
@@ -2332,9 +2367,9 @@ function paneAutoCor(){
         <div class="f"><label>Pixel Range</label>
           <select id="aucor-pix">${opts(PIX, S.corPix)}</select>
         </div>
-        <div class="f"><label>Severity Level</label>
-          <select id="aucor-sev">${opts(Object.keys(SEV), S.corSev)}</select>
-          <div class="hint">Major 250% · Medium 200% · Minor 150% · Multiple 400%</div>
+        <div class="f"><label>Fault Severity</label>
+          <select id="aucor-sev">${opts(FAULT_SEVERITIES, canonicalSeverity(S.corSev))}</select>
+          <div class="hint">Critical 400% · High 250% · Medium 200% · Low 150% · Not applicable 100%</div>
         </div>
         <div class="f"><label>Quantity (Files)</label>
           <div class="ro" style="font-weight:600">${selCount} files selected</div>
@@ -3050,6 +3085,7 @@ function calcDisputeChargeback(d){
   const pix = d.pix || '> 5000';
   const uPrice = price(svc, cat, pix);
   const pr = uPrice || 0;
+  const sevCanonical = canonicalSeverity(d.fault_severity || d.sev || 'Low');
 
   if(reason.toLowerCase() === 'delay'){
     const durStr = d.order_duration || d.dur || '24:00:00';
@@ -3064,28 +3100,24 @@ function calcDisputeChargeback(d){
     return {
       reason: 'Delay',
       svc, cat, pix, pr, qty,
+      sevKey: sevCanonical,
       factorLabel: (pct * 100).toFixed(1) + '% (Tier: ' + Math.round(share * 100) + '%)',
+      factorDetail: (pct * 100).toFixed(1) + '% (Tier: ' + Math.round(share * 100) + '%)',
       rawAmount: raw,
       chargeback: finalAmount,
       minApplied: raw > 0 && raw < 2.0
     };
   } else {
     // Correction and Quality share the EXACT same rule!
-    const sevRaw = (d.fault_severity || 'Low').toLowerCase();
-    let sevKey = 'Minor';
-    if(sevRaw.includes('med')) sevKey = 'Medium';
-    else if(sevRaw.includes('high') || sevRaw.includes('crit') || sevRaw.includes('maj')) sevKey = 'Major';
-    else if(sevRaw.includes('mult')) sevKey = 'Multiple';
-    else sevKey = 'Minor';
-
-    const mult = SEV[sevKey] || 1.5;
+    const mult = getSeverityMultiplier(sevCanonical);
     const raw = pr * mult * qty;
     const finalAmount = raw > 0 ? Math.max(2.0, raw) : 0;
     return {
       reason: reason,
       svc, cat, pix, pr, qty,
-      sevKey,
-      factorLabel: sevKey + ' (' + Math.round(mult * 100) + '%)',
+      sevKey: sevCanonical,
+      factorLabel: sevCanonical + ' (' + Math.round(mult * 100) + '%)',
+      factorDetail: Math.round(mult * 100) + '% Multiplier',
       rawAmount: raw,
       chargeback: finalAmount,
       minApplied: raw > 0 && raw < 2.0
@@ -3399,7 +3431,12 @@ function paneBatch(){
                     ${allCatList.map(c => `<option value="${esc(c)}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('')}
                   </select>
                 </td>
-                <td><span style="font-size:12px">${esc(r.factorLabel)}</span></td>
+                <td>
+                  <select class="bt-row-sev" data-idx="${item.idx}" style="font-size:12px;padding:3px 6px;max-width:130px;border-radius:4px;border:1px solid var(--line);background:var(--bg);font-weight:600">
+                    ${FAULT_SEVERITIES.map(s => `<option value="${esc(s)}"${s === canonicalSeverity(d.fault_severity || r.sevKey || 'Low') ? ' selected' : ''}>${esc(s)}</option>`).join('')}
+                  </select>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${esc(r.factorDetail || r.factorLabel)}</div>
+                </td>
                 <td class="n" style="font-family:var(--font-mono);font-weight:600">${r.qty}</td>
                 <td class="n" style="font-family:var(--font-mono)">${money(r.pr)}</td>
                 <td class="n" style="font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--accent)">
@@ -3622,6 +3659,7 @@ function openDisputeInCalc(idx){
     S.del.service = r.svc;
     S.del.cat = r.cat;
     S.del.pix = r.pix;
+    S.del.fault_severity = canonicalSeverity(d.fault_severity || 'Low');
     S.del.qty = r.qty;
     S.del.dur = d.order_duration || '24:00:00';
     S.del.sec = d.delay_seconds || -6185;
@@ -3638,7 +3676,8 @@ function openDisputeInCalc(idx){
     S.cor.service = r.svc;
     S.cor.cat = r.cat;
     S.cor.pix = r.pix;
-    S.cor.sev = r.sevKey || 'Minor';
+    S.cor.fault_severity = canonicalSeverity(d.fault_severity || r.sevKey || 'Low');
+    S.cor.sev = S.cor.fault_severity;
     S.cor.qty = r.qty;
     S.corAutoId = raw_oid;
     S.corDisputeId = d.dispute_id || '';
@@ -3652,7 +3691,7 @@ function openDisputeInCalc(idx){
   render();
 }
 
-async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId){
+async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId, faultSeverity){
   const statusEl = $(statusId);
   const btnEl = $(btnId);
   const cleanOid = (orderId || '').trim();
@@ -3685,7 +3724,8 @@ async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId){
       body: JSON.stringify({
         order_id: cleanOid,
         dispute_id: cleanDid,
-        amount: amt
+        amount: amt,
+        fault_severity: faultSeverity || undefined
       })
     });
     const data = await res.json();
@@ -3742,7 +3782,8 @@ async function closeBatchRow(idx){
       body: JSON.stringify({
         dispute_id: d.dispute_id,
         order_id: d.order_id,
-        amount: amt
+        amount: amt,
+        fault_severity: d.fault_severity || r.sevKey || 'Low'
       })
     });
     const data = await res.json();
@@ -3794,7 +3835,8 @@ async function closeBatchAll(){
   const items = unclosed.map(it => ({
     dispute_id: it.orig.dispute_id,
     order_id: it.orig.order_id,
-    amount: it.res.chargeback
+    amount: it.res.chargeback,
+    fault_severity: it.orig.fault_severity || it.res.sevKey || 'Low'
   }));
 
   if(statusEl){
@@ -3943,6 +3985,15 @@ pane.addEventListener('change',e=>{
     }
     return;
   }
+  if(e.target.classList.contains('bt-row-sev')){
+    const idx = +e.target.dataset.idx;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      S.batch.disputes[idx].fault_severity = e.target.value;
+      save();
+      render();
+    }
+    return;
+  }
 
   const id = e.target.id;
   if(id && id.startsWith('bt-')){
@@ -4049,12 +4100,13 @@ pane.addEventListener('click',e=>{
   else if(t.id==='cor-close-btn'){
     const d=S.cor;
     const p=price(d.service,d.cat,d.pix)||0;
-    const m=SEV[d.sev]||0;
+    const sevKey = canonicalSeverity(d.fault_severity || d.sev || 'Low');
+    const m = getSeverityMultiplier(sevKey);
     const q=num(d.qty);
     const calcTot=p*m*q;
     const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
     const oid = S.corAutoId || ($('cor-quick-id') ? $('cor-quick-id').value : '');
-    closeDisputeLive(oid, '', tot, 'cor-close-status', 'cor-close-btn');
+    closeDisputeLive(oid, S.corDisputeId || '', tot, 'cor-close-status', 'cor-close-btn', sevKey);
   }
   else if(t.id==='del-close-btn'){
     const d=S.del;
@@ -4068,7 +4120,8 @@ pane.addEventListener('click',e=>{
     const calcTot=p*r*q;
     const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
     const oid = S.autoId || ($('del-quick-id') ? $('del-quick-id').value : '');
-    closeDisputeLive(oid, '', tot, 'del-close-status', 'del-close-btn');
+    const sevKey = canonicalSeverity(d.fault_severity || 'Low');
+    closeDisputeLive(oid, '', tot, 'del-close-status', 'del-close-btn', sevKey);
   }
   else if(t.id==='cf-reset'){ S.prices=DEF().prices; save(); render(); }
   else if(t.id==='cfg-save-api'){

@@ -1326,7 +1326,7 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
 
     return result
 
-def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, headless: bool = False):
+def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, fault_severity: str = None, headless: bool = False):
     """
     Charges the specified amount to vendor and closes the dispute on Tista.
     """
@@ -1396,6 +1396,16 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
             page.select_option("#order_dispute_status", "closed")
         except Exception as e:
             print(f"Warning setting status: {e}")
+
+        # Select Fault severity if provided
+        if fault_severity:
+            try:
+                page.select_option("#order_dispute_fault_severity", label=str(fault_severity))
+            except Exception:
+                try:
+                    page.select_option("#order_dispute_fault_severity", value=str(fault_severity))
+                except Exception as e:
+                    print(f"Warning setting fault_severity: {e}")
 
         # If comment provided
         if comment:
@@ -1485,6 +1495,14 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
                 page.select_option("#order_dispute_chargeable_to", "vendor")
                 charge_input.fill(f"{amount:.2f}")
                 page.select_option("#order_dispute_status", "closed")
+                if it.get("fault_severity"):
+                    try:
+                        page.select_option("#order_dispute_fault_severity", label=str(it["fault_severity"]))
+                    except Exception:
+                        try:
+                            page.select_option("#order_dispute_fault_severity", value=str(it["fault_severity"]))
+                        except Exception:
+                            pass
 
                 page.locator('input[value="Update Order dispute"]').click()
                 time.sleep(1.5)
@@ -2123,9 +2141,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = qs.get("dispute_id", [""])[0]
             amount = float(qs.get("amount", [2.0])[0] or 2.0)
             comment = qs.get("comment", [""])[0]
-            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
+            fault_severity = qs.get("fault_severity", [""])[0] or None
+            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount}, fault_severity={fault_severity}")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, fault_severity=fault_severity, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -2216,9 +2235,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = data.get("dispute_id", "")
             amount = float(data.get("amount", 2.0) or 2.0)
             comment = data.get("comment", "")
-            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
+            fault_severity = data.get("fault_severity") or None
+            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount}, fault_severity={fault_severity}")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, fault_severity=fault_severity, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
