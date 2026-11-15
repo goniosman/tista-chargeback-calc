@@ -849,6 +849,214 @@ tfoot td {
   .sidebar-footer { display: none; }
   .app-main { padding: 16px; }
 }
+
+/* Custom Date Range Picker Matching User Mockup */
+.date-range-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1.5px solid #48b0a7;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0f172a;
+  cursor: pointer;
+  min-width: 220px;
+  user-select: none;
+  box-shadow: 0 0 0 2px rgba(72, 176, 167, 0.14);
+  transition: all .15s ease;
+}
+
+.date-range-box:hover {
+  border-color: #38a39a;
+  box-shadow: 0 0 0 3px rgba(72, 176, 167, 0.22);
+}
+
+.cal-icon-svg {
+  color: #48b0a7;
+  display: flex;
+  align-items: center;
+}
+
+.date-range-text {
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.calendar-dropdown-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 16px 18px;
+  width: 320px;
+  font-family: inherit;
+  animation: fadeInCal .15s ease-out;
+}
+
+@keyframes fadeInCal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cal-btn-nav {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all .15s;
+}
+
+.cal-btn-nav:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.cal-selects-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-dropdown-month, .cal-dropdown-year {
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  outline: none;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7b93a8;
+  margin-bottom: 8px;
+}
+
+.cal-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+}
+
+.cal-day-cell {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+  transition: background .1s;
+  position: relative;
+}
+
+.cal-day-cell:hover:not(.in-range):not(.other-month) {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.cal-day-cell.other-month {
+  color: #cbd5e1;
+  cursor: default;
+}
+
+/* In Range Continuous Teal Pill */
+.cal-day-cell.in-range {
+  background: #4fa89f !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border-radius: 0;
+}
+
+.cal-day-cell.range-start {
+  border-top-left-radius: 14px !important;
+  border-bottom-left-radius: 14px !important;
+}
+
+.cal-day-cell.range-end {
+  border-top-right-radius: 14px !important;
+  border-bottom-right-radius: 14px !important;
+}
+
+.cal-day-cell.range-start.range-end {
+  border-radius: 14px !important;
+}
+
+.cal-day-cell.col-start {
+  border-top-left-radius: 14px !important;
+  border-bottom-left-radius: 14px !important;
+}
+
+.cal-day-cell.col-end {
+  border-top-right-radius: 14px !important;
+  border-bottom-right-radius: 14px !important;
+}
+
+.cal-footer-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  justify-content: space-between;
+}
+
+.cal-preset-pill {
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #475569;
+  transition: all .15s;
+}
+
+.cal-preset-pill:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.cal-preset-pill.clear {
+  color: var(--danger);
+}
+
 </style>
 </head><body>
 <title>Chargeback Calculator</title>
@@ -1403,12 +1611,25 @@ function paneDel(){
 }
 function updLines(k,pre){
   let sum=0,qs=0;
-  S[k].order.forEach((r,i)=>{ const u=price(r.s,r.c,r.p), q=num(r.q), t=(u||0)*q; sum+=t; qs+=q;
-    $(pre+'o'+'u'+i).textContent = u===null?'':money(u); $(pre+'o'+'t'+i).textContent=money(t); });
-  $(pre+'osum').textContent=money(sum); $(pre+'oqsum').textContent=qs||'';
+  if(S[k] && S[k].order){
+    S[k].order.forEach((r,i)=>{
+      const u=price(r.s,r.c,r.p), q=num(r.q), t=(u||0)*q; sum+=t; qs+=q;
+      const uEl = $(pre+'o'+'u'+i), tEl = $(pre+'o'+'t'+i);
+      if(uEl) uEl.textContent = u===null?'':money(u);
+      if(tEl) tEl.textContent = money(t);
+    });
+  }
+  const sumEl = $(pre+'osum'); if(sumEl) sumEl.textContent=money(sum);
+  const qsumEl = $(pre+'oqsum'); if(qsumEl) qsumEl.textContent=qs||'';
   let cs=0;
-  S[k].cb.forEach((r,i)=>{ const u=price(r.s,r.c,r.p); cs+=u||0; $(pre+'c'+'u'+i).textContent=u===null?'':money(u); });
-  $(pre+'csum').textContent=money(cs);
+  if(S[k] && S[k].cb){
+    S[k].cb.forEach((r,i)=>{
+      const u=price(r.s,r.c,r.p); cs+=u||0;
+      const cuEl = $(pre+'c'+'u'+i);
+      if(cuEl) cuEl.textContent=u===null?'':money(u);
+    });
+    const csumEl = $(pre+'csum'); if(csumEl) csumEl.textContent=money(cs);
+  }
 }
 function refreshCor(){
   const d=S.cor, p=price(d.service,d.cat,d.pix), pr=p||0, m=SEV[d.sev]||0, q=num(d.qty);
@@ -2910,20 +3131,53 @@ function paneBatch(){
   <div class="card" style="margin-bottom:16px">
     <h2>Batch Dispute Search & Chargeback</h2>
 
-    <!-- Fault at Date Range directly below heading on the left -->
+    <!-- Fault at Date Range matching User Mockup -->
     <div style="margin:10px 0 16px;display:flex;align-items:flex-start;flex-wrap:wrap">
-      <div class="f" style="display:block;margin:0;padding:10px 14px;background:var(--bg-subtle,rgba(255,255,255,0.03));border:1px solid var(--line);border-radius:8px">
-        <label style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600">📅 Fault at (Date Range)</label>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input type="date" id="bt-date-start" value="${esc(f.dateStart||'')}" title="Start Date" style="padding:4px 8px;font-size:12px;width:130px">
-          <span style="color:var(--muted);font-size:12px">to</span>
-          <input type="date" id="bt-date-end" value="${esc(f.dateEnd||'')}" title="End Date" style="padding:4px 8px;font-size:12px;width:130px">
-          <div style="display:inline-flex;gap:4px;margin-left:4px;flex-wrap:wrap">
-            <button class="btn" type="button" id="bt-preset-today" style="padding:2px 7px;font-size:11px">Today</button>
-            <button class="btn" type="button" id="bt-preset-7d" style="padding:2px 7px;font-size:11px">7 Days</button>
-            <button class="btn" type="button" id="bt-preset-14d" style="padding:2px 7px;font-size:11px">14 Days</button>
-            <button class="btn" type="button" id="bt-preset-month" style="padding:2px 7px;font-size:11px">This Month</button>
-            <button class="btn" type="button" id="bt-preset-clear" style="padding:2px 7px;font-size:11px;color:var(--danger)">Clear</button>
+      <div class="f" style="display:block;margin:0;position:relative;">
+        <label style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--ink-secondary)">Fault at (Date Range)</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="bt-date-picker-wrap" style="position:relative;display:inline-block;">
+            <div id="bt-date-box" class="date-range-box" onclick="toggleDateRangePicker()" tabindex="0">
+              <span class="cal-icon-svg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </span>
+              <span id="bt-date-text" class="date-range-text">${formatDisplayDateRange(f.dateStart, f.dateEnd)}</span>
+            </div>
+
+            <!-- Popup Calendar Dropdown matching screenshot -->
+            <div id="bt-calendar-dropdown" class="calendar-dropdown-card" style="display:none;">
+              <div class="cal-header">
+                <button type="button" class="cal-btn-nav" onclick="changeCalMonth(-1)">&lt;</button>
+                <div class="cal-selects-row">
+                  <select id="cal-month-select" onchange="onCalMonthSelect(this.value)" class="cal-dropdown-month">
+                    ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i}">${m}</option>`).join('')}
+                  </select>
+                  <select id="cal-year-select" onchange="onCalYearSelect(this.value)" class="cal-dropdown-year">
+                    ${[2024, 2025, 2026, 2027, 2028].map(y=>`<option value="${y}">${y}</option>`).join('')}
+                  </select>
+                </div>
+                <button type="button" class="cal-btn-nav" onclick="changeCalMonth(1)">&gt;</button>
+              </div>
+
+              <div class="cal-weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+              </div>
+
+              <div id="cal-grid" class="cal-days-grid"></div>
+
+              <div class="cal-footer-actions">
+                <button type="button" class="cal-preset-pill" onclick="applyCalPreset('today')">Today</button>
+                <button type="button" class="cal-preset-pill" onclick="applyCalPreset('7d')">7 Days</button>
+                <button type="button" class="cal-preset-pill" onclick="applyCalPreset('14d')">14 Days</button>
+                <button type="button" class="cal-preset-pill" onclick="applyCalPreset('month')">This Month</button>
+                <button type="button" class="cal-preset-pill clear" onclick="applyCalPreset('clear')">Clear</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3995,6 +4249,239 @@ function saveSettingsModal() {
   checkTistaLoginStatus();
   alert('✓ Settings saved successfully.');
 }
+
+
+// ---------- Interactive Calendar Date Range Picker ----------
+var calCurrentYear = 2026;
+var calCurrentMonth = 10; // 0-indexed: 10 = November
+var calSelectionStart = '2026-11-01';
+var calSelectionEnd = '2026-11-15';
+var calPickingStart = true;
+
+function toDDMMYY(iso) {
+  if (!iso) return '';
+  const parts = iso.split('-');
+  if (parts.length === 3) {
+    const y = parts[0].slice(-2);
+    const m = parts[1];
+    const d = parts[2];
+    return `${d}/${m}/${y}`;
+  }
+  return iso;
+}
+
+function formatDisplayDateRange(start, end) {
+  const s = start || calSelectionStart;
+  const e = end || calSelectionEnd;
+  if (!s && !e) return 'Select Date Range';
+  if (s && !e) return `${toDDMMYY(s)} - ...`;
+  if (s && e) return `${toDDMMYY(s)} - ${toDDMMYY(e)}`;
+  return 'Select Date Range';
+}
+
+function toggleDateRangePicker() {
+  const dd = $('bt-calendar-dropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display === 'block';
+  if (isOpen) {
+    dd.style.display = 'none';
+  } else {
+    dd.style.display = 'block';
+    // Sync current view with start date if available
+    const curStart = S.batch && S.batch.filters && S.batch.filters.dateStart ? S.batch.filters.dateStart : calSelectionStart;
+    if (curStart) {
+      const parts = curStart.split('-');
+      if (parts.length === 3) {
+        calCurrentYear = parseInt(parts[0], 10);
+        calCurrentMonth = parseInt(parts[1], 10) - 1;
+      }
+    }
+    renderCalendarGrid();
+  }
+}
+
+function renderCalendarGrid() {
+  const grid = $('cal-grid');
+  const mSelect = $('cal-month-select');
+  const ySelect = $('cal-year-select');
+  if (!grid) return;
+
+  if (mSelect) mSelect.value = calCurrentMonth;
+  if (ySelect) ySelect.value = calCurrentYear;
+
+  const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay(); // 0 = Sun
+  const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(calCurrentYear, calCurrentMonth, 0).getDate();
+
+  const startDate = S.batch && S.batch.filters && S.batch.filters.dateStart ? S.batch.filters.dateStart : calSelectionStart;
+  const endDate = S.batch && S.batch.filters && S.batch.filters.dateEnd ? S.batch.filters.dateEnd : calSelectionEnd;
+
+  let html = '';
+
+  // Previous month trailing days
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const dayNum = prevMonthDays - i;
+    html += `<div class="cal-day-cell other-month">${dayNum}</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(calCurrentMonth + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${calCurrentYear}-${mm}-${dd}`;
+    const colIdx = (firstDay + d - 1) % 7; // 0 = Sun, 6 = Sat
+
+    let classes = ['cal-day-cell'];
+    let inRange = false;
+    let isStart = (dateStr === startDate);
+    let isEnd = (dateStr === endDate);
+
+    if (startDate && endDate) {
+      if (dateStr >= startDate && dateStr <= endDate) {
+        inRange = true;
+      }
+    } else if (startDate && dateStr === startDate) {
+      inRange = true;
+    }
+
+    if (inRange) {
+      classes.push('in-range');
+      if (isStart) classes.push('range-start');
+      if (isEnd) classes.push('range-end');
+      if (colIdx === 0) classes.push('col-start');
+      if (colIdx === 6) classes.push('col-end');
+    }
+
+    html += `<div class="${classes.join(' ')}" onclick="onCalDayClick('${dateStr}')">${d}</div>`;
+  }
+
+  // Next month leading days to complete grid (up to 42 cells total)
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let j = 1; j <= remaining; j++) {
+    html += `<div class="cal-day-cell other-month">${j}</div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function onCalDayClick(dateStr) {
+  if (calPickingStart || !calSelectionStart) {
+    calSelectionStart = dateStr;
+    calSelectionEnd = '';
+    calPickingStart = false;
+  } else {
+    if (dateStr < calSelectionStart) {
+      calSelectionEnd = calSelectionStart;
+      calSelectionStart = dateStr;
+    } else {
+      calSelectionEnd = dateStr;
+    }
+    if (calSelectionStart) {
+    const p = calSelectionStart.split('-');
+    if (p.length === 3) {
+      calCurrentYear = parseInt(p[0], 10);
+      calCurrentMonth = parseInt(p[1], 10) - 1;
+    }
+  }
+
+  calPickingStart = true;
+    // Auto-close after selecting end date
+    const dd = $('bt-calendar-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+
+  if (S.batch && S.batch.filters) {
+    S.batch.filters.dateStart = calSelectionStart;
+    S.batch.filters.dateEnd = calSelectionEnd;
+    save();
+  }
+
+  const textEl = $('bt-date-text');
+  if (textEl) textEl.textContent = formatDisplayDateRange(calSelectionStart, calSelectionEnd);
+  renderCalendarGrid();
+}
+
+function changeCalMonth(delta) {
+  calCurrentMonth += delta;
+  if (calCurrentMonth > 11) {
+    calCurrentMonth = 0;
+    calCurrentYear++;
+  } else if (calCurrentMonth < 0) {
+    calCurrentMonth = 11;
+    calCurrentYear--;
+  }
+  renderCalendarGrid();
+}
+
+function onCalMonthSelect(val) {
+  calCurrentMonth = parseInt(val, 10);
+  renderCalendarGrid();
+}
+
+function onCalYearSelect(val) {
+  calCurrentYear = parseInt(val, 10);
+  renderCalendarGrid();
+}
+
+function applyCalPreset(type) {
+  const pad = n => String(n).padStart(2, '0');
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
+  if (type === 'today') {
+    calSelectionStart = todayStr;
+    calSelectionEnd = todayStr;
+  } else if (type === '7d') {
+    const d7 = new Date(now.getTime() - 7 * 86400000);
+    calSelectionStart = `${d7.getFullYear()}-${pad(d7.getMonth()+1)}-${pad(d7.getDate())}`;
+    calSelectionEnd = todayStr;
+  } else if (type === '14d') {
+    const d14 = new Date(now.getTime() - 14 * 86400000);
+    calSelectionStart = `${d14.getFullYear()}-${pad(d14.getMonth()+1)}-${pad(d14.getDate())}`;
+    calSelectionEnd = todayStr;
+  } else if (type === 'month') {
+    calSelectionStart = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+    calSelectionEnd = todayStr;
+  } else if (type === 'clear') {
+    calSelectionStart = '';
+    calSelectionEnd = '';
+  }
+
+  if (calSelectionStart) {
+    const p = calSelectionStart.split('-');
+    if (p.length === 3) {
+      calCurrentYear = parseInt(p[0], 10);
+      calCurrentMonth = parseInt(p[1], 10) - 1;
+    }
+  }
+
+  calPickingStart = true;
+
+  if (S.batch && S.batch.filters) {
+    S.batch.filters.dateStart = calSelectionStart;
+    S.batch.filters.dateEnd = calSelectionEnd;
+    save();
+  }
+
+  const textEl = $('bt-date-text');
+  if (textEl) textEl.textContent = formatDisplayDateRange(calSelectionStart, calSelectionEnd);
+
+  renderCalendarGrid();
+  const dd = $('bt-calendar-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+// Global click outside to dismiss calendar popup
+document.addEventListener('click', function(e) {
+  const wrap = $('bt-date-picker-wrap');
+  const dd = $('bt-calendar-dropdown');
+  if (dd && dd.style.display === 'block') {
+    if (wrap && !wrap.contains(e.target)) {
+      dd.style.display = 'none';
+    }
+  }
+});
 
 checkTistaLoginStatus();
 </script>

@@ -1132,7 +1132,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             disp_comment = ""
             disp_link = ""
             disp_files = []
-            if r.get("dispute_id") and (reason_name.lower() == "delay" or deep_scan or single_clean_id or len(rows) <= 20):
+            if r.get("dispute_id") and (single_clean_id or (deep_scan and len(rows) <= 3)):
                 try:
                     edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
