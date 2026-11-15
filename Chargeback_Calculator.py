@@ -6,20 +6,51 @@ without opening a web browser or showing URL bars/tabs.
 """
 import sys
 import os
+
+# Safe stream wrappers so print never fails in windowed/GUI/frozen mode
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    except Exception:
+        pass
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    except Exception:
+        pass
+if sys.stdin is None:
+    class DummyStdin:
+        def readline(self): return ""
+        def read(self, *a): return ""
+        def isatty(self): return False
+    sys.stdin = DummyStdin()
+
 import time
 import socket
 import threading
 import subprocess
+import urllib.request
 from pathlib import Path
 
 # Resolve base directories
 if getattr(sys, 'frozen', False):
+    BUNDLE_DIR = Path(getattr(sys, '_MEIPASS', Path(sys.executable).parent))
     APP_DIR = Path(sys.executable).parent
+    bundled_html = BUNDLE_DIR / "Chargeback Calculator.html"
+    target_html = APP_DIR / "Chargeback Calculator.html"
+    if bundled_html.exists() and not target_html.exists():
+        try:
+            import shutil
+            shutil.copy2(bundled_html, target_html)
+        except Exception:
+            pass
 else:
     APP_DIR = Path(__file__).parent
+    BUNDLE_DIR = APP_DIR
 
 os.chdir(APP_DIR)
 sys.path.insert(0, str(APP_DIR))
+sys.path.insert(0, str(BUNDLE_DIR))
 
 # Import server module
 try:
@@ -33,23 +64,48 @@ def is_port_in_use(port=8765):
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+def verify_server_http(port=8765, timeout=1.0):
+    """Verifies that the server is not just bound, but actually serving HTTP 200."""
+    try:
+        url = f"http://127.0.0.1:{port}/Chargeback%20Calculator.html"
+        req = urllib.request.Request(url, headers={"User-Agent": "HealthCheck"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
+def start_internal_server(port=8765):
+    """Starts the calculator HTTP server."""
+    if tista_delay_fetch:
+        tista_delay_fetch.start_server(port=port, host="127.0.0.1")
+    else:
+        import http.server
+        import socketserver
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, format, *args): pass
+        with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
+            httpd.serve_forever()
+
+
 def ensure_server(port=8765):
-    """Starts the internal background server if not already active."""
-    if is_port_in_use(port):
+    """Starts the internal background server if not already responsive."""
+    if verify_server_http(port):
         return True
 
-    if tista_delay_fetch:
+    # If port is in use by a dead/unresponsive socket, wait slightly
+    if not is_port_in_use(port):
         t = threading.Thread(
-            target=tista_delay_fetch.start_server,
-            kwargs={"port": port, "host": "0.0.0.0"},
+            target=start_internal_server,
+            args=(port,),
             daemon=True
         )
         t.start()
 
-    # Wait up to 5 seconds for server to be responsive
-    for _ in range(20):
+    # Wait up to 8 seconds for server to be responsive to HTTP GET
+    for _ in range(32):
         time.sleep(0.25)
-        if is_port_in_use(port):
+        if verify_server_http(port):
             return True
     return False
 
@@ -81,49 +137,46 @@ def get_standalone_app_launcher():
 
 
 def run_desktop_app():
-    # 1. Start internal server silently
-    ensure_server(8765)
+    port = 8765
+    target_url = f"http://127.0.0.1:{port}/Chargeback%20Calculator.html"
 
-    target_url = "http://127.0.0.1:8765/Chargeback%20Calculator.html"
+    # Start the server and wait until HTTP 200 is confirmed
+    server_ok = ensure_server(port)
+    if not server_ok:
+        # Try alternate port if 8765 is blocked
+        for alt_port in [8766, 8767, 8768]:
+            if not is_port_in_use(alt_port):
+                port = alt_port
+                target_url = f"http://127.0.0.1:{port}/Chargeback%20Calculator.html"
+                server_ok = ensure_server(port)
+                if server_ok:
+                    break
+
+    # Open app window
     app_exe = get_standalone_app_launcher()
-
-    # 2. Preferred: Native Standalone App Window (No address bar, no tabs, native desktop frame)
+    opened = False
     if app_exe:
         cmd = [
             app_exe,
             f"--app={target_url}",
-            "--window-size=1360,900",
-            "--window-position=center",
-            "--disable-extensions",
-            "--disable-default-apps"
+            "--window-size=1360,900"
         ]
         try:
-            # Run the standalone window process and wait until user closes the window
-            proc = subprocess.Popen(cmd)
-            proc.wait()
-            return
+            subprocess.Popen(cmd)
+            opened = True
         except Exception as e:
-            print(f"Standalone app mode launch error: {e}")
+            pass
 
-    # 3. Fallback: pywebview
+    if not opened:
+        import webbrowser
+        webbrowser.open(target_url)
+
+    # Keep process alive so the background server never shuts down
     try:
-        import webview
-        window = webview.create_window(
-            title="Tista Chargeback Calculator",
-            url=target_url,
-            width=1360,
-            height=900,
-            min_size=(960, 600),
-            background_color="#0d1117"
-        )
-        webview.start()
-        return
-    except Exception as e:
-        print(f"pywebview fallback error: {e}")
-
-    # 4. Final fallback: default browser
-    import webbrowser
-    webbrowser.open(target_url)
+        while True:
+            time.sleep(1)
+    except (KeyboardInterrupt, SystemExit):
+        pass
 
 
 def main():

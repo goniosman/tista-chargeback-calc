@@ -8,10 +8,15 @@ echo                 Tista One-Time Login Helper
 echo ======================================================================
 echo.
 
-set PYTHON_BIN=
-where py >nul 2>&1 && set PYTHON_BIN=py -3
-if "%PYTHON_BIN%"=="" (
-    where python >nul 2>&1 && set PYTHON_BIN=python
+set "PYTHON_BIN="
+py -3.11 --version >nul 2>&1
+if not errorlevel 1 (
+    set "PYTHON_BIN=py -3.11"
+) else (
+    where py >nul 2>&1 && set "PYTHON_BIN=py -3"
+    if "%PYTHON_BIN%"=="" (
+        where python >nul 2>&1 && set "PYTHON_BIN=python"
+    )
 )
 
 if "%PYTHON_BIN%"=="" (
@@ -21,7 +26,7 @@ if "%PYTHON_BIN%"=="" (
     exit /b 1
 )
 
-echo [*] Opening Tista Login page...
+echo [*] Opening Tista Login page using %PYTHON_BIN%...
 %PYTHON_BIN% login_tista.py
 
 echo.

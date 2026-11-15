@@ -105,182 +105,6 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
 .result-card-dismiss{background:rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.22);color:var(--accent-ink);font-size:11px;padding:4px 12px;border-radius:12px;cursor:pointer;font-weight:600;transition:all .15s ease}
 .result-card-dismiss:hover{background:rgba(0,0,0,0.22)}
 .btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-
-/* Authentic Tista Sign-In Theme (tista.app/users/sign_in) */
-#auth-gateway {
-  position: fixed;
-  inset: 0;
-  background: #ffffff;
-  z-index: 999999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 16px;
-  overflow-y: auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #333333;
-}
-.tista-login-container {
-  max-width: 380px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  animation: tistaFadeIn .25s ease;
-}
-@keyframes tistaFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.tista-logo-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.tista-logo-text {
-  font-size: 32px;
-  font-weight: 400;
-  color: #333333;
-  letter-spacing: -0.5px;
-  font-family: inherit;
-}
-.tista-auth-card {
-  background: #5caac2;
-  border-radius: 4px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  padding: 38px 32px 32px;
-  box-sizing: border-box;
-  color: #ffffff;
-  text-align: left;
-}
-.tista-card-title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin: 0 0 24px;
-  color: #ffffff;
-  text-align: left;
-}
-.tista-field {
-  margin-bottom: 18px;
-}
-.tista-field label {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #ffffff;
-  margin-bottom: 6px;
-}
-.tista-field input {
-  width: 100%;
-  background: #ffffff;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  padding: 10px 12px;
-  font-size: 14px;
-  color: #2d3748;
-  box-sizing: border-box;
-  outline: none;
-  transition: box-shadow .15s ease, border-color .15s ease;
-}
-.tista-field input::placeholder {
-  color: #94a3b8;
-}
-.tista-field input:focus {
-  border-color: #2b6cb0;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-}
-.tista-eye-btn {
-  position: absolute;
-  right: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 6px;
-  font-size: 14px;
-  opacity: 0.6;
-}
-.tista-eye-btn:hover { opacity: 1; }
-.tista-remember-row {
-  display: flex;
-  align-items: center;
-  margin: 16px 0 22px;
-}
-.tista-checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 13.5px;
-  color: #ffffff;
-}
-.tista-checkbox-label input[type="checkbox"] {
-  width: 17px;
-  height: 17px;
-  cursor: pointer;
-  accent-color: #5caac2;
-  border-radius: 2px;
-}
-.tista-submit-btn {
-  width: 100%;
-  background: transparent;
-  color: #ffffff;
-  border: 1.5px solid #ffffff;
-  border-radius: 3px;
-  padding: 9px 16px;
-  font-size: 14.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.tista-submit-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-.tista-links-row {
-  margin-top: 18px;
-  text-align: left;
-}
-.tista-forgot-link {
-  color: #ffffff;
-  font-size: 13px;
-  text-decoration: underline;
-  transition: opacity .15s;
-}
-.tista-forgot-link:hover {
-  opacity: 0.85;
-}
-.tista-error-box {
-  background: rgba(255, 255, 255, 0.95);
-  border-left: 4px solid #e53e3e;
-  color: #c53030;
-  padding: 10px 12px;
-  border-radius: 3px;
-  font-size: 13px;
-  margin-bottom: 16px;
-  line-height: 1.4;
-  font-weight: 500;
-}
-.tista-guest-row {
-  margin-top: 18px;
-  width: 100%;
-  text-align: center;
-}
-.tista-guest-row a {
-  color: #718096;
-  font-size: 12.5px;
-  text-decoration: none;
-}
-.tista-guest-row a:hover {
-  color: #2d3748;
-  text-decoration: underline;
-}
 </style>
 <div id="global-top-progress"></div>
 <div id="global-loader-overlay">
@@ -291,81 +115,13 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
     <button type="button" class="loader-cancel-btn" onclick="hideLoading()">Dismiss</button>
   </div>
 </div>
-
-<!-- Authentic Tista Sign-In Theme (tista.app/users/sign_in) -->
-<div id="auth-gateway" style="display:none;">
-  <div class="tista-login-container">
-    <div class="tista-logo-header">
-      <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="12" fill="url(#tista_bg)" />
-        <path d="M16 12L34 24L16 36V12Z" fill="#ffffff" fill-opacity="0.95"/>
-        <path d="M16 12L27 24L16 24V12Z" fill="#ffffff" fill-opacity="0.35"/>
-        <defs>
-          <linearGradient id="tista_bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#8cd5e8"/>
-            <stop offset="1" stop-color="#4ea1b8"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <span class="tista-logo-text">tista</span>
-    </div>
-
-    <div class="tista-auth-card">
-      <h2 class="tista-card-title">WELCOME</h2>
-
-      <!-- Error Alert Box -->
-      <div id="auth-error-box" class="tista-error-box" style="display:none;"></div>
-
-      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
-        <div class="tista-field">
-          <label for="auth-email">Email address</label>
-          <input type="email" id="auth-email" placeholder="user@email.com" required autocomplete="email">
-        </div>
-
-        <div class="tista-field">
-          <label for="auth-password">Password</label>
-          <div style="position:relative;display:flex;align-items:center;">
-            <input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password" style="width:100%;">
-            <button type="button" class="tista-eye-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">👁️</button>
-          </div>
-        </div>
-
-        <div class="tista-remember-row">
-          <label class="tista-checkbox-label">
-            <input type="checkbox" id="auth-remember" checked>
-            <span>Remember me</span>
-          </label>
-        </div>
-
-        <button type="submit" id="auth-submit-btn" class="tista-submit-btn">
-          <span id="auth-submit-spinner" class="btn-spinner" style="display:none;border-color:rgba(255,255,255,0.4);border-top-color:#ffffff;"></span>
-          <span id="auth-submit-text">Log in</span>
-        </button>
-
-        <div class="tista-links-row">
-          <a href="https://tista.app/users/password/new" target="_blank" class="tista-forgot-link">Forgot your password?</a>
-        </div>
-      </form>
-    </div>
-
-    <div class="tista-guest-row">
-      <a href="javascript:void(0)" onclick="continueAsGuest()">Need local offline mode? Continue as Guest</a>
-    </div>
-  </div>
-</div>
-
 <div class="wrap">
 <header style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
   <div><h1>Chargeback Calculator</h1><p class="sub">Correction and delay chargebacks, using the price list and formulas from the Excel workbook.</p></div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <!-- User Badge -->
-    <div id="user-session-badge" style="display:none;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);padding:5px 12px;border-radius:20px;font-size:12px;">
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2ecc71;"></span>
-      <span id="user-email-display" style="font-weight:600;color:var(--ink);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">user@example.com</span>
-      <button type="button" onclick="handleLogout()" class="btn" style="padding:2px 8px;font-size:11px;border-radius:12px;background:none;border:none;cursor:pointer;color:var(--muted);" title="Sign out from this account">Sign Out</button>
-    </div>
-    <button id="auth-login-link-btn" type="button" onclick="showAuthGateway()" class="btn" style="display:none;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;">
-      🔑 Tista Login
+    <button id="btn-tista-login" type="button" class="btn" style="display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;">
+      <span id="tista-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e3b341"></span>
+      <span id="tista-status-text">🔑 Tista Login</span>
     </button>
     <a href="BOOKMARKLET.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(32,178,170,0.15);border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:20px;" title="কোনো পাইথন বা সার্ভার ছাড়াই সরাসরি ব্রাউজারে Tista-র ভেতরে কাজ করুন">
       ⚡ সার্ভার ছাড়া Tista-তে ব্যবহার করুন (Serverless)
@@ -412,7 +168,7 @@ function getApiBase(){
   if (window.location.protocol.startsWith('http')) {
     const h = window.location.hostname;
     if (h.endsWith('.vercel.app')) {
-      return (custom && custom.trim()) ? custom.trim().replace(/\/+$/, '') : 'https://tista-chargeback-calculator.onrender.com';
+      return (custom && custom.trim()) ? custom.trim().replace(/\/+$/, '') : 'http://127.0.0.1:8765';
     }
     if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
     if (window.location.port) return window.location.origin;
@@ -420,53 +176,6 @@ function getApiBase(){
   return 'http://127.0.0.1:8765';
 }
 const API_BASE = getApiBase();
-
-// ---------- Multi-User Auth Helpers ----------
-function getAuthUser() {
-  try {
-    const raw = localStorage.getItem('tista_auth_user') || sessionStorage.getItem('tista_auth_user');
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) {
-    return null;
-  }
-}
-
-function setAuthUser(user, remember) {
-  try {
-    const str = JSON.stringify(user);
-    if (remember) {
-      localStorage.setItem('tista_auth_user', str);
-      sessionStorage.removeItem('tista_auth_user');
-    } else {
-      sessionStorage.setItem('tista_auth_user', str);
-      localStorage.removeItem('tista_auth_user');
-    }
-  } catch(e) {}
-}
-
-function clearAuthUser() {
-  try {
-    localStorage.removeItem('tista_auth_user');
-    sessionStorage.removeItem('tista_auth_user');
-  } catch(e) {}
-}
-
-function getAuthHeaders() {
-  const u = getAuthUser();
-  if (u && u.email) {
-    return {
-      'X-Tista-Email': u.email,
-      'X-Tista-Password': u.password || ''
-    };
-  }
-  return {};
-}
-
-function apiFetch(url, options = {}) {
-  const authHeaders = getAuthHeaders();
-  const headers = Object.assign({}, authHeaders, options.headers || {});
-  return fetch(url, Object.assign({}, options, { headers }));
-}
 
 // ---------- helpers ----------
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -942,7 +651,7 @@ async function fetchLiveTista(idInputId='au-id', statusId='au-status', autoApply
   }
   showLoading(`Fetching Order #${oid}`, 'Connecting to Tista & retrieving order details...');
   try {
-    const res = await apiFetch(`${API_BASE}/api/fetch?order_id=${oid}`);
+    const res = await fetch(`${API_BASE}/api/fetch?order_id=${oid}`);
     if(!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
@@ -978,7 +687,7 @@ async function extractFilesFromDelLink(){
   if(btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Extracting...'; }
   if(status) { status.textContent = 'Extracting files from link...'; status.style.color = 'var(--accent)'; }
   try {
-    const res = await apiFetch(`${API_BASE}/api/fetch_link_files?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${API_BASE}/api/fetch_link_files?url=${encodeURIComponent(url)}`);
     const data = await res.json();
     if(data.success && data.filenames && data.filenames.length){
       S.del.comment_link = url;
@@ -1588,7 +1297,7 @@ async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
   }
   showLoading(`Fetching Order #${oid}`, 'Connecting to Tista & calculating Correction chargeback...');
   try {
-    const res = await apiFetch(`${API_BASE}/api/fetch?order_id=${oid}`);
+    const res = await fetch(`${API_BASE}/api/fetch?order_id=${oid}`);
     if(!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
@@ -1640,7 +1349,7 @@ async function fetchLiveCorrection(oid, statusId='aucor-status'){
   }
   showLoading(`Fetching Files for #${oid}`, 'Retrieving files and categories from Tista...');
   try {
-    const res = await apiFetch(`${API_BASE}/api/fetch_files?order_id=${oid}`);
+    const res = await fetch(`${API_BASE}/api/fetch_files?order_id=${oid}`);
     if(!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
@@ -1682,7 +1391,7 @@ async function importFromGoogleSlides(slideUrl){
   showLoading('Fetching Google Slides...', 'Extracting Order IDs, Services, Severities, and File Names from presentation slides...', true);
 
   try {
-    const res = await apiFetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}`);
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Failed to fetch slides');
     
@@ -2478,7 +2187,7 @@ async function fetchLiveBatchDisputes(customQuery=null){
     };
     const qs = new URLSearchParams(params).toString();
 
-    const res = await apiFetch(`${API_BASE}/api/fetch_disputes?${qs}`);
+    const res = await fetch(`${API_BASE}/api/fetch_disputes?${qs}`);
     if(!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
@@ -2568,6 +2277,12 @@ function openDisputeInCalc(idx){
     S.del.dur = d.order_duration || '24:00:00';
     S.del.sec = d.delay_seconds || -6185;
     S.autoId = raw_oid;
+    if(d.filenames && d.filenames.length){
+      S.del.filenames = d.filenames;
+      S.del.qty = d.filenames.length;
+    }
+    if(d.comment) S.del.comment = d.comment;
+    if(d.comment_link) S.del.comment_link = d.comment_link;
     S.tab = 'del';
   } else {
     S.cor.contractor = d.contractor || S.cor.contractor;
@@ -2615,7 +2330,7 @@ async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId){
   showLoading('Closing Dispute on Tista...', `Charging $${amt.toFixed(2)} to vendor & updating status to Closed...`);
 
   try {
-    const res = await apiFetch(`${API_BASE}/api/close_dispute`, {
+    const res = await fetch(`${API_BASE}/api/close_dispute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2672,7 +2387,7 @@ async function closeBatchRow(idx){
   showLoading('Closing Dispute on Tista...', `Updating Order ${d.order_id} ($${amt.toFixed(2)})...`);
 
   try {
-    const res = await apiFetch(`${API_BASE}/api/close_dispute`, {
+    const res = await fetch(`${API_BASE}/api/close_dispute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2740,7 +2455,7 @@ async function closeBatchAll(){
   showLoading('Batch Closing Disputes on Tista...', `Processing ${items.length} visible disputes ($${totalAmt.toFixed(2)}). Please wait...`);
 
   try {
-    const res = await apiFetch(`${API_BASE}/api/batch_close_disputes`, {
+    const res = await fetch(`${API_BASE}/api/batch_close_disputes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ disputes: items })
@@ -3013,170 +2728,72 @@ pane.addEventListener('click',e=>{
 });
 render();
 
-// ---------- Modern Multi-User Auth Gateway & Session Management ----------
-function updateAuthUI() {
-  const user = getAuthUser();
-  const gateway = $('auth-gateway');
-  const userBadge = $('user-session-badge');
-  const emailDisplay = $('user-email-display');
-  const loginLink = $('auth-login-link-btn');
-
-  if (user && user.email) {
-    if (gateway) gateway.style.display = 'none';
-    if (userBadge) {
-      userBadge.style.display = 'inline-flex';
-      if (emailDisplay) emailDisplay.textContent = user.email;
-    }
-    if (loginLink) loginLink.style.display = 'none';
-  } else {
-    const isGuest = sessionStorage.getItem('tista_guest_mode') === '1';
-    if (userBadge) userBadge.style.display = 'none';
-    if (loginLink) loginLink.style.display = 'inline-flex';
-    if (gateway) {
-      gateway.style.display = isGuest ? 'none' : 'flex';
-    }
-  }
-}
-
-function showAuthGateway() {
-  sessionStorage.removeItem('tista_guest_mode');
-  const gateway = $('auth-gateway');
-  if (gateway) gateway.style.display = 'flex';
-  const emailInput = $('auth-email');
-  if (emailInput) {
-    const u = getAuthUser();
-    if (u && u.email) emailInput.value = u.email;
-    emailInput.focus();
-  }
-}
-
-function hideAuthGateway() {
-  const gateway = $('auth-gateway');
-  if (gateway) gateway.style.display = 'none';
-}
-
-function continueAsGuest() {
-  sessionStorage.setItem('tista_guest_mode', '1');
-  hideAuthGateway();
-  updateAuthUI();
-}
-
-function handleLogout() {
-  if (confirm('Are you sure you want to sign out from this account?')) {
-    clearAuthUser();
-    sessionStorage.removeItem('tista_guest_mode');
-    updateAuthUI();
-  }
-}
-
-function togglePasswordVisibility() {
-  const input = $('auth-password');
-  if (!input) return;
-  input.type = input.type === 'password' ? 'text' : 'password';
-}
-
-function switchAuthTab(tab) {
-  const passTab = $('auth-tab-pass');
-  const codeTab = $('auth-tab-code');
-  const passGroup = $('auth-password-group');
-  const errBox = $('auth-error-box');
-  if (tab === 'code') {
-    if (codeTab) codeTab.classList.add('active');
-    if (passTab) passTab.classList.remove('active');
-    if (passGroup) passGroup.style.display = 'none';
-    if (errBox) {
-      errBox.textContent = 'One-time code is not enabled for Tista. Please use the Password tab.';
-      errBox.style.display = 'block';
-    }
-  } else {
-    if (passTab) passTab.classList.add('active');
-    if (codeTab) codeTab.classList.remove('active');
-    if (passGroup) passGroup.style.display = 'block';
-    if (errBox) errBox.style.display = 'none';
-  }
-}
-
-async function handleAuthSubmit(event) {
-  if (event) event.preventDefault();
-  const errBox = $('auth-error-box');
-  const spinner = $('auth-submit-spinner');
-  const submitBtn = $('auth-submit-btn');
-  const submitTxt = $('auth-submit-text');
-  const emailInput = $('auth-email');
-  const passInput = $('auth-password');
-  const remember = $('auth-remember') ? $('auth-remember').checked : true;
-
-  if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
-
-  const email = emailInput ? emailInput.value.trim() : '';
-  const password = passInput ? passInput.value.trim() : '';
-
-  if (!email) {
-    if (errBox) { errBox.textContent = 'Please enter your email address.'; errBox.style.display = 'block'; }
-    return;
-  }
-  if (!password) {
-    if (errBox) { errBox.textContent = 'Please enter your password.'; errBox.style.display = 'block'; }
-    return;
-  }
-
-  if (spinner) spinner.style.display = 'inline-block';
-  if (submitBtn) submitBtn.disabled = true;
-  if (submitTxt) submitTxt.textContent = 'Logging in...';
-
-  try {
-    const res = await fetch(`${API_BASE}/api/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tista-Email': email,
-        'X-Tista-Password': password
-      },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-      setAuthUser({ email, password }, remember);
-      updateAuthUI();
-      hideAuthGateway();
-    } else {
-      throw new Error(data.error || 'Login failed. Please verify your email and password.');
-    }
-  } catch (err) {
-    if (errBox) {
-      errBox.textContent = err.message || 'Login failed. Could not connect to authentication server.';
-      errBox.style.display = 'block';
-    }
-  } finally {
-    if (spinner) spinner.style.display = 'none';
-    if (submitBtn) submitBtn.disabled = false;
-    if (submitTxt) submitTxt.textContent = 'Log in';
-  }
-}
-
+// ---------- Tista Login Helper & Live Status ----------
 async function checkTistaLoginStatus() {
   try {
-    const res = await apiFetch(`${API_BASE}/api/login_status`);
+    const res = await fetch(`${API_BASE}/api/login_status`);
     if(!res.ok) return;
     const data = await res.json();
-    const userBadge = $('user-session-badge');
-    const emailDisplay = $('user-email-display');
-    const loginLink = $('auth-login-link-btn');
-
-    if (data.logged_in) {
-      if (userBadge && !getAuthUser()) {
-        if (emailDisplay) emailDisplay.textContent = data.email || 'Logged In';
-        userBadge.style.display = 'inline-flex';
-        if (loginLink) loginLink.style.display = 'none';
-      }
+    const txt = $('tista-status-text');
+    const dot = $('tista-status-dot');
+    if(data.logged_in) {
+      if(txt) txt.textContent = '🟢 Tista Logged In';
+      if(dot) dot.style.background = '#2ecc71';
+    } else {
+      if(txt) txt.textContent = '🔑 Tista Login';
+      if(dot) dot.style.background = '#e3b341';
     }
   } catch(e) {
     // Offline / serverless mode
   }
 }
 
-// Initial authentication state check
-updateAuthUI();
+async function triggerTistaLogin() {
+  const btn = $('btn-tista-login');
+  const txt = $('tista-status-text');
+  const dot = $('tista-status-dot');
+
+  const isRemote = API_BASE.includes('onrender.com') || (window.location.protocol.startsWith('http') && !API_BASE.includes('127.0.0.1') && !API_BASE.includes('localhost'));
+  let bodyData = null;
+
+  if (isRemote) {
+    const email = prompt('Enter your Tista Email:');
+    if (!email) return;
+    const password = prompt('Enter your Tista Password:');
+    if (!password) return;
+    bodyData = JSON.stringify({ email: email.trim(), password: password.trim() });
+  }
+
+  if(txt) txt.textContent = 'Logging in...';
+  showLoading('Connecting to Tista...', isRemote ? 'Submitting credentials to save session on cloud server...' : 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+
+  try {
+    const opts = bodyData ? {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyData
+    } : { method: 'GET' };
+
+    const res = await fetch(`${API_BASE}/api/login`, opts);
+    const data = await res.json();
+    if(data.status === 'success') {
+      if(txt) txt.textContent = '🟢 Tista Logged In';
+      if(dot) dot.style.background = '#2ecc71';
+      alert('✓ Tista Login Successful! Your session has been permanently saved.');
+    } else {
+      throw new Error(data.error || 'Login was not completed.');
+    }
+  } catch(err) {
+    alert('Tista Login Helper: ' + err.message + '\n\nNote: You can also set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables.');
+  } finally {
+    hideLoading();
+    checkTistaLoginStatus();
+  }
+}
+
+if($('btn-tista-login')) {
+  $('btn-tista-login').addEventListener('click', triggerTistaLogin);
+}
 checkTistaLoginStatus();
 </script>
 

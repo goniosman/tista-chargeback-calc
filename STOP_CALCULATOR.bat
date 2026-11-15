@@ -9,6 +9,9 @@ echo ======================================================================
 echo.
 
 set FOUND=0
+taskkill /f /im Chargeback_Calculator.exe >nul 2>&1
+if not errorlevel 1 set FOUND=1
+
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8765" ^| findstr "LISTENING"') do (
     echo Killing process PID %%a ...
     taskkill /f /pid %%a >nul 2>&1
@@ -23,4 +26,3 @@ if "%FOUND%"=="1" (
 
 echo.
 pause
-

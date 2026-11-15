@@ -14,42 +14,156 @@ import re
 import sys
 import os
 import time
+import shutil
+import tempfile
 import urllib.request
-import hashlib
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
-from playwright.sync_api import sync_playwright
+
+# Safe stream wrappers so print never fails in windowed/GUI mode
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    except Exception:
+        pass
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    except Exception:
+        pass
+if sys.stdin is None:
+    class DummyStdin:
+        def readline(self): return ""
+        def read(self, *a): return ""
+        def isatty(self): return False
+    sys.stdin = DummyStdin()
+
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None
 
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
 APP_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
-LOCAL_PROFILE = APP_DIR / ".tista-profile"
+BUNDLE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
 
-# Allow custom profile directory via environment variable (e.g. Render persistent disk)
-CUSTOM_DATA_DIR = os.environ.get("TISTA_DATA_DIR")
-if CUSTOM_DATA_DIR:
-    USER_DATA_DIR = Path(CUSTOM_DATA_DIR)
-elif LOCAL_PROFILE.exists():
-    USER_DATA_DIR = LOCAL_PROFILE
-else:
-    USER_DATA_DIR = Path.home() / ".tista-profile"
+# Writable data directory (supports read-only DMG volumes / Applications on macOS)
+try:
+    if os.access(APP_DIR, os.W_OK):
+        DATA_DIR = APP_DIR
+    else:
+        DATA_DIR = Path.home() / ".tista-data"
+except Exception:
+    DATA_DIR = Path.home() / ".tista-data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-def resolve_profile_dir(user_identifier=None):
-    """Returns isolated persistent directory for specific user (e.g. per-user on Render/Cloud)."""
-    clean_id = str(user_identifier or "").strip().lower()
-    if not clean_id:
-        return USER_DATA_DIR
-    uhash = hashlib.sha256(clean_id.encode("utf-8")).hexdigest()[:16]
-    base = USER_DATA_DIR.parent / ".tista-profiles"
-    p = base / f"u_{uhash}"
-    p.mkdir(parents=True, exist_ok=True)
-    return p
-
-# Cloud / Headless auto-detection (True on Render or when HEADLESS is set)
+# Cloud / Headless auto-detection (True by default so data fetching runs silently in background)
 IS_CLOUD_ENV = bool(os.environ.get("RENDER") or os.environ.get("HEADLESS", "").lower() in ("1", "true", "yes"))
-DEFAULT_HEADLESS = True if IS_CLOUD_ENV else False
+DEFAULT_HEADLESS = True
+
+def resolve_profile_dir() -> Path:
+    """
+    Finds the active Chrome profile directory with Tista cookies,
+    checking local directory, sibling Report Apps directories, and home directory.
+    Follows unified_app architecture.
+    """
+    custom = os.environ.get("TISTA_DATA_DIR")
+    if custom:
+        p = Path(custom)
+        if p.exists():
+            return p
+
+    local_chrome = APP_DIR / "chrome-profile"
+    candidates = [
+        local_chrome,
+        APP_DIR / ".tista-profile",
+        Path(r"D:\Osman_File\_Report Apps\__Reporting Automation__\Chargeback data\chrome-profile"),
+        Path(r"D:\Osman_File\_Report Apps\Chargeback data\chrome-profile"),
+        Path(r"D:\Osman_File\_Report Apps\__Reporting Automation__\unified_app\chrome-profile"),
+        Path.home() / ".tista-profile",
+        Path.home() / "chrome-profile",
+    ]
+
+    for p in candidates:
+        if not p.exists():
+            continue
+        for cp in [p / "Default" / "Network" / "Cookies", p / "Default" / "Cookies", p / "Cookies"]:
+            if cp.exists() and cp.stat().st_size > 0:
+                return p
+
+    try:
+        local_chrome.mkdir(parents=True, exist_ok=True)
+        return local_chrome
+    except Exception:
+        return Path.home() / ".tista-profile"
+
+USER_DATA_DIR = resolve_profile_dir()
+
+def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
+    """
+    Launches persistent context using Google Chrome channel and anti-automation flag,
+    matching unified_app. Includes profile lock handling with temp profile fallback.
+    """
+    profile = resolve_profile_dir()
+    profile.mkdir(parents=True, exist_ok=True)
+
+    args = ["--disable-blink-features=AutomationControlled"]
+    viewport = {"width": 1280, "height": 800}
+
+    # 1. Try Google Chrome channel first
+    try:
+        return p.chromium.launch_persistent_context(
+            user_data_dir=str(profile),
+            channel="chrome",
+            headless=headless,
+            viewport=viewport,
+            args=args
+        )
+    except Exception as e1:
+        print(f"[*] Chrome channel launch note: {e1}")
+
+    # 2. Try standard Playwright Chromium with primary profile
+    try:
+        return p.chromium.launch_persistent_context(
+            user_data_dir=str(profile),
+            headless=headless,
+            viewport=viewport,
+            args=args
+        )
+    except Exception as e2:
+        print(f"[*] Standard persistent profile locked or failed: {e2}")
+
+    # 3. Fallback to temp directory with copied cookies if primary profile is locked
+    temp_dir = Path(tempfile.mkdtemp(prefix="tista_chrome_"))
+    print(f"[*] Primary profile locked, falling back to temp profile: {temp_dir}")
+    try:
+        for c_src in [profile / "Default" / "Network" / "Cookies", profile / "Default" / "Cookies"]:
+            if c_src.exists():
+                target = temp_dir / "Default" / "Network"
+                target.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(c_src, target / "Cookies")
+                break
+    except Exception:
+        pass
+
+    try:
+        return p.chromium.launch_persistent_context(
+            user_data_dir=str(temp_dir),
+            channel="chrome",
+            headless=headless,
+            viewport=viewport,
+            args=args
+        )
+    except Exception:
+        return p.chromium.launch_persistent_context(
+            user_data_dir=str(temp_dir),
+            headless=headless,
+            viewport=viewport,
+            args=args
+        )
 
 KNOWN_SERVICES = [
     "Clipping path", "Multi-clipping path", "Image masking", "Drop shadow",
@@ -121,17 +235,17 @@ def hours_to_seconds(text):
     n = re.search(r"-?\d+(?:\.\d+)?", t)
     return round(float(n[0]) * 3600) if n else None
 
-def ensure_logged_in(page, email=None, password=None):
-    """Ensures user is logged into Tista. If on login page, attempts auto-login with credentials or waits for user."""
-    page.goto(BASE_URL)
-    page.wait_for_load_state("domcontentloaded")
+def ensure_logged_in(page):
+    """Ensures user is logged into Tista. If on login page, attempts auto-login with env credentials or waits for user."""
+    page.goto(DISPUTES_URL, wait_until="domcontentloaded")
     time.sleep(1)
 
-    if "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
-        email = email or os.environ.get("TISTA_EMAIL")
-        password = password or os.environ.get("TISTA_PASSWORD")
+    is_login = ("sign_in" in page.url or "login" in page.url or page.locator('input[type="password"]').count() > 0)
+    if is_login:
+        email = os.environ.get("TISTA_EMAIL")
+        password = os.environ.get("TISTA_PASSWORD")
         if email and password:
-            print(f"\n[✓] Logging in for '{email}' with credentials...")
+            print("\n[✓] Logging in with TISTA_EMAIL / TISTA_PASSWORD environment credentials...")
             try:
                 email_input = page.locator('#user_email, input[type="email"], input[name*="email"]').first
                 pass_input = page.locator('#user_password, input[type="password"], input[name*="password"]').first
@@ -141,23 +255,18 @@ def ensure_logged_in(page, email=None, password=None):
                     rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
                     if rem.count() > 0 and not rem.is_checked():
                         rem.check()
-                    submit_btn = page.locator('input[type="submit"], button[type="submit"], input[value*="Log in"], input[value*="Sign in"]').first
+                    submit_btn = page.locator('input[type="submit"], button[type="submit"]').first
                     if submit_btn.count() > 0:
                         submit_btn.click()
-                    else:
-                        pass_input.press("Enter")
-                    for _ in range(12):
-                        time.sleep(1)
-                        if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
-                            break
-                        if page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback').count() > 0:
-                            break
+                    page.wait_for_load_state("domcontentloaded", timeout=15000)
+                    time.sleep(2)
             except Exception as e:
                 print(f"[!] Auto-login exception: {e}")
 
-        if "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
+        is_still_login = ("sign_in" in page.url or "login" in page.url or page.locator('input[type="password"]').count() > 0)
+        if is_still_login:
             if DEFAULT_HEADLESS:
-                raise RuntimeError("Not logged into Tista. Please sign in with your work email and password.")
+                raise RuntimeError("Not logged into Tista. Please click '🔑 Tista Login' in the calculator or run login_tista.bat.")
 
             print("\n" + "=" * 60)
             print("[!] TISTA LOGIN REQUIRED:")
@@ -178,16 +287,15 @@ def ensure_logged_in(page, email=None, password=None):
                 pass
 
             start_time = time.time()
-            while "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
+            while "sign_in" in page.url or "login" in page.url or page.locator('input[type="password"]').count() > 0:
                 time.sleep(1)
                 if time.time() - start_time > 300:
                     raise TimeoutError("Login timed out after 5 minutes.")
 
-        print("[✓] Login successful! Saved to profile.\n")
-        page.wait_for_load_state("networkidle")
+        print("[✓] Login verified! Saved to profile.\n")
         time.sleep(1)
 
-def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = None, password: str = None):
+def fetch_order_from_tista(order_id: str, headless: bool = True):
     """
     Automates Tista login, dispute extraction, and order file parsing using Playwright.
     """
@@ -199,7 +307,6 @@ def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = N
     if not oid:
         return {"error": "Invalid Order ID"}
 
-    profile_dir = resolve_profile_dir(email)
     out = {
         "order_id": oid,
         "dispute_id": "",
@@ -223,16 +330,18 @@ def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = N
         "warnings": []
     }
 
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            str(profile_dir),
-            headless=headless,
-            viewport={"width": 1400, "height": 900}
-        )
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         # Step 1: Ensure user is logged in
-        ensure_logged_in(page, email=email, password=password)
+        ensure_logged_in(page)
 
         # Step 2: Search in Disputes Page (supports Order ID with/without hash and Dispute ID)
         print(f"[*] Searching for Order / Dispute '{raw_id}' in Disputes...")
@@ -315,13 +424,13 @@ def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = N
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit"
                     edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
                     time.sleep(1.5)
-                    c_el = edit_page.locator("#order_dispute_comment")
+                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
                     if c_el.count() > 0:
                         c_val = c_el.input_value().strip()
                         if c_val:
                             out["comment"] = c_val
                             print(f"[✓] Extracted dispute comment: {c_val}")
-                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27]+", c_val)]
+                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
                             if urls:
                                 link = urls[0]
                                 out["comment_link"] = link
@@ -477,7 +586,7 @@ def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = N
 
         ctx.close()
 
-    output_file = Path(__file__).with_name(f"tista_{oid}.json")
+    output_file = DATA_DIR / f"tista_{oid}.json"
     output_file.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n[✓] Successfully saved fetched data to: {output_file}")
     return out
@@ -514,7 +623,7 @@ def parse_file_services(services_raw):
                 current_services.append(line)
     return parsed
 
-def fetch_order_files_from_tista(order_id: str, headless: bool = False, email: str = None, password: str = None):
+def fetch_order_files_from_tista(order_id: str, headless: bool = True):
     """
     Fetches the list of files, services, categories, and location for an order to calculate Correction chargebacks.
     """
@@ -532,13 +641,19 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = False, email: s
         "warnings": []
     }
 
-    profile_dir = resolve_profile_dir(email)
+    profile_dir = USER_DATA_DIR
+
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
 
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(str(profile_dir), headless=headless)
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-        ensure_logged_in(page, email=email, password=password)
+        ensure_logged_in(page)
 
         # 0. If 5 digits or not found, check if it's a Dispute ID first
         if len(digits) == 5:
@@ -714,7 +829,7 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = False, email: s
         result["files"] = files_list
         ctx.close()
 
-    out_file = Path(__file__).with_name(f"tista_correction_{oid}.json")
+    out_file = DATA_DIR / f"tista_correction_{oid}.json"
     out_file.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[✓] Saved {len(files_list)} files to: {out_file}")
     return result
@@ -756,7 +871,7 @@ def format_tista_date_range(date_str=None, start_date=None, end_date=None):
         return date_str.strip()
     return ""
 
-def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False, email: str = None, password: str = None):
+def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False):
     """
     Fetches list of disputes based on filters (Dispute reason, Status, Chargeable to, Location, Order ID),
     and optionally deep-scans order files to extract service and category.
@@ -806,11 +921,17 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     url = f"{DISPUTES_URL}?{qs}" if qs else DISPUTES_URL
     print(f"\n[*] Navigating to disputes search: {url}")
 
-    profile_dir = resolve_profile_dir(email)
+    profile_dir = USER_DATA_DIR
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(str(profile_dir), headless=headless)
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        ensure_logged_in(page, email=email, password=password)
+        ensure_logged_in(page)
         page.goto(url)
         page.wait_for_load_state("domcontentloaded")
         time.sleep(2)
@@ -875,8 +996,13 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             qty = int(re.sub(r"\D", "", r["fault_quantity"]) or 1)
             reason_name = r["dispute_reason"] or "Correction"
 
-            cached_corr = Path(__file__).with_name(f"tista_correction_{raw_oid}.json")
-            cached_delay = Path(__file__).with_name(f"tista_{raw_oid}.json")
+            cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
+            if not cached_corr.exists():
+                cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+
+            cached_delay = DATA_DIR / f"tista_{raw_oid}.json"
+            if not cached_delay.exists():
+                cached_delay = APP_DIR / f"tista_{raw_oid}.json"
 
             detected_svc = ""
             detected_cat = ""
@@ -981,12 +1107,12 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
                     edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
                     time.sleep(1.2)
-                    c_el = edit_page.locator("#order_dispute_comment")
+                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
                     if c_el.count() > 0:
                         c_val = c_el.input_value().strip()
                         if c_val:
                             disp_comment = c_val
-                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27]+", c_val)]
+                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
                             if urls:
                                 disp_link = urls[0]
                                 disp_files = extract_filenames_from_page(edit_page, disp_link)
@@ -1028,30 +1154,69 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
         "total_disputes": len(out_list),
         "disputes": out_list
     }
-    out_file = Path(__file__).with_name("tista_batch_disputes.json")
+    out_file = DATA_DIR / "tista_batch_disputes.json"
     out_file.write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[✓] Saved {len(out_list)} disputes to: {out_file}")
     return res
 
 def extract_filenames_from_page(page, url):
-    """Navigates to a file storage or transfer URL (Dropbox, etc.) and extracts all filenames."""
+    """
+    Navigates to a file storage or transfer URL (Dropbox, Google Drive, WeTransfer, etc.)
+    and extracts all filenames reliably using TreeWalker and attribute search.
+    """
     if not url: return []
     clean_url = str(url).strip().rstrip(".,;")
     print(f"[*] Extracting filenames from link: {clean_url}")
     try:
-        page.goto(clean_url, wait_until="domcontentloaded", timeout=25000)
+        try:
+            page.goto(clean_url, wait_until="networkidle", timeout=25000)
+        except Exception:
+            page.goto(clean_url, wait_until="domcontentloaded", timeout=25000)
         time.sleep(2.5)
+
         files = page.evaluate("""() => {
-            const elements = document.querySelectorAll('*');
-            const filenames = [];
-            for (const el of elements) {
-                const txt = el.innerText ? el.innerText.trim() : '';
-                if (/\\.(?:jpg|jpeg|png|psd|tif|tiff|cr2|raw|dng|ai|eps|pdf)$/i.test(txt) && txt.length < 150 && !txt.includes('\\n')) {
-                    filenames.push(txt);
+            const filenames = new Set();
+            const extRegex = /\\.(?:jpg|jpeg|png|psd|tif|tiff|cr2|raw|dng|ai|eps|pdf)$/i;
+            const fullRegex = /[\\w\\-. ]+\\.(?:jpg|jpeg|png|psd|tif|tiff|cr2|raw|dng|ai|eps|pdf)/gi;
+            const ignoreList = ['dropbox', 'logo', 'favicon', 'icon', 'apple-touch', 'webclip', 'badge', 'banner'];
+
+            function isIgnored(name) {
+                const lower = name.toLowerCase();
+                return ignoreList.some(ig => lower.includes(ig)) || name.length < 4 || name.length > 200;
+            }
+
+            // 1. Text walker on all visible text nodes
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                const val = (node.nodeValue || '').trim();
+                if (extRegex.test(val) && !isIgnored(val)) {
+                    filenames.add(val);
+                } else if (val.length < 300) {
+                    const matches = val.match(fullRegex);
+                    if (matches) {
+                        for (const m of matches) {
+                            const cleanM = m.trim();
+                            if (!isIgnored(cleanM)) filenames.add(cleanM);
+                        }
+                    }
                 }
             }
-            return [...new Set(filenames)];
+
+            // 2. Check title, alt, data-filename, aria-label attributes
+            const attrElements = document.querySelectorAll('[title], [alt], [data-filename], [aria-label]');
+            for (const el of attrElements) {
+                for (const attr of ['title', 'alt', 'data-filename', 'aria-label']) {
+                    const v = (el.getAttribute(attr) || '').trim();
+                    if (v && extRegex.test(v) && !isIgnored(v)) {
+                        filenames.add(v);
+                    }
+                }
+            }
+
+            return [...filenames];
         }""")
+        print(f"[✓] Extracted {len(files)} filenames from {clean_url}")
         return files
     except Exception as e:
         print(f"[!] Error extracting filenames from {clean_url}: {e}")
@@ -1059,8 +1224,14 @@ def extract_filenames_from_page(page, url):
 
 def extract_filenames_from_link_standalone(url: str, headless: bool = True):
     """Launches Playwright headless and extracts filenames from any storage/transfer link."""
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(str(USER_DATA_DIR), headless=headless)
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.new_page()
         files = extract_filenames_from_page(page, url)
         ctx.close()
@@ -1086,18 +1257,25 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}/edit"
     print(f"[*] Fetching dispute edit page: {edit_url}")
 
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(str(USER_DATA_DIR), headless=headless)
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.new_page()
         try:
+            ensure_logged_in(page)
             page.goto(edit_url, wait_until="domcontentloaded", timeout=25000)
             time.sleep(1.5)
-            comment_el = page.locator("#order_dispute_comment")
+            comment_el = page.locator("#order_dispute_comment, textarea[name*='comment']").first
             if comment_el.count() > 0:
                 comment_val = comment_el.input_value().strip()
                 result["comment"] = comment_val
                 print(f"[✓] Extracted comment: {comment_val}")
-                urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27]+", comment_val)]
+                urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", comment_val)]
                 if urls:
                     link = urls[0]
                     result["comment_link"] = link
@@ -1114,7 +1292,7 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
 
     return result
 
-def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, headless: bool = False, email: str = None, password: str = None):
+def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, headless: bool = False):
     """
     Charges the specified amount to vendor and closes the dispute on Tista.
     """
@@ -1122,14 +1300,15 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
     raw_oid = re.sub(r"\D", "", str(order_id or ""))
     charge_amt = round(max(2.0, float(amount or 2.0)), 2)
 
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(resolve_profile_dir(email)),
-            headless=headless,
-            slow_mo=100
-        )
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        ensure_logged_in(page, email=email, password=password)
 
         # Step 1: Resolve dispute_id if missing
         if not clean_dispute_id and raw_oid:
@@ -1219,19 +1398,24 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
             "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
         }
 
-def batch_close_disputes_on_tista(items: list, headless: bool = False, email: str = None, password: str = None):
+def batch_close_disputes_on_tista(items: list, headless: bool = False):
     """
     Charges to vendor and closes multiple disputes in a single browser session.
     """
     results = []
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(resolve_profile_dir(email)),
+            user_data_dir=str(USER_DATA_DIR),
             headless=headless,
             slow_mo=50
         )
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        ensure_logged_in(page, email=email, password=password)
 
         for it in items:
             did = str(it.get("dispute_id") or "").strip()
@@ -1299,42 +1483,49 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False, email: st
         "results": results
     }
 
-def check_tista_login_status(email=None):
+def check_tista_login_status():
     """Checks if Tista profile exists and has saved session cookies/storage."""
-    profile_dir = resolve_profile_dir(email) if email else USER_DATA_DIR
+    profile_dir = resolve_profile_dir()
     if not profile_dir.exists():
         return {"logged_in": False, "reason": "No profile directory"}
-    has_default = (profile_dir / "Default").exists() or (profile_dir / "Cookies").exists()
-    return {"logged_in": has_default, "email": email or ""}
+    has_cookies = False
+    for cp in [profile_dir / "Default" / "Network" / "Cookies", profile_dir / "Default" / "Cookies", profile_dir / "Cookies"]:
+        if cp.exists() and cp.stat().st_size > 0:
+            has_cookies = True
+            break
+    return {"logged_in": has_cookies, "profile_dir": str(profile_dir)}
 
 def perform_tista_login(email=None, password=None):
-    """Logs in to Tista. In headless / cloud mode, uses provided credentials or env vars; locally opens visible browser."""
+    """Logs in to Tista. Local runs open visible Chrome matching unified_app."""
+    profile_dir = resolve_profile_dir()
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
     email = (email or os.environ.get("TISTA_EMAIL", "")).strip()
     password = (password or os.environ.get("TISTA_PASSWORD", "")).strip()
 
-    profile_dir = resolve_profile_dir(email) if email else USER_DATA_DIR
-    profile_dir.mkdir(parents=True, exist_ok=True)
-
-    headless = DEFAULT_HEADLESS
-    if headless and not (email and password):
+    # In cloud environments (Render), login runs headless with env credentials.
+    # On local desktop, login opens a visible Google Chrome window so the user can sign in.
+    headless = True if (IS_CLOUD_ENV and email and password) else False
+    if IS_CLOUD_ENV and not (email and password):
         return {
             "status": "error",
-            "error": "Tista credentials missing. Please enter your work email and password to sign in."
+            "error": "Tista credentials missing. Please set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables."
         }
 
     print("\n" + "=" * 60)
-    print(f" [*] Logging in to Tista for '{email or 'local'}' (Headless: {headless})...")
+    print(f" [*] Logging in to Tista (Headless: {headless})...")
     print("=" * 60 + "\n")
 
+    if not sync_playwright:
+        return {
+            "status": "error",
+            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+        }
+
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            str(profile_dir),
-            headless=headless,
-            viewport={"width": 1360, "height": 880}
-        )
+        ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        page.goto("https://tista.app/users/sign_in")
-        page.wait_for_load_state("domcontentloaded")
+        page.goto(DISPUTES_URL, wait_until="domcontentloaded")
         time.sleep(1)
 
         if email and password:
@@ -1353,24 +1544,36 @@ def perform_tista_login(email=None, password=None):
                         submit_btn.click()
                     else:
                         pass_input.press("Enter")
-                    for _ in range(12):
-                        time.sleep(1)
-                        if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
-                            break
-                        if page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback').count() > 0:
-                            break
+                    try:
+                        page.wait_for_load_state("domcontentloaded", timeout=12000)
+                    except Exception:
+                        pass
+                    time.sleep(2)
             except Exception as e:
                 print(f" [!] Login submission error: {e}")
 
+        try:
+            rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
+            if rem.count() > 0 and not rem.is_checked():
+                rem.check()
+        except Exception:
+            pass
+
         if not headless:
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
             # Wait until user signs in (URL leaves sign_in or no password box)
             start_t = time.time()
-            while time.time() - start_t < 180:
-                if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
+            while time.time() - start_t < 300:
+                cur_url = page.url.lower()
+                is_on_login = "sign_in" in cur_url or "login" in cur_url or page.locator('input[type="password"]').count() > 0
+                if not is_on_login:
                     break
                 time.sleep(1)
 
-        is_logged_in = "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0
+        is_logged_in = "sign_in" not in page.url and "login" not in page.url and page.locator('input[type="password"]').count() == 0
 
         err_msg = ""
         if not is_logged_in:
@@ -1385,10 +1588,10 @@ def perform_tista_login(email=None, password=None):
         ctx.close()
 
     if is_logged_in:
-        print(f"[✓] Login completed for '{email}'. Session saved to profile.\n")
-        return {"status": "success", "message": "Login completed successfully", "email": email}
+        print("[✓] Login flow completed. Session saved to profile.\n")
+        return {"status": "success", "message": "Login completed successfully"}
     else:
-        detail = f": {err_msg}" if err_msg else ". Please verify your work email and password."
+        detail = f": {err_msg}" if err_msg else ". Please verify your Tista Email and Password."
         return {"status": "error", "error": f"Login failed{detail}"}
 
 def clean_html_block(html):
@@ -1669,7 +1872,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Tista-Email, X-Tista-Password, Authorization")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -1678,10 +1881,6 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        qs = parse_qs(parsed.query)
-        user_email = self.headers.get("X-Tista-Email") or qs.get("user_email", [None])[0]
-        user_password = self.headers.get("X-Tista-Password") or qs.get("user_password", [None])[0]
-
         if parsed.path in ("", "/", "/index.html", "/calc", "/calculator"):
             self.send_response(302)
             self.send_header("Location", "/Chargeback%20Calculator.html")
@@ -1689,10 +1888,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login", "/api/tista_login"):
-            print(f"\n[API GET] Received Tista login request for: '{user_email or 'env'}'...")
+            print("\n[API] Received Tista login request...")
             try:
-                res = perform_tista_login(email=user_email, password=user_password)
-                self.send_response(200 if res.get("status") == "success" else 400)
+                res = perform_tista_login()
+                self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
@@ -1704,7 +1903,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login_status", "/api/tista_login_status"):
-            res = check_tista_login_status(email=user_email)
+            res = check_tista_login_status()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -1733,9 +1932,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 "end_date": end_date,
                 "deep_scan": deep_scan
             }
-            print(f"\n[API] Received batch disputes request with filters: {filters} (User: {user_email or 'default'})")
+            print(f"\n[API] Received batch disputes request with filters: {filters}")
             try:
-                result = fetch_disputes_batch_from_tista(filters, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                result = fetch_disputes_batch_from_tista(filters, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1756,9 +1955,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing order_id parameter"}).encode("utf-8"))
                 return
 
-            print(f"\n[API] Received files fetch request for Order #{order_id} (User: {user_email or 'default'})")
+            print(f"\n[API] Received files fetch request for Order #{order_id}")
             try:
-                result = fetch_order_files_from_tista(order_id, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                result = fetch_order_files_from_tista(order_id, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1796,9 +1995,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing order_id parameter"}).encode("utf-8"))
                 return
 
-            print(f"\n[API] Received fetch request for Order #{order_id} (User: {user_email or 'default'})")
+            print(f"\n[API] Received fetch request for Order #{order_id}")
             try:
-                result = fetch_order_from_tista(order_id, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                result = fetch_order_from_tista(order_id, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1862,9 +2061,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = qs.get("dispute_id", [""])[0]
             amount = float(qs.get("amount", [2.0])[0] or 2.0)
             comment = qs.get("comment", [""])[0]
-            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount} (User: {user_email or 'default'})")
+            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1889,12 +2088,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             except Exception:
                 pass
 
-        user_email = self.headers.get("X-Tista-Email") or data.get("email") or data.get("user_email")
-        user_password = self.headers.get("X-Tista-Password") or data.get("password") or data.get("user_password")
-
         if parsed.path in ("/api/login", "/api/tista_login"):
             try:
-                res = perform_tista_login(email=user_email, password=user_password)
+                res = perform_tista_login(email=data.get("email"), password=data.get("password"))
                 self.send_response(200 if res.get("status") == "success" else 400)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1907,7 +2103,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login_status", "/api/tista_login_status"):
-            res = check_tista_login_status(email=user_email)
+            res = check_tista_login_status()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -1934,9 +2130,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = data.get("dispute_id", "")
             amount = float(data.get("amount", 2.0) or 2.0)
             comment = data.get("comment", "")
-            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount} (User: {user_email or 'default'})")
+            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1950,9 +2146,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
         if parsed.path == "/api/batch_close_disputes":
             items = data.get("disputes", [])
-            print(f"\n[API POST] Batch close disputes: {len(items)} items (User: {user_email or 'default'})")
+            print(f"\n[API POST] Batch close disputes: {len(items)} items")
             try:
-                res = batch_close_disputes_on_tista(items, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
+                res = batch_close_disputes_on_tista(items, headless=DEFAULT_HEADLESS)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -2024,11 +2220,12 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
-def start_server(port=None, host="0.0.0.0"):
+def start_server(port=None, host="127.0.0.1"):
     if port is None:
         port = int(os.environ.get("PORT", 8765))
     server_address = (host, port)
-    os.chdir(APP_DIR)
+    serve_dir = BUNDLE_DIR if (BUNDLE_DIR / "Chargeback Calculator.html").exists() else APP_DIR
+    os.chdir(serve_dir)
     httpd = HTTPServer(server_address, TistaRequestHandler)
     local_ip = get_local_ip()
     print(f"\n========================================================")
@@ -2054,7 +2251,14 @@ def main():
         return
 
     # If run in GUI/frozen mode or no interactive terminal attached, default to start_server
-    if getattr(sys, 'frozen', False) or not sys.stdin or not hasattr(sys.stdin, 'isatty') or not sys.stdin.isatty():
+    is_interactive = False
+    try:
+        if sys.stdin and hasattr(sys.stdin, 'isatty') and sys.stdin.isatty():
+            is_interactive = True
+    except Exception:
+        is_interactive = False
+
+    if getattr(sys, 'frozen', False) or not is_interactive:
         start_server(port=port)
         return
 
@@ -2066,7 +2270,9 @@ def main():
         try:
             order_id = input("Enter Tista Order ID: ").strip()
         except (KeyboardInterrupt, EOFError, RuntimeError, Exception):
-            sys.exit(0)
+            # If input fails for any reason (e.g. sys.stdin closed), start the server
+            start_server(port=port)
+            return
 
     if not order_id:
         print("Error: Order ID is required.")
@@ -2074,13 +2280,13 @@ def main():
 
     if is_files_mode:
         print(f"\nFetching files for Order #{order_id}...")
-        res = fetch_order_files_from_tista(order_id, headless=False)
+        res = fetch_order_files_from_tista(order_id, headless=True)
         print(f"\n[✓] Fetched {res.get('total_files', 0)} files for Order #{res.get('order_id')}")
         print(f"Contractor: {res.get('contractor')}")
         return
 
     print(f"\nFetching data for Order #{order_id}...")
-    res = fetch_order_from_tista(order_id, headless=False)
+    res = fetch_order_from_tista(order_id, headless=True)
     print("\n--- Fetched Summary ---")
     print(f"Order ID:                 {res.get('order_id')}")
     print(f"Contractor Name:          {res.get('contractor') or res.get('dispute_location')}")
