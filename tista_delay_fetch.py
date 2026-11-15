@@ -258,8 +258,15 @@ def ensure_logged_in(page):
                     submit_btn = page.locator('input[type="submit"], button[type="submit"]').first
                     if submit_btn.count() > 0:
                         submit_btn.click()
-                    page.wait_for_load_state("domcontentloaded", timeout=15000)
-                    time.sleep(2)
+                    else:
+                        pass_input.press("Enter")
+
+                    # Wait up to 20 seconds for login redirection
+                    start_nav = time.time()
+                    while time.time() - start_nav < 20:
+                        time.sleep(1)
+                        if "sign_in" not in page.url.lower() and "login" not in page.url.lower() and page.locator('input[type="password"]').count() == 0:
+                            break
             except Exception as e:
                 print(f"[!] Auto-login exception: {e}")
 
@@ -1544,20 +1551,16 @@ def perform_tista_login(email=None, password=None):
                         submit_btn.click()
                     else:
                         pass_input.press("Enter")
-                    try:
-                        page.wait_for_load_state("domcontentloaded", timeout=12000)
-                    except Exception:
-                        pass
-                    time.sleep(2)
+
+                    # Wait up to 20 seconds for navigation/login redirect
+                    start_nav = time.time()
+                    while time.time() - start_nav < 20:
+                        time.sleep(1)
+                        cur_url = page.url.lower()
+                        if "sign_in" not in cur_url and "login" not in cur_url and page.locator('input[type="password"]').count() == 0:
+                            break
             except Exception as e:
                 print(f" [!] Login submission error: {e}")
-
-        try:
-            rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
-            if rem.count() > 0 and not rem.is_checked():
-                rem.check()
-        except Exception:
-            pass
 
         if not headless:
             try:
@@ -1578,9 +1581,17 @@ def perform_tista_login(email=None, password=None):
         err_msg = ""
         if not is_logged_in:
             try:
-                alerts = page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback, .flash-message')
+                alerts = page.locator('.alert-danger, .alert-warning, #flash_alert, .error_explanation, .invalid-feedback')
                 if alerts.count() > 0:
-                    err_msg = alerts.first.inner_text().strip()
+                    txt = alerts.first.inner_text().strip()
+                    if "You need to sign in or sign up" not in txt:
+                        err_msg = txt
+                if not err_msg:
+                    all_alerts = page.locator('.alert, .notice, #flash_notice, .flash-message')
+                    if all_alerts.count() > 0:
+                        txt = all_alerts.first.inner_text().strip()
+                        if "You need to sign in or sign up" not in txt:
+                            err_msg = txt
             except Exception:
                 pass
 
