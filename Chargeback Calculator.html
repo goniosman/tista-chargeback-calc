@@ -1,111 +1,860 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root {
+  --sidebar-bg: #311b92;
+  --sidebar-active: #4f35cf;
+  --sidebar-hover: rgba(255, 255, 255, 0.09);
+  --sidebar-text: #c7d2fe;
+  --sidebar-text-active: #ffffff;
+  
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --ink-secondary: #334155;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --line-light: #f1f5f9;
+  --soft: #f8fafc;
+  
+  --accent: #3b5bf0;
+  --accent-ink: #ffffff;
+  --accent-purple: #3724a8;
+  --accent-purple-hover: #2e1a96;
+  
+  --amount-green: #15803d;
+  --ok: #10b981;
+  --ok-soft: #ecfdf5;
+  --ok-border: #a7f3d0;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+/* Main App Shell Layout */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Left Sidebar */
+.app-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 100;
+  box-shadow: 2px 0 12px rgba(15, 23, 42, 0.08);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-brand-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-line-1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+.brand-line-2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sidebar-text);
+  line-height: 1.15;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 20px 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.sidebar-nav-item:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+}
+
+.sidebar-nav-item[aria-selected="true"] {
+  background: var(--sidebar-active);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.sidebar-nav-item .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  opacity: 0.92;
+}
+
+.sidebar-footer {
+  padding: 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-settings-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sidebar-settings-btn:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+}
+
+/* Main Content Area */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 26px 36px 48px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.main-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.breadcrumbs {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.header-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.header-sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-tista-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: all 0.15s ease;
+}
+
+.btn-tista-status:hover {
+  border-color: #cbd5e1;
+  background: #fafbfc;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: all 0.15s ease;
+}
+
+.btn-refresh:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--ink);
+}
+
+/* Card & Layout Styles */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.15fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .top {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Order ID Search Bar */
+.order-search-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.order-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.input-order {
+  flex: 1;
+  min-width: 240px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink);
+  background: #ffffff;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.input-order:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 91, 240, 0.14);
+}
+
+.btn-primary-action {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-primary-action:hover {
+  background: #2d4bd8;
+}
+
+/* 2-Column Form Fields */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 22px;
+}
+
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.field-group select, .field-group input {
+  font: inherit;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field-group select:focus, .field-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 91, 240, 0.12);
+}
+
+.field-helper {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.formula-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-light);
+}
+
+/* Total Chargeback Result Card */
+.total-cb-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.total-cb-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.total-cb-amount {
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--amount-green);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 12px 0 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-steps-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--line-light);
+  padding-top: 16px;
+  margin-bottom: 24px;
+  font-size: 13.5px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #475569;
+}
+
+.summary-row strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-close-dispute {
+  width: 100%;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent-purple);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(55, 36, 168, 0.25);
+  transition: background 0.15s ease;
+}
+
+.btn-close-dispute:hover {
+  background: var(--accent-purple-hover);
+}
+
+/* Accordion Order Line Items */
+.order-items-accordion {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.order-items-summary {
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.order-items-summary::-webkit-details-marker {
+  display: none;
+}
+
+.order-items-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-items-title-group .arrow {
+  font-size: 12px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.order-items-accordion[open] .arrow {
+  transform: rotate(0deg);
+}
+
+.order-items-accordion:not([open]) .arrow {
+  transform: rotate(-90deg);
+}
+
+.badge-item-pill {
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 11px;
+  border-radius: 12px;
+}
+
+/* Table Styles */
+.tbl {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+}
+
+th {
+  font-size: 12px;
+  text-transform: capitalize;
+  color: var(--muted);
+  text-align: left;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+td {
+  padding: 8px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line-light);
+}
+
+td.n, th.n { text-align: right; }
+
+.ro {
+  background: var(--soft);
+  font-family: var(--font-mono);
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+
+td .ro { text-align: right; min-height: 34px; }
+
+tfoot td {
+  border-top: 2px solid var(--line);
+  font-weight: 600;
+  padding-top: 12px;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn.pri {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.btn.pri:hover {
+  background: #2d4bd8;
+}
+
+.btn.x {
+  padding: 4px 8px;
+  color: var(--danger);
+  border-color: transparent;
+  background: transparent;
+  font-size: 15px;
+}
+
+.btn.x:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger-soft);
+}
+
+.badge-reason {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-reason.Correction { background: #e0f2fe; color: #0284c7; }
+.badge-reason.Delay { background: #fef3c7; color: #b45309; }
+.badge-reason.Quality { background: #f3e8ff; color: #7e22ce; }
+
+.badge-min {
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.kpi-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--amount-green);
+  line-height: 1.1;
+}
+
+.kpi-lbl {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.contractor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 3px 5px 3px 0;
+}
+
+.contractor-pill strong { color: var(--amount-green); }
+
+/* Global Progress & Loaders */
+#global-top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #2ecc71, var(--accent));
+  background-size: 200% 100%;
+  animation: moveBar 1.2s linear infinite;
+  z-index: 100000;
+  display: none;
+}
+
+@keyframes moveBar {
+  0% { background-position: 100% 0 }
+  100% { background-position: -100% 0 }
+}
+
+#global-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .2s ease;
+}
+
+.loader-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  border-radius: 14px;
+  padding: 30px 40px;
+  text-align: center;
+  max-width: 440px;
+  width: 90%;
+}
+
+.loader-spinner {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 16px;
+  border: 4px solid var(--soft);
+  border-top: 4px solid var(--accent);
+  border-right: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.loader-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.loader-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+
+.loader-cancel-btn {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.result-card-loader {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(3px);
+  color: var(--ink);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  border-radius: inherit;
+}
+
+.result-card-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #e2e8f0;
+  border-top-color: var(--accent);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+  margin-bottom: 12px;
+}
+
+.result-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.result-card-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+  max-width: 260px;
+  margin-bottom: 14px;
+}
+
+.result-card-dismiss {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: var(--muted);
+  font-size: 11.5px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .app-layout { flex-direction: column; }
+  .app-sidebar { width: 100%; height: auto; position: static; }
+  .sidebar-nav { flex-direction: row; overflow-x: auto; padding: 10px 14px; }
+  .sidebar-footer { display: none; }
+  .app-main { padding: 16px; }
+}
+</style>
+</head><body>
 <title>Chargeback Calculator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: sticky top bar with tabs; each calculator = inputs card + live result panel, then two editable tables below. */
-:root{
-  --bg:#f3f5f4; --surface:#ffffff; --ink:#1b2428; --muted:#5d6b70; --line:#d9e0de; --soft:#eaf0ee;
-  --accent:#0d6b62; --accent-ink:#ffffff; --danger:#b23a24; --danger-soft:#fbe9e5; --ok-soft:#e2f2ee;
-  --font-head:'Space Grotesk',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#101617; --surface:#182022; --ink:#e6eeec; --muted:#93a4a6; --line:#2b3739; --soft:#1f2a2c;
-  --accent:#4cc3b3; --accent-ink:#0b1a18; --danger:#ff9b86; --danger-soft:#33201c; --ok-soft:#1b2f2c; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#101617; --surface:#182022; --ink:#e6eeec; --muted:#93a4a6; --line:#2b3739; --soft:#1f2a2c;
-  --accent:#4cc3b3; --accent-ink:#0b1a18; --danger:#ff9b86; --danger-soft:#33201c; --ok-soft:#1b2f2c; color-scheme:dark}
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
-.wrap{max-width:1080px;margin:0 auto}
-header{padding-block:22px 12px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
-h1{font-family:var(--font-head);font-size:26px;line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
-.sub{color:var(--muted);margin:2px 0 0}
-nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
-nav button{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;white-space:nowrap}
-nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
-@media(max-width:820px){.top{grid-template-columns:minmax(0,1fr)}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
-.card+.card{margin-top:16px}
-h2{font-family:var(--font-head);font-size:16px;margin:0 0 14px}
-.f{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 12px;align-items:center;margin-bottom:10px}
-@media(max-width:520px){.f{grid-template-columns:minmax(0,1fr)}}
-.f label{font-weight:500}
-.hint{grid-column:2;color:var(--muted);font-size:12px;margin-top:-2px}
-@media(max-width:520px){.hint{grid-column:1}}
-input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:7px 9px;width:100%;min-width:0}
-input[type=number]{font-family:var(--font-mono)}
-.ro{background:var(--soft);font-family:var(--font-mono);padding:7px 9px;border-radius:4px;border:1px solid var(--line)}
-.result{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.result h2{color:inherit;opacity:.85;font-size:13px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-body);font-weight:600}
-.big{font-family:var(--font-head);font-size:40px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;word-break:break-all}
-.steps{margin:14px 0 0;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--accent-ink) 30%,transparent);font-family:var(--font-mono);font-size:12.5px;display:grid;gap:4px}
-.steps div{display:flex;justify-content:space-between;gap:12px}
-.tbl{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:640px}
-th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
-td{padding:4px 4px;vertical-align:middle}
-td.n,th.n{text-align:right}
-td .ro{text-align:right;min-height:34px}
-tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
-.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:4px;cursor:pointer}
-.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.x{padding:4px 9px;color:var(--danger)}
-.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
-.tier{width:100%;min-width:0;font-size:13px}
-.tier td,.tier th{padding:5px 8px;border-bottom:1px solid var(--line)}
-.tier tr.on td{background:var(--ok-soft);font-weight:600}
-.warn{background:var(--danger-soft);color:var(--danger);padding:8px 10px;border-radius:4px;margin-top:10px;font-size:13px}
-.formula{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:12px}
-.sev tr.on td{background:var(--ok-soft);font-weight:600}
-[hidden]{display:none!important}
-.badge-cat{display:inline-block;padding:2px 7px;font-size:11px;font-weight:600;font-family:var(--font-mono);background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:4px;letter-spacing:0.02em}
-.tbl-files{width:100%;border-collapse:collapse}
-.tbl-files th,.tbl-files td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-.tbl-files tr:hover td{background:var(--soft)}
-.tbl-files tr.selected td{background:var(--ok-soft)}
-.tbl-files input[type="checkbox"]{width:16px;height:16px;cursor:pointer}
-.svc-item{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.badge-reason{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em}
-.badge-reason.Correction{background:#e0f2fe;color:#0284c7}
-.badge-reason.Delay{background:#fef3c7;color:#b45309}
-.badge-reason.Quality{background:#f3e8ff;color:#7e22ce}
-.badge-min{background:var(--ok-soft);color:var(--ok);font-size:10.5px;font-weight:600;padding:2px 5px;border-radius:3px;margin-left:4px;white-space:nowrap}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
-.kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center}
-.kpi-val{font-size:26px;font-weight:700;font-family:var(--font-head);color:var(--accent)}
-.kpi-lbl{font-size:11.5px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
-.contractor-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--soft);border:1px solid var(--line);border-radius:14px;font-size:12px;font-weight:500;margin:3px 4px 3px 0}
-.contractor-pill strong{color:var(--accent)}
 
-/* Global Loading System */
-#global-top-progress{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#2ecc71,var(--accent));background-size:200% 100%;animation:moveBar 1.2s linear infinite;z-index:100000;display:none}
-@keyframes moveBar{0%{background-position:100% 0}100%{background-position:-100% 0}}
-
-#global-loader-overlay{position:fixed;inset:0;background:rgba(13,17,23,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:99999;display:none;align-items:center;justify-content:center;transition:opacity .2s ease}
-.loader-box{background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 35px rgba(0,0,0,0.6);border-radius:12px;padding:28px 36px;text-align:center;max-width:440px;width:90%;animation:popIn .25s cubic-bezier(0.175,0.885,0.32,1.275)}
-@keyframes popIn{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}
-.loader-spinner{width:48px;height:48px;margin:0 auto 16px;border:4px solid var(--soft);border-top:4px solid var(--accent);border-right:4px solid var(--accent);border-radius:50%;animation:spin .75s linear infinite}
-@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-.loader-title{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px}
-.loader-sub{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:14px}
-.loader-cancel-btn{background:var(--soft);border:1px solid var(--line);color:var(--muted);padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;transition:all .15s ease}
-.loader-cancel-btn:hover{background:var(--line);color:var(--ink)}
-
-/* Card Loading Overlay for Total Chargeback Cards */
-.card.result{position:relative;overflow:hidden;min-height:220px}
-.result-card-loader{position:absolute;inset:0;background:var(--accent);color:var(--accent-ink);z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;border-radius:inherit;opacity:1;box-shadow:0 4px 20px rgba(0,0,0,0.25)}
-@keyframes fadeIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
-.result-card-spinner{width:42px;height:42px;border:3.5px solid rgba(0,0,0,0.18);border-top-color:var(--accent-ink);border-right-color:var(--accent-ink);border-radius:50%;animation:spin .75s linear infinite;margin-bottom:12px}
-.result-card-title{font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px;color:var(--accent-ink)}
-.result-card-sub{font-size:12.5px;opacity:0.88;line-height:1.4;max-width:280px;margin-bottom:12px;color:var(--accent-ink)}
-.result-card-dismiss{background:rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.22);color:var(--accent-ink);font-size:11px;padding:4px 12px;border-radius:12px;cursor:pointer;font-weight:600;transition:all .15s ease}
-.result-card-dismiss:hover{background:rgba(0,0,0,0.22)}
-.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-</style>
 <div id="global-top-progress"></div>
 <div id="global-loader-overlay">
   <div class="loader-box">
@@ -115,29 +864,130 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
     <button type="button" class="loader-cancel-btn" onclick="hideLoading()">Dismiss</button>
   </div>
 </div>
-<div class="wrap">
-<header style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-  <div><h1>Chargeback Calculator</h1><p class="sub">Correction and delay chargebacks, using the price list and formulas from the Excel workbook.</p></div>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <button id="btn-tista-login" type="button" class="btn" style="display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;">
-      <span id="tista-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e3b341"></span>
-      <span id="tista-status-text">🔑 Tista Login</span>
-    </button>
-    <button id="btn-global-refresh" type="button" class="btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;" title="Reset all data and clear calculation history">
-      🔄 Reset / Refresh
-    </button>
+
+<div class="app-layout">
+  <!-- Left Sidebar -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="3"></rect>
+          <line x1="8" y1="6" x2="16" y2="6"></line>
+          <line x1="8" y1="10" x2="10" y2="10"></line>
+          <line x1="14" y1="10" x2="16" y2="10"></line>
+          <line x1="8" y1="14" x2="10" y2="14"></line>
+          <line x1="14" y1="14" x2="16" y2="14"></line>
+          <line x1="8" y1="18" x2="10" y2="18"></line>
+          <line x1="14" y1="18" x2="16" y2="18"></line>
+        </svg>
+      </div>
+      <div class="sidebar-brand-text">
+        <div class="brand-line-1">Tista</div>
+        <div class="brand-line-2">Chargeback</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="tabs" role="tablist">
+      <button role="tab" data-tab="cor" aria-selected="true" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </span>
+        <span class="nav-label">Correction</span>
+      </button>
+      <button role="tab" data-tab="del" aria-selected="false" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </span>
+        <span class="nav-label">Delay Delivery</span>
+      </button>
+      <button role="tab" data-tab="auto" aria-selected="false" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        </span>
+        <span class="nav-label">Automatic Delay</span>
+      </button>
+      <button role="tab" data-tab="autocor" aria-selected="false" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        </span>
+        <span class="nav-label">Auto Correction</span>
+      </button>
+      <button role="tab" data-tab="batch" aria-selected="false" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </span>
+        <span class="nav-label">Batch Chargeback</span>
+      </button>
+      <button role="tab" data-tab="cfg" aria-selected="false" class="sidebar-nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </span>
+        <span class="nav-label">Price List</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" class="sidebar-settings-btn" id="btn-open-settings" onclick="openSettingsModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content View -->
+  <div class="app-main">
+    <header class="main-header">
+      <div class="header-left">
+        <div class="breadcrumbs">Operations / <span id="breadcrumb-tab-name">Correction</span></div>
+        <h1 class="header-title" id="header-main-title">Chargeback Calculator</h1>
+        <p class="header-sub" id="header-main-sub">Review service details and calculate vendor chargebacks.</p>
+      </div>
+      <div class="header-actions">
+        <button id="btn-tista-login" type="button" class="btn-tista-status" title="Tista Connection Status">
+          <span id="tista-status-dot" class="status-dot"></span>
+          <span id="tista-status-text">Tista Connected</span>
+        </button>
+        <button id="btn-global-refresh" type="button" class="btn-refresh" title="Reset all data and clear calculation history">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="pane" class="main-pane"></main>
   </div>
-</header>
-<nav role="tablist" id="tabs">
-  <button role="tab" data-tab="cor" aria-selected="true">Correction</button>
-  <button role="tab" data-tab="del" aria-selected="false">Delay Delivery</button>
-  <button role="tab" data-tab="auto" aria-selected="false">Automatic Delay</button>
-  <button role="tab" data-tab="autocor" aria-selected="false">Auto Correction</button>
-  <button role="tab" data-tab="batch" aria-selected="false">Batch Chargeback</button>
-  <button role="tab" data-tab="cfg" aria-selected="false">Price List</button>
-</nav>
-<main id="pane"></main>
 </div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;width:90%;max-width:480px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.15);color:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;">⚙ Settings & Configuration</h3>
+      <button type="button" onclick="$('settings-modal').style.display='none'" style="background:transparent;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px;">
+      Manage backend server endpoint, cookies, and account authentication status.
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:6px;">API Server Endpoint</label>
+      <input id="settings-api-endpoint" type="text" style="width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;" value="">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Default: Render Cloud or Local Server (8765)</div>
+    </div>
+    <div style="margin-bottom:20px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+      <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Tista Account Status</div>
+      <div id="settings-account-status" style="font-size:13px;color:#059669;font-weight:600;">Checking...</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        🔑 Switch Account
+      </button>
+      <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <!-- Tista Individual User Login Modal -->
 <div id="tista-login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
@@ -161,6 +1011,36 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
         Sign In &rarr;
       </button>
     </form>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;width:90%;max-width:480px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.15);color:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;">⚙ Settings & Configuration</h3>
+      <button type="button" onclick="$('settings-modal').style.display='none'" style="background:transparent;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px;">
+      Manage backend server endpoint, cookies, and account authentication status.
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:6px;">API Server Endpoint</label>
+      <input id="settings-api-endpoint" type="text" style="width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;" value="">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Default: Render Cloud or Local Server (8765)</div>
+    </div>
+    <div style="margin-bottom:20px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+      <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Tista Account Status</div>
+      <div id="settings-account-status" style="font-size:13px;color:#059669;font-weight:600;">Checking...</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        🔑 Switch Account
+      </button>
+      <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        Save Changes
+      </button>
+    </div>
   </div>
 </div>
 
@@ -292,111 +1172,234 @@ function lineTable(k,which,title,withQty,idPrefix){
 
 // ---------- calculators ----------
 function paneCor(){
-  const d=S.cor;
-  return `<div class="card" style="margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <strong style="font-family:var(--font-head);font-size:15px">⚡ Quick Auto-Fetch:</strong>
-      <input id="cor-quick-id" inputmode="numeric" placeholder="Order ID (e.g. 457531)" style="max-width:180px" value="${esc(S.corAutoId||'')}">
-      <button class="btn pri" id="cor-quick-fetch">⚡ Fetch & Calculate</button>
+  const d=S.cor; const cats=catsOf(d.service);
+  const itemCount = d.order.filter(r=>r.s).length;
+  return `
+  <!-- Order Search Card -->
+  <div class="order-search-card">
+    <label class="field-label">Order ID</label>
+    <div class="order-search-row">
+      <input id="cor-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID" value="${esc(S.corAutoId||'')}">
+      <button class="btn-primary-action" id="cor-quick-fetch">
+        Fetch & Calculate
+      </button>
       <button class="btn" id="cor-quick-files" title="Open file-by-file selection in Auto Correction tab">Select Files</button>
+      <span id="cor-quick-status" class="sub" style="font-weight:500;margin-left:8px"></span>
     </div>
-    <span id="cor-quick-status" class="sub" style="font-weight:500"></span>
   </div>
-  <div class="top"><div class="card"><h2>Inputs</h2>${selectors('cor')}
-    ${formRow('Severity Level',`<select data-k="cor" data-f="sev">${opts(Object.keys(SEV),d.sev)}</select>`,'Major 250% · Medium 200% · Minor 150% · Multiple 400%')}
-    ${formRow('Quantity of Service',`<input type="number" min="0" step="any" data-k="cor" data-f="qty" value="${esc(d.qty)}">`,'Total quantity of the selected service and category')}
-    ${formRow('Service Price','<div class="ro" id="c-price"></div>','Looked up from the price list by service, category and pixel range')}
-    <div class="formula">Chargeback = Service Price × Severity % × Quantity</div></div>
-    <div class="card result" id="cor-result-card">
+
+  <!-- 2-Column Details & Total Chargeback Section -->
+  <div class="top">
+    <!-- Left Card: Chargeback details -->
+    <div class="card">
+      <h2 style="font-size:18px;font-weight:700;margin:0 0 18px;color:var(--ink)">Chargeback details</h2>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Contractor</label>
+          <select data-k="cor" data-f="contractor">${opts(contractors(),d.contractor)}</select>
+          <div class="field-helper">Service provider for this order</div>
+        </div>
+        <div class="field-group">
+          <label>Service type</label>
+          <select data-k="cor" data-f="service" data-rerender="1">${opts(services(),d.service)}</select>
+          <div class="field-helper">Type of service performed</div>
+        </div>
+        <div class="field-group">
+          <label>Category level</label>
+          <select data-k="cor" data-f="cat">${opts(cats,d.cat)}</select>
+          <div class="field-helper">Internal category level</div>
+        </div>
+        <div class="field-group">
+          <label>Pixel range</label>
+          <select data-k="cor" data-f="pix">${opts(PIX,d.pix)}</select>
+          <div class="field-helper">Total affected pixels in image(s)</div>
+        </div>
+        <div class="field-group">
+          <label>Severity</label>
+          <select data-k="cor" data-f="sev">${opts(Object.keys(SEV),d.sev)}</select>
+          <div class="field-helper">Issue severity level</div>
+        </div>
+        <div class="field-group">
+          <label>Quantity</label>
+          <input type="number" min="0" step="any" data-k="cor" data-f="qty" value="${esc(d.qty)}">
+          <div class="field-helper">Number of items</div>
+        </div>
+      </div>
+      <div style="display:none" id="c-price"></div>
+      <div class="formula-hint">Chargeback = Service price × Severity × Quantity</div>
+    </div>
+
+    <!-- Right Card: Total chargeback -->
+    <div class="total-cb-card" id="cor-result-card">
       <div class="result-card-loader" id="cor-card-loader" style="display:none">
         <div class="result-card-spinner"></div>
         <div class="result-card-title" id="cor-card-loader-title">Fetching Order...</div>
         <div class="result-card-sub" id="cor-card-loader-sub">Connecting to Tista & calculating chargeback...</div>
         <button type="button" class="result-card-dismiss" onclick="hideCardLoading('cor')">✕ Dismiss</button>
       </div>
-      <h2>Total Chargeback Amount</h2>
-      <div class="big" id="c-total"></div>
-      <div class="steps" id="c-steps"></div>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.12)">
-        <button class="btn pri" id="cor-close-btn" style="width:100%;padding:10px 12px;font-size:13px;background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">
-          🔒 Charge to Vendor & Close Dispute on Tista
-        </button>
-        <div id="cor-close-status" class="sub" style="margin-top:6px;font-weight:500;text-align:center"></div>
+      <div class="total-cb-label">Total chargeback</div>
+      <div class="total-cb-amount" id="c-total">$0.00</div>
+      <div class="summary-steps-box" id="c-steps"></div>
+      <button class="btn-close-dispute" id="cor-close-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Close Dispute
+      </button>
+      <div id="cor-close-status" class="sub" style="margin-top:8px;font-weight:500;text-align:center;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Collapsible Order Line Items Accordion Card -->
+  <details class="order-items-accordion" open>
+    <summary class="order-items-summary">
+      <div class="order-items-title-group">
+        <span class="arrow">▼</span>
+        <strong style="font-size:16px;font-weight:700;color:var(--ink)">Order line items</strong>
+        <span class="badge-item-pill" id="cor-items-badge">${itemCount} items</span>
       </div>
-    </div></div>
-    <div style="height:16px"></div>
-    ${lineTable('cor','order','Total Order Value',true,'co')}
-    ${lineTable('cor','cb','Total Chargeback Value',false,'cc')}`;
+    </summary>
+    <div style="margin-top:16px;">
+      ${lineTable('cor','order','',true,'co')}
+    </div>
+  </details>
+  `;
 }
 function paneDel(){
-  const d=S.del;
-  return `<div class="card" style="margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <strong style="font-family:var(--font-head);font-size:15px">⚡ Quick Auto-Fetch:</strong>
-      <input id="del-quick-id" inputmode="numeric" placeholder="Order ID (e.g. 371289)" style="max-width:180px" value="${esc(S.autoId||'')}">
-      <button class="btn pri" id="del-quick-fetch">Fetch from Tista</button>
+  const d=S.del; const cats=catsOf(d.service);
+  const itemCount = d.order.filter(r=>r.s).length;
+  return `
+  <!-- Order Search Card -->
+  <div class="order-search-card">
+    <label class="field-label">Order ID</label>
+    <div class="order-search-row">
+      <input id="del-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID (e.g. 371289)" value="${esc(S.autoId||'')}">
+      <button class="btn-primary-action" id="del-quick-fetch">
+        Fetch from Tista
+      </button>
+      <span id="del-quick-status" class="sub" style="font-weight:500;margin-left:8px"></span>
     </div>
-    <span id="del-quick-status" class="sub" style="font-weight:500"></span>
   </div>
-  <div class="card" style="margin-bottom:16px" id="del-comment-card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <strong style="font-family:var(--font-head);font-size:14px">💬 Dispute Comment & Delay Link:</strong>
-        <span style="font-size:12px;color:var(--muted)">(Auto-extracts filenames from Dropbox/storage links & sets Quantity)</span>
-      </div>
+
+  <!-- Dispute Comment & Link Extractor -->
+  <div class="card" style="margin-bottom:20px" id="del-comment-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <strong style="font-size:14px;color:var(--ink)">💬 Dispute Comment & Storage Link:</strong>
+      <span style="font-size:12px;color:var(--muted)">(Auto-extracts filenames from Dropbox/storage links & sets Quantity)</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input id="del-link-input" placeholder="Paste Dropbox / Transfer / Storage Link from Dispute Comment..." style="flex:1;min-width:260px" value="${esc(d.comment_link||'')}">
       <button class="btn" id="del-link-extract-btn" type="button" style="font-weight:600">⚡ Extract Files</button>
       <span id="del-link-status" class="sub" style="font-weight:500"></span>
     </div>
     ${d.comment ? `
-      <div style="margin-top:8px;font-size:12.5px;color:var(--muted);background:var(--soft);padding:6px 10px;border-radius:4px;border:1px solid var(--line)">
-        <strong style="color:var(--text)">Dispute Comment:</strong> ${esc(d.comment)}
+      <div style="margin-top:10px;font-size:12.5px;color:var(--muted);background:var(--soft);padding:8px 12px;border-radius:6px;border:1px solid var(--line)">
+        <strong style="color:var(--ink)">Dispute Comment:</strong> ${esc(d.comment)}
       </div>
     ` : ''}
     ${(d.filenames && d.filenames.length) ? `
-      <details style="margin-top:8px;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px" open>
+      <details style="margin-top:10px;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px" open>
         <summary style="cursor:pointer;font-weight:600;color:var(--accent);font-size:13px;outline:none">
           📁 Extracted Delayed Files (${d.filenames.length}) - Click to collapse/expand
         </summary>
-        <div style="margin-top:8px;max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:4px">
-          ${d.filenames.map(fn => `<span style="font-size:11px;font-family:var(--font-mono);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--line)">${esc(fn)}</span>`).join('')}
+        <div style="margin-top:8px;max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:5px">
+          ${d.filenames.map(fn => `<span style="font-size:11px;font-family:var(--font-mono);background:var(--surface);padding:3px 8px;border-radius:4px;border:1px solid var(--line)">${esc(fn)}</span>`).join('')}
         </div>
       </details>
     ` : ''}
   </div>
-  <div class="top"><div><div class="card"><h2>Inputs</h2>${selectors('del')}
-    ${formRow('Quantity of Service',`<input type="number" min="0" step="any" data-k="del" data-f="qty" value="${esc(d.qty)}">`,'Total quantity of the selected service and category')}
-    ${formRow('Service Price','<div class="ro" id="d-price"></div>','Looked up from the price list')}</div>
-    <div class="card"><h2>Delay Percentage Calculator</h2>
-    ${formRow('Order Duration',`<input type="text" inputmode="numeric" data-k="del" data-f="dur" value="${esc(d.dur)}" placeholder="hh:mm:ss">`,'Total order duration as hh:mm:ss (24:00:00 = 1 day)')}
-    ${formRow('Delay time difference (Second)',`<input type="number" step="any" data-k="del" data-f="sec" value="${esc(d.sec)}">`,'Delivery time difference in seconds from the fulfillment history (negative when delayed)')}
-    ${formRow('Delay %','<div class="ro" id="d-pct"></div>','Calculated: |seconds| ÷ 3600 ÷ 24 ÷ order duration (days)')}
-    <div id="d-warn" class="warn" hidden></div></div></div>
-    <div><div class="card result" id="del-result-card">
-      <div class="result-card-loader" id="del-card-loader" style="display:none">
-        <div class="result-card-spinner"></div>
-        <div class="result-card-title" id="del-card-loader-title">Fetching Order...</div>
-        <div class="result-card-sub" id="del-card-loader-sub">Connecting to Tista & calculating chargeback...</div>
-        <button type="button" class="result-card-dismiss" onclick="hideCardLoading('del')">✕ Dismiss</button>
+
+  <div class="top">
+    <!-- Left Card: Delay details -->
+    <div class="card">
+      <h2 style="font-size:18px;font-weight:700;margin:0 0 18px;color:var(--ink)">Delay details</h2>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Contractor</label>
+          <select data-k="del" data-f="contractor">${opts(contractors(),d.contractor)}</select>
+          <div class="field-helper">Service provider for this order</div>
+        </div>
+        <div class="field-group">
+          <label>Service type</label>
+          <select data-k="del" data-f="service" data-rerender="1">${opts(services(),d.service)}</select>
+          <div class="field-helper">Type of service performed</div>
+        </div>
+        <div class="field-group">
+          <label>Category level</label>
+          <select data-k="del" data-f="cat">${opts(cats,d.cat)}</select>
+          <div class="field-helper">Internal category level</div>
+        </div>
+        <div class="field-group">
+          <label>Pixel range</label>
+          <select data-k="del" data-f="pix">${opts(PIX,d.pix)}</select>
+          <div class="field-helper">Total affected pixels in image(s)</div>
+        </div>
+        <div class="field-group">
+          <label>Quantity</label>
+          <input type="number" min="0" step="any" data-k="del" data-f="qty" value="${esc(d.qty)}">
+          <div class="field-helper">Number of delayed items</div>
+        </div>
+        <div class="field-group">
+          <label>Order Duration</label>
+          <input type="text" inputmode="numeric" data-k="del" data-f="dur" value="${esc(d.dur)}" placeholder="hh:mm:ss">
+          <div class="field-helper">Total order duration (hh:mm:ss)</div>
+        </div>
+        <div class="field-group" style="grid-column:span 2">
+          <label>Delay time difference (Seconds)</label>
+          <input type="number" step="any" data-k="del" data-f="sec" value="${esc(d.sec)}">
+          <div class="field-helper">Delivery time diff from fulfillment history (negative = delayed)</div>
+        </div>
       </div>
-      <h2>Total Chargeback Amount</h2>
-      <div class="big" id="d-total"></div>
-      <div class="steps" id="d-steps"></div>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.12)">
-        <button class="btn pri" id="del-close-btn" style="width:100%;padding:10px 12px;font-size:13px;background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">
-          🔒 Charge to Vendor & Close Dispute on Tista
+      <div style="display:none" id="d-price"></div>
+      <div style="display:none" id="d-pct"></div>
+      <div id="d-warn" class="warn" hidden></div>
+      <div class="formula-hint">Delay % = |seconds| ÷ 3600 ÷ 24 ÷ duration (days)</div>
+    </div>
+
+    <!-- Right Card: Total chargeback -->
+    <div>
+      <div class="total-cb-card" id="del-result-card">
+        <div class="result-card-loader" id="del-card-loader" style="display:none">
+          <div class="result-card-spinner"></div>
+          <div class="result-card-title" id="del-card-loader-title">Fetching Order...</div>
+          <div class="result-card-sub" id="del-card-loader-sub">Connecting to Tista & calculating chargeback...</div>
+          <button type="button" class="result-card-dismiss" onclick="hideCardLoading('del')">✕ Dismiss</button>
+        </div>
+        <div class="total-cb-label">Total chargeback</div>
+        <div class="total-cb-amount" id="d-total">$0.00</div>
+        <div class="summary-steps-box" id="d-steps"></div>
+        <button class="btn-close-dispute" id="del-close-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Close Dispute
         </button>
-        <div id="del-close-status" class="sub" style="margin-top:6px;font-weight:500;text-align:center"></div>
+        <div id="del-close-status" class="sub" style="margin-top:8px;font-weight:500;text-align:center;font-size:12px;"></div>
+      </div>
+
+      <!-- Delay % bands card -->
+      <div class="card" style="margin-top:16px">
+        <h2 style="font-size:15px;font-weight:700;margin:0 0 12px;color:var(--ink)">Delay % Bands</h2>
+        <table class="tier" id="d-tiers">
+          <thead><tr><th>Delay %</th><th class="n">Share of price</th></tr></thead>
+          <tbody>
+            ${[['more than 0% to 5%','20%'],['more than 5% to 15%','40%'],['more than 15% to 30%','60%'],['more than 30% to 50%','80%'],['more than 50%','100%']].map((t,i)=>`<tr data-t="${i}"><td>${t[0]}</td><td class="n">${t[1]}</td></tr>`).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
-    <div class="card"><h2>Delay % bands</h2><table class="tier" id="d-tiers"><thead><tr><th>Delay %</th><th class="n">Share of price</th></tr></thead><tbody>
-    ${[['more than 0% to 5%','20%'],['more than 5% to 15%','40%'],['more than 15% to 30%','60%'],['more than 30% to 50%','80%'],['more than 50%','100%']].map((t,i)=>`<tr data-t="${i}"><td>${t[0]}</td><td class="n">${t[1]}</td></tr>`).join('')}
-    </tbody></table></div></div></div>
-    <div style="height:16px"></div>
-    ${lineTable('del','order','Total Order Value',true,'do')}
-    ${lineTable('del','cb','Total Chargeback Value',false,'dc')}`;
+  </div>
+
+  <!-- Collapsible Order Line Items Accordion Card -->
+  <details class="order-items-accordion" open>
+    <summary class="order-items-summary">
+      <div class="order-items-title-group">
+        <span class="arrow">▼</span>
+        <strong style="font-size:16px;font-weight:700;color:var(--ink)">Order line items</strong>
+        <span class="badge-item-pill" id="del-items-badge">${itemCount} items</span>
+      </div>
+    </summary>
+    <div style="margin-top:16px;">
+      ${lineTable('del','order','',true,'do')}
+    </div>
+  </details>
+  `;
 }
 function updLines(k,pre){
   let sum=0,qs=0;
@@ -409,33 +1412,46 @@ function updLines(k,pre){
 }
 function refreshCor(){
   const d=S.cor, p=price(d.service,d.cat,d.pix), pr=p||0, m=SEV[d.sev]||0, q=num(d.qty);
-  $('c-price').textContent = p===null?'Not in price list':money(p);
+  const pEl = $('c-price'); if(pEl) pEl.textContent = p===null?'Not in price list':money(p);
   const calcTot=pr*m*q;
   const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
-  $('c-total').textContent=money(tot);
-  let steps = `<div><span>Service price</span><span>${money(pr)}</span></div><div><span>Severity (${esc(d.sev)})</span><span>${Math.round(m*100)}%</span></div><div><span>Quantity</span><span>${q}</span></div>`;
+  const totEl = $('c-total'); if(totEl) totEl.textContent=money(tot);
+  let steps = `
+    <div class="summary-row"><span>Service price</span><strong>${money(pr)}</strong></div>
+    <div class="summary-row"><span>Severity</span><strong>${Math.round(m*100)}%</strong></div>
+    <div class="summary-row"><span>Quantity</span><strong>${q}</strong></div>
+  `;
   if(calcTot > 0 && calcTot < 2.0){
-    steps += `<div><span>Calculated</span><span>${money(calcTot)}</span></div><div style="font-weight:600"><span>Minimum Applied</span><span>$2.00</span></div>`;
+    steps += `<div class="summary-row" style="color:var(--muted);font-size:12px"><span>Calculated</span><span>${money(calcTot)}</span></div><div class="summary-row" style="color:var(--amount-green);font-weight:700"><span>Minimum Applied</span><span>$2.00</span></div>`;
   }
-  $('c-steps').innerHTML=steps;
+  const stepsEl = $('c-steps'); if(stepsEl) stepsEl.innerHTML=steps;
+  const badgeEl = $('cor-items-badge');
+  if(badgeEl && d.order) badgeEl.textContent = `${d.order.filter(r=>r.s).length} items`;
   updLines('cor','c');
 }
 function refreshDel(){
   const d=S.del, p=price(d.service,d.cat,d.pix), pr=p||0, q=num(d.qty);
   const days=parseDur(d.dur), delayDays=Math.abs(num(d.sec))/3600/24, pct=days>0?delayDays/days:0;
   const t=tierFor(pct), r=t?t.r:0;
-  $('d-price').textContent = p===null?'Not in price list':money(p);
-  $('d-pct').textContent=(pct*100).toFixed(2)+'%';
-  const w=$('d-warn'); w.hidden = days>0; w.textContent='Order duration must be greater than zero (hh:mm:ss).';
+  const pEl = $('d-price'); if(pEl) pEl.textContent = p===null?'Not in price list':money(p);
+  const pctEl = $('d-pct'); if(pctEl) pctEl.textContent=(pct*100).toFixed(2)+'%';
+  const w=$('d-warn'); if(w){ w.hidden = days>0; w.textContent='Order duration must be greater than zero (hh:mm:ss).'; }
   const calcTot=pr*r*q;
   const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
-  $('d-total').textContent=money(tot);
-  let steps = `<div><span>Service price</span><span>${money(pr)}</span></div><div><span>Delay %</span><span>${(pct*100).toFixed(2)}%</span></div><div><span>Share of price</span><span>${Math.round(r*100)}%</span></div><div><span>Quantity</span><span>${q}</span></div>`;
+  const totEl = $('d-total'); if(totEl) totEl.textContent=money(tot);
+  let steps = `
+    <div class="summary-row"><span>Service price</span><strong>${money(pr)}</strong></div>
+    <div class="summary-row"><span>Delay %</span><strong>${(pct*100).toFixed(2)}%</strong></div>
+    <div class="summary-row"><span>Severity / Share</span><strong>${Math.round(r*100)}%</strong></div>
+    <div class="summary-row"><span>Quantity</span><strong>${q}</strong></div>
+  `;
   if(calcTot > 0 && calcTot < 2.0){
-    steps += `<div><span>Calculated</span><span>${money(calcTot)}</span></div><div style="font-weight:600"><span>Minimum Applied</span><span>$2.00</span></div>`;
+    steps += `<div class="summary-row" style="color:var(--muted);font-size:12px"><span>Calculated</span><span>${money(calcTot)}</span></div><div class="summary-row" style="color:var(--amount-green);font-weight:700"><span>Minimum Applied</span><span>$2.00</span></div>`;
   }
-  $('d-steps').innerHTML=steps;
+  const stepsEl = $('d-steps'); if(stepsEl) stepsEl.innerHTML=steps;
   document.querySelectorAll('#d-tiers tr[data-t]').forEach((tr,i)=>tr.classList.toggle('on',t===TIERS[i]));
+  const badgeEl = $('del-items-badge');
+  if(badgeEl && d.order) badgeEl.textContent = `${d.order.filter(r=>r.s).length} items`;
   updLines('del','d');
 }
 
@@ -2598,6 +3614,19 @@ function fillCfg(){
 // ---------- render + events ----------
 function render(){
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  const tabInfo = {
+    cor: { breadcrumb: 'Correction', title: 'Chargeback Calculator', sub: 'Review service details and calculate vendor chargebacks.' },
+    del: { breadcrumb: 'Delay Delivery', title: 'Delay Chargeback Calculator', sub: 'Calculate delay delivery chargebacks from duration and fulfillment history.' },
+    auto: { breadcrumb: 'Automatic Delay', title: 'Automatic Delay Delivery', sub: 'Instant delay calculation by Order ID directly from Tista fulfillment history.' },
+    autocor: { breadcrumb: 'Auto Correction', title: 'Auto Correction Calculator', sub: 'Multi-service file-by-file revision chargeback calculation.' },
+    batch: { breadcrumb: 'Batch Chargeback', title: 'Batch Dispute Search & Chargeback', sub: 'Search, calculate, and batch close vendor disputes with single-click actions.' },
+    cfg: { breadcrumb: 'Price List', title: 'Service Price List', sub: 'Standard service rates, category complexity levels, and pixel bands.' }
+  };
+  const cur = tabInfo[S.tab] || tabInfo.cor;
+  if($('breadcrumb-tab-name')) $('breadcrumb-tab-name').textContent = cur.breadcrumb;
+  if($('header-main-title')) $('header-main-title').textContent = cur.title;
+  if($('header-main-sub')) $('header-main-sub').textContent = cur.sub;
+
   const pane=$('pane');
   pane.innerHTML = S.tab==='cor'?paneCor():S.tab==='del'?paneDel():S.tab==='auto'?paneAuto():S.tab==='autocor'?paneAutoCor():S.tab==='batch'?paneBatch():paneCfg();
   if(S.tab==='cor')refreshCor(); else if(S.tab==='del')refreshDel(); else if(S.tab==='auto')setCmd(); else if(S.tab==='autocor'||S.tab==='batch'){} else fillCfg();
@@ -2838,7 +3867,7 @@ if (S.batch && Array.isArray(S.batch.disputes)) {
 }
 
 // ---------- Tista Login Helper & Live Status ----------
-let isTistaCurrentlyLoggedIn = false;
+var isTistaCurrentlyLoggedIn = false;
 
 async function checkTistaLoginStatus() {
   try {
@@ -2940,6 +3969,33 @@ async function submitTistaModalLogin() {
 if($('btn-tista-login')) {
   $('btn-tista-login').addEventListener('click', triggerTistaLogin);
 }
+
+function openSettingsModal() {
+  const modal = $('settings-modal');
+  if (!modal) return;
+  const inp = $('settings-api-endpoint');
+  if (inp) inp.value = getApiBase();
+  const statusEl = $('settings-account-status');
+  const savedUser = localStorage.getItem('tista_logged_user');
+  if (statusEl) {
+    statusEl.textContent = isTistaCurrentlyLoggedIn
+      ? (savedUser ? `🟢 Authenticated as: ${savedUser}` : '🟢 Connected & Saved')
+      : '🟡 Disconnected / Not Authenticated';
+    statusEl.style.color = isTistaCurrentlyLoggedIn ? '#059669' : '#d97706';
+  }
+  modal.style.display = 'flex';
+}
+
+function saveSettingsModal() {
+  const inp = $('settings-api-endpoint');
+  if (inp && inp.value.trim()) {
+    localStorage.setItem('tista_api_base', inp.value.trim());
+  }
+  $('settings-modal').style.display = 'none';
+  checkTistaLoginStatus();
+  alert('✓ Settings saved successfully.');
+}
+
 checkTistaLoginStatus();
 </script>
 
