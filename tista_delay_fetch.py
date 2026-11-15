@@ -15,6 +15,7 @@ import sys
 import os
 import time
 import urllib.request
+import hashlib
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
@@ -34,6 +35,17 @@ elif LOCAL_PROFILE.exists():
     USER_DATA_DIR = LOCAL_PROFILE
 else:
     USER_DATA_DIR = Path.home() / ".tista-profile"
+
+def resolve_profile_dir(user_identifier=None):
+    """Returns isolated persistent directory for specific user (e.g. per-user on Render/Cloud)."""
+    clean_id = str(user_identifier or "").strip().lower()
+    if not clean_id:
+        return USER_DATA_DIR
+    uhash = hashlib.sha256(clean_id.encode("utf-8")).hexdigest()[:16]
+    base = USER_DATA_DIR.parent / ".tista-profiles"
+    p = base / f"u_{uhash}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
 
 # Cloud / Headless auto-detection (True on Render or when HEADLESS is set)
 IS_CLOUD_ENV = bool(os.environ.get("RENDER") or os.environ.get("HEADLESS", "").lower() in ("1", "true", "yes"))
@@ -109,17 +121,17 @@ def hours_to_seconds(text):
     n = re.search(r"-?\d+(?:\.\d+)?", t)
     return round(float(n[0]) * 3600) if n else None
 
-def ensure_logged_in(page):
-    """Ensures user is logged into Tista. If on login page, attempts auto-login with env credentials or waits for user."""
+def ensure_logged_in(page, email=None, password=None):
+    """Ensures user is logged into Tista. If on login page, attempts auto-login with credentials or waits for user."""
     page.goto(BASE_URL)
     page.wait_for_load_state("domcontentloaded")
     time.sleep(1)
 
     if "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
-        email = os.environ.get("TISTA_EMAIL")
-        password = os.environ.get("TISTA_PASSWORD")
+        email = email or os.environ.get("TISTA_EMAIL")
+        password = password or os.environ.get("TISTA_PASSWORD")
         if email and password:
-            print("\n[✓] Logging in with TISTA_EMAIL / TISTA_PASSWORD environment credentials...")
+            print(f"\n[✓] Logging in for '{email}' with credentials...")
             try:
                 email_input = page.locator('#user_email, input[type="email"], input[name*="email"]').first
                 pass_input = page.locator('#user_password, input[type="password"], input[name*="password"]').first
@@ -129,23 +141,28 @@ def ensure_logged_in(page):
                     rem = page.locator('#user_remember_me, input[name*="remember_me"]').first
                     if rem.count() > 0 and not rem.is_checked():
                         rem.check()
-                    submit_btn = page.locator('input[type="submit"], button[type="submit"]').first
+                    submit_btn = page.locator('input[type="submit"], button[type="submit"], input[value*="Log in"], input[value*="Sign in"]').first
                     if submit_btn.count() > 0:
                         submit_btn.click()
-                    page.wait_for_load_state("networkidle", timeout=15000)
-                    time.sleep(2)
+                    else:
+                        pass_input.press("Enter")
+                    for _ in range(12):
+                        time.sleep(1)
+                        if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
+                            break
+                        if page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback').count() > 0:
+                            break
             except Exception as e:
                 print(f"[!] Auto-login exception: {e}")
 
         if "sign_in" in page.url or page.locator('input[type="password"]').count() > 0:
             if DEFAULT_HEADLESS:
-                raise RuntimeError("Not logged into Tista. Please click '🔑 Tista Login' in the calculator or set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables.")
+                raise RuntimeError("Not logged into Tista. Please sign in with your work email and password.")
 
             print("\n" + "=" * 60)
             print("[!] TISTA LOGIN REQUIRED:")
             print("    Please log in to Tista in the browser window.")
             print("    Your session will be saved automatically for future runs.")
-            print("    (On headless/cloud servers like Render, set TISTA_EMAIL and TISTA_PASSWORD env vars)")
             print("=" * 60 + "\n")
 
             try:
@@ -170,7 +187,7 @@ def ensure_logged_in(page):
         page.wait_for_load_state("networkidle")
         time.sleep(1)
 
-def fetch_order_from_tista(order_id: str, headless: bool = False):
+def fetch_order_from_tista(order_id: str, headless: bool = False, email: str = None, password: str = None):
     """
     Automates Tista login, dispute extraction, and order file parsing using Playwright.
     """
@@ -182,7 +199,7 @@ def fetch_order_from_tista(order_id: str, headless: bool = False):
     if not oid:
         return {"error": "Invalid Order ID"}
 
-    profile_dir = USER_DATA_DIR
+    profile_dir = resolve_profile_dir(email)
     out = {
         "order_id": oid,
         "dispute_id": "",
@@ -215,7 +232,7 @@ def fetch_order_from_tista(order_id: str, headless: bool = False):
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         # Step 1: Ensure user is logged in
-        ensure_logged_in(page)
+        ensure_logged_in(page, email=email, password=password)
 
         # Step 2: Search in Disputes Page (supports Order ID with/without hash and Dispute ID)
         print(f"[*] Searching for Order / Dispute '{raw_id}' in Disputes...")
@@ -497,7 +514,7 @@ def parse_file_services(services_raw):
                 current_services.append(line)
     return parsed
 
-def fetch_order_files_from_tista(order_id: str, headless: bool = False):
+def fetch_order_files_from_tista(order_id: str, headless: bool = False, email: str = None, password: str = None):
     """
     Fetches the list of files, services, categories, and location for an order to calculate Correction chargebacks.
     """
@@ -515,13 +532,13 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = False):
         "warnings": []
     }
 
-    profile_dir = USER_DATA_DIR
+    profile_dir = resolve_profile_dir(email)
 
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(str(profile_dir), headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-        ensure_logged_in(page)
+        ensure_logged_in(page, email=email, password=password)
 
         # 0. If 5 digits or not found, check if it's a Dispute ID first
         if len(digits) == 5:
@@ -739,7 +756,7 @@ def format_tista_date_range(date_str=None, start_date=None, end_date=None):
         return date_str.strip()
     return ""
 
-def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False):
+def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False, email: str = None, password: str = None):
     """
     Fetches list of disputes based on filters (Dispute reason, Status, Chargeable to, Location, Order ID),
     and optionally deep-scans order files to extract service and category.
@@ -789,10 +806,11 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     url = f"{DISPUTES_URL}?{qs}" if qs else DISPUTES_URL
     print(f"\n[*] Navigating to disputes search: {url}")
 
-    profile_dir = USER_DATA_DIR
+    profile_dir = resolve_profile_dir(email)
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(str(profile_dir), headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        ensure_logged_in(page, email=email, password=password)
         page.goto(url)
         page.wait_for_load_state("domcontentloaded")
         time.sleep(2)
@@ -1096,7 +1114,7 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
 
     return result
 
-def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, headless: bool = False):
+def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, headless: bool = False, email: str = None, password: str = None):
     """
     Charges the specified amount to vendor and closes the dispute on Tista.
     """
@@ -1106,11 +1124,12 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
 
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(USER_DATA_DIR),
+            user_data_dir=str(resolve_profile_dir(email)),
             headless=headless,
             slow_mo=100
         )
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        ensure_logged_in(page, email=email, password=password)
 
         # Step 1: Resolve dispute_id if missing
         if not clean_dispute_id and raw_oid:
@@ -1200,18 +1219,19 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
             "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
         }
 
-def batch_close_disputes_on_tista(items: list, headless: bool = False):
+def batch_close_disputes_on_tista(items: list, headless: bool = False, email: str = None, password: str = None):
     """
     Charges to vendor and closes multiple disputes in a single browser session.
     """
     results = []
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(USER_DATA_DIR),
+            user_data_dir=str(resolve_profile_dir(email)),
             headless=headless,
             slow_mo=50
         )
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        ensure_logged_in(page, email=email, password=password)
 
         for it in items:
             did = str(it.get("dispute_id") or "").strip()
@@ -1279,31 +1299,31 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
         "results": results
     }
 
-def check_tista_login_status():
+def check_tista_login_status(email=None):
     """Checks if Tista profile exists and has saved session cookies/storage."""
-    profile_dir = USER_DATA_DIR
+    profile_dir = resolve_profile_dir(email) if email else USER_DATA_DIR
     if not profile_dir.exists():
         return {"logged_in": False, "reason": "No profile directory"}
     has_default = (profile_dir / "Default").exists() or (profile_dir / "Cookies").exists()
-    return {"logged_in": has_default}
+    return {"logged_in": has_default, "email": email or ""}
 
 def perform_tista_login(email=None, password=None):
     """Logs in to Tista. In headless / cloud mode, uses provided credentials or env vars; locally opens visible browser."""
-    profile_dir = USER_DATA_DIR
-    profile_dir.mkdir(parents=True, exist_ok=True)
-
     email = (email or os.environ.get("TISTA_EMAIL", "")).strip()
     password = (password or os.environ.get("TISTA_PASSWORD", "")).strip()
+
+    profile_dir = resolve_profile_dir(email) if email else USER_DATA_DIR
+    profile_dir.mkdir(parents=True, exist_ok=True)
 
     headless = DEFAULT_HEADLESS
     if headless and not (email and password):
         return {
             "status": "error",
-            "error": "Tista credentials missing. Please set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables, or enter your credentials when logging in."
+            "error": "Tista credentials missing. Please enter your work email and password to sign in."
         }
 
     print("\n" + "=" * 60)
-    print(f" [*] Logging in to Tista (Headless: {headless})...")
+    print(f" [*] Logging in to Tista for '{email or 'local'}' (Headless: {headless})...")
     print("=" * 60 + "\n")
 
     with sync_playwright() as p:
@@ -1333,11 +1353,12 @@ def perform_tista_login(email=None, password=None):
                         submit_btn.click()
                     else:
                         pass_input.press("Enter")
-                    try:
-                        page.wait_for_load_state("domcontentloaded", timeout=12000)
-                    except Exception:
-                        pass
-                    time.sleep(2)
+                    for _ in range(12):
+                        time.sleep(1)
+                        if "sign_in" not in page.url and page.locator('input[type="password"]').count() == 0:
+                            break
+                        if page.locator('.alert, .notice, #flash_alert, #flash_notice, .error_explanation, .invalid-feedback').count() > 0:
+                            break
             except Exception as e:
                 print(f" [!] Login submission error: {e}")
 
@@ -1364,10 +1385,10 @@ def perform_tista_login(email=None, password=None):
         ctx.close()
 
     if is_logged_in:
-        print("[✓] Login flow completed. Session saved to profile.\n")
-        return {"status": "success", "message": "Login completed successfully"}
+        print(f"[✓] Login completed for '{email}'. Session saved to profile.\n")
+        return {"status": "success", "message": "Login completed successfully", "email": email}
     else:
-        detail = f": {err_msg}" if err_msg else ". Please verify your Tista Email and Password."
+        detail = f": {err_msg}" if err_msg else ". Please verify your work email and password."
         return {"status": "error", "error": f"Login failed{detail}"}
 
 def clean_html_block(html):
@@ -1648,7 +1669,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Tista-Email, X-Tista-Password, Authorization")
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -1657,6 +1678,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        qs = parse_qs(parsed.query)
+        user_email = self.headers.get("X-Tista-Email") or qs.get("user_email", [None])[0]
+        user_password = self.headers.get("X-Tista-Password") or qs.get("user_password", [None])[0]
+
         if parsed.path in ("", "/", "/index.html", "/calc", "/calculator"):
             self.send_response(302)
             self.send_header("Location", "/Chargeback%20Calculator.html")
@@ -1664,10 +1689,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login", "/api/tista_login"):
-            print("\n[API] Received Tista login request...")
+            print(f"\n[API GET] Received Tista login request for: '{user_email or 'env'}'...")
             try:
-                res = perform_tista_login()
-                self.send_response(200)
+                res = perform_tista_login(email=user_email, password=user_password)
+                self.send_response(200 if res.get("status") == "success" else 400)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
@@ -1679,7 +1704,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login_status", "/api/tista_login_status"):
-            res = check_tista_login_status()
+            res = check_tista_login_status(email=user_email)
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -1708,9 +1733,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 "end_date": end_date,
                 "deep_scan": deep_scan
             }
-            print(f"\n[API] Received batch disputes request with filters: {filters}")
+            print(f"\n[API] Received batch disputes request with filters: {filters} (User: {user_email or 'default'})")
             try:
-                result = fetch_disputes_batch_from_tista(filters, headless=DEFAULT_HEADLESS)
+                result = fetch_disputes_batch_from_tista(filters, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1731,9 +1756,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing order_id parameter"}).encode("utf-8"))
                 return
 
-            print(f"\n[API] Received files fetch request for Order #{order_id}")
+            print(f"\n[API] Received files fetch request for Order #{order_id} (User: {user_email or 'default'})")
             try:
-                result = fetch_order_files_from_tista(order_id, headless=DEFAULT_HEADLESS)
+                result = fetch_order_files_from_tista(order_id, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1771,9 +1796,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing order_id parameter"}).encode("utf-8"))
                 return
 
-            print(f"\n[API] Received fetch request for Order #{order_id}")
+            print(f"\n[API] Received fetch request for Order #{order_id} (User: {user_email or 'default'})")
             try:
-                result = fetch_order_from_tista(order_id, headless=DEFAULT_HEADLESS)
+                result = fetch_order_from_tista(order_id, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1837,9 +1862,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = qs.get("dispute_id", [""])[0]
             amount = float(qs.get("amount", [2.0])[0] or 2.0)
             comment = qs.get("comment", [""])[0]
-            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
+            print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount} (User: {user_email or 'default'})")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1864,9 +1889,12 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             except Exception:
                 pass
 
+        user_email = self.headers.get("X-Tista-Email") or data.get("email") or data.get("user_email")
+        user_password = self.headers.get("X-Tista-Password") or data.get("password") or data.get("user_password")
+
         if parsed.path in ("/api/login", "/api/tista_login"):
             try:
-                res = perform_tista_login(email=data.get("email"), password=data.get("password"))
+                res = perform_tista_login(email=user_email, password=user_password)
                 self.send_response(200 if res.get("status") == "success" else 400)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1879,7 +1907,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/login_status", "/api/tista_login_status"):
-            res = check_tista_login_status()
+            res = check_tista_login_status(email=user_email)
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -1906,9 +1934,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             dispute_id = data.get("dispute_id", "")
             amount = float(data.get("amount", 2.0) or 2.0)
             comment = data.get("comment", "")
-            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount}")
+            print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount} (User: {user_email or 'default'})")
             try:
-                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS)
+                res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -1922,9 +1950,9 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
         if parsed.path == "/api/batch_close_disputes":
             items = data.get("disputes", [])
-            print(f"\n[API POST] Batch close disputes: {len(items)} items")
+            print(f"\n[API POST] Batch close disputes: {len(items)} items (User: {user_email or 'default'})")
             try:
-                res = batch_close_disputes_on_tista(items, headless=DEFAULT_HEADLESS)
+                res = batch_close_disputes_on_tista(items, headless=DEFAULT_HEADLESS, email=user_email, password=user_password)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
