@@ -110,7 +110,13 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
     profile = resolve_profile_dir()
     profile.mkdir(parents=True, exist_ok=True)
 
-    args = ["--disable-blink-features=AutomationControlled"]
+    args = [
+        "--disable-blink-features=AutomationControlled",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+    ]
     viewport = {"width": 1280, "height": 800}
 
     ctx = None

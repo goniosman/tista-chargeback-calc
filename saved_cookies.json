@@ -1,0 +1,22 @@
+[
+  {
+    "name": "remember_user_token",
+    "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6Ilcxc3hOamc0WFN3aUpESmhKREV4SkhoSE9VaFhXWFpEVUZBek9HTkdMMVowYzNSRFlYVWlMQ0l4TnprME56RTVORFV6TGpRNU1qa3hOU0pkIiwiZXhwIjoiMjAyNi0xMS0yOVQwNToxMDo1My40OTJaIiwicHVyIjoiY29va2llLnJlbWVtYmVyX3VzZXJfdG9rZW4ifX0%3D--9bd40450bda0d51c66af0917b26f9a3f18d465ca",
+    "domain": "tista.app",
+    "path": "/",
+    "expires": 1795929053.204765,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_example_session",
+    "value": "0LWnmKeyrVtRIygPuoTzVgw0hXremKoNsuNAhi%2BVU%2B6sVvhufIDqSw5YQoPrMFUCfPsZPpoJfFMJ9rVnZr9U6u%2B0x%2BFKdPvXPf7fhBHyBLMhKAvK%2FRiqxZONx2U9v19ueXiSgVWwMmKNJJzP7vZa%2FZ3UzHpft%2Fq4A5hD6%2F1FuY2EoNxkWra9lMty7iPx1gzIUrfpMbHSbl2AxrBqRzxf1915ywa9LqDeyc7Cu00AXjRGaj56NGOPC5f1LLH498dd7yhNsB7rNgxJnGHfdh05S9SKUJnwWIZT6GkOliBNKBi%2FJ%2BFCreBW%2B%2ByxOtYCXl0G06E4PovR0h%2BkCnz4wu%2BNbhnTplaAIQKL5LQDhKEYJM3yP0dGnqiqSHN3JfE6ye9Kx5buP3V1cLNjtykftd6e%2FRdRO8MYzqf2JTTpkNNZSFbK%2F9%2B1pbPpJa2rtoCKPiXaDfQ4NsatNxOUrL%2FhacoO6MvNVslE%2BnG4a5YDtHzTDTP6MRuMBtMAWbkVZ6v5z2vh8lXCyU7W--%2BtQAjPfIiugxZD%2Bj--I8q67pXIfveGX0GWzT%2BvAA%3D%3D",
+    "domain": "tista.app",
+    "path": "/",
+    "expires": 1795932144.787775,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]
