@@ -2728,6 +2728,31 @@ pane.addEventListener('click',e=>{
 });
 render();
 
+<!-- Tista Individual User Login Modal -->
+<div id="tista-login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;width:90%;max-width:420px;padding:24px;box-shadow:0 12px 36px rgba(0,0,0,0.6);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin:0;font-size:18px;display:flex;align-items:center;gap:8px;">🔑 তিস্তা অ্যাকাউন্টে লগইন</h3>
+      <button onclick="$('tista-login-modal').style.display='none'" style="background:transparent;border:none;color:#8b949e;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <p style="font-size:13px;color:#8b949e;margin:0 0 16px;line-height:1.5;">আপনার অফিসিয়াল তিস্তা ইমেইল ও পাসওয়ার্ড দিয়ে সাইন-ইন করুন। কেবল নিবন্ধিত তিস্তা ব্যবহারকারীরাই ডাটা অ্যাক্সেস করতে পারবেন।</p>
+    <form id="tista-login-form" onsubmit="event.preventDefault(); submitTistaModalLogin();" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#c9d1d9;display:block;margin-bottom:4px;">Tista Email</label>
+        <input id="modal-tista-email" type="email" required placeholder="name@email.com" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#c9d1d9;display:block;margin-bottom:4px;">Tista Password</label>
+        <input id="modal-tista-password" type="password" required placeholder="••••••••" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none;">
+      </div>
+      <div id="modal-login-err" style="color:#f85149;font-size:12px;display:none;line-height:1.4;"></div>
+      <button id="modal-btn-submit" type="submit" style="margin-top:6px;padding:12px;background:#238636;color:#fff;border:none;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        সাইন-ইন করুন &rarr;
+      </button>
+    </form>
+  </div>
+</div>
+
 // ---------- Tista Login Helper & Live Status ----------
 async function checkTistaLoginStatus() {
   try {
@@ -2736,8 +2761,9 @@ async function checkTistaLoginStatus() {
     const data = await res.json();
     const txt = $('tista-status-text');
     const dot = $('tista-status-dot');
+    const savedUser = localStorage.getItem('tista_logged_user');
     if(data.logged_in) {
-      if(txt) txt.textContent = '🟢 Tista Logged In';
+      if(txt) txt.textContent = savedUser ? `🟢 ${savedUser}` : '🟢 Tista Logged In';
       if(dot) dot.style.background = '#2ecc71';
     } else {
       if(txt) txt.textContent = '🔑 Tista Login';
@@ -2748,46 +2774,73 @@ async function checkTistaLoginStatus() {
   }
 }
 
-async function triggerTistaLogin() {
-  const btn = $('btn-tista-login');
-  const txt = $('tista-status-text');
-  const dot = $('tista-status-dot');
-
+function triggerTistaLogin() {
   const isRemote = API_BASE.includes('onrender.com') || (window.location.protocol.startsWith('http') && !API_BASE.includes('127.0.0.1') && !API_BASE.includes('localhost'));
-  let bodyData = null;
 
   if (isRemote) {
-    const email = prompt('Enter your Tista Email:');
-    if (!email) return;
-    const password = prompt('Enter your Tista Password:');
-    if (!password) return;
-    bodyData = JSON.stringify({ email: email.trim(), password: password.trim() });
+    const modal = $('tista-login-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      $('modal-login-err').style.display = 'none';
+      setTimeout(() => $('modal-tista-email').focus(), 100);
+      return;
+    }
   }
 
-  if(txt) txt.textContent = 'Logging in...';
-  showLoading('Connecting to Tista...', isRemote ? 'Submitting credentials to save session on cloud server...' : 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+  showLoading('Connecting to Tista...', 'A browser window will open. Enter your email and password, check "Remember me", and click "Sign in".', true);
+  fetch(`${API_BASE}/api/login`)
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'success') {
+        alert('✓ Tista Login Successful! Your session has been permanently saved.');
+        checkTistaLoginStatus();
+      } else {
+        alert('Tista Login: ' + (data.error || 'Failed to login'));
+      }
+    })
+    .catch(err => {
+      alert('Tista Login Error: ' + err.message);
+    })
+    .finally(() => {
+      hideLoading();
+      checkTistaLoginStatus();
+    });
+}
+
+async function submitTistaModalLogin() {
+  const email = $('modal-tista-email').value.trim();
+  const password = $('modal-tista-password').value;
+  const btn = $('modal-btn-submit');
+  const errDiv = $('modal-login-err');
+
+  if(!email || !password) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span> তিস্তায় যাচাই করা হচ্ছে...';
+  errDiv.style.display = 'none';
 
   try {
-    const opts = bodyData ? {
+    const res = await fetch(`${API_BASE}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: bodyData
-    } : { method: 'GET' };
-
-    const res = await fetch(`${API_BASE}/api/login`, opts);
+      body: JSON.stringify({ email, password })
+    });
     const data = await res.json();
     if(data.status === 'success') {
-      if(txt) txt.textContent = '🟢 Tista Logged In';
-      if(dot) dot.style.background = '#2ecc71';
-      alert('✓ Tista Login Successful! Your session has been permanently saved.');
+      localStorage.setItem('tista_logged_user', email);
+      $('tista-login-modal').style.display = 'none';
+      alert(`✓ স্বাগতম! তিস্তা অ্যাকাউন্ট (${email}) সফলভাবে লগইন হয়েছে।`);
+      checkTistaLoginStatus();
     } else {
-      throw new Error(data.error || 'Login was not completed.');
+      errDiv.textContent = '❌ লগইন ব্যর্থ হয়েছে: ' + (data.error || 'ইমেইল বা পাসওয়ার্ড ভুল হয়েছে।');
+      errDiv.style.display = 'block';
     }
   } catch(err) {
-    alert('Tista Login Helper: ' + err.message + '\n\nNote: You can also set TISTA_EMAIL and TISTA_PASSWORD in Render Environment Variables.');
+    errDiv.textContent = '❌ সার্ভার সংযোগে ত্রুটি: ' + err.message;
+    errDiv.style.display = 'block';
   } finally {
-    hideLoading();
-    checkTistaLoginStatus();
+    btn.disabled = false;
+    btn.innerHTML = 'সাইন-ইন করুন &rarr;';
   }
 }
 
