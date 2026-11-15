@@ -1132,7 +1132,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             disp_comment = ""
             disp_link = ""
             disp_files = []
-            if r.get("dispute_id") and (reason_name.lower() == "delay" or deep_scan):
+            if r.get("dispute_id") and (reason_name.lower() == "delay" or deep_scan or single_clean_id or len(rows) <= 20):
                 try:
                     edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
@@ -1147,7 +1147,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                             if urls:
                                 disp_link = urls[0]
                                 disp_files = extract_filenames_from_page(edit_page, disp_link)
-                                if disp_files and reason_name.lower() == "delay":
+                                if disp_files:
                                     qty = len(disp_files)
                     edit_page.close()
                 except Exception as bce:
@@ -1200,10 +1200,13 @@ def extract_filenames_from_page(page, url):
     print(f"[*] Extracting filenames from link: {clean_url}")
     try:
         try:
-            page.goto(clean_url, wait_until="networkidle", timeout=25000)
+            page.goto(clean_url, wait_until="domcontentloaded", timeout=12000)
         except Exception:
-            page.goto(clean_url, wait_until="domcontentloaded", timeout=25000)
-        time.sleep(2.5)
+            try:
+                page.goto(clean_url, timeout=12000)
+            except Exception:
+                pass
+        time.sleep(2.0)
 
         files = page.evaluate("""() => {
             const filenames = new Set();

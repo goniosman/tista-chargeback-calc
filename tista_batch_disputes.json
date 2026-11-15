@@ -1,14 +1,6 @@
 {
   "filters": {
-    "reason": "1",
-    "status": "1",
-    "chargeable": "1",
-    "location": "",
-    "query": "#458475",
-    "date_range": "",
-    "start_date": "2026-11-09",
-    "end_date": "2026-11-12",
-    "deep_scan": false
+    "query": "#458475"
   },
   "total_disputes": 1,
   "disputes": [

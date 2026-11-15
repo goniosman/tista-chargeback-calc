@@ -2073,7 +2073,7 @@ function paneBatch(){
               <tr>
                 <td style="color:var(--muted);font-size:12px">${idx + 1}</td>
                 <td style="font-family:var(--font-mono);font-weight:600">
-                  <div>${esc(d.order_id)}</div>
+                  <div style="font-size:13px">${esc(d.order_id)}</div>
                   ${d.is_all_images ? 
                     `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${d.fault_quantity||r.qty})</div>` : 
                     (d.filenames && d.filenames.length ? `
@@ -2081,11 +2081,29 @@ function paneBatch(){
                         <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none">
                           ▶ ${d.filenames.length} files (click to view)
                         </summary>
-                        <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;max-width:260px">
-                          ${d.filenames.map(f => `<span style="font-size:10.5px;font-family:var(--font-mono);background:var(--soft);padding:1px 5px;border-radius:3px;border:1px solid var(--line);">${esc(f)}</span>`).join('')}
+                        <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;max-width:280px">
+                          ${d.filenames.map(f => `<span style="font-size:10px;font-family:var(--font-mono);background:var(--soft);padding:1px 5px;border-radius:3px;border:1px solid var(--line);">${esc(f)}</span>`).join('')}
                         </div>
                       </details>
-                    ` : '')
+                    ` : (d.comment_link ? `
+                      <details style="margin-top:2px;cursor:pointer" onclick="fetchRowFilenamesIfEmpty(${item.idx})">
+                        <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none" id="row-files-sum-${item.idx}">
+                          ▶ ${d.fault_quantity||r.qty} files (click to view)
+                        </summary>
+                        <div id="row-files-div-${item.idx}" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;max-width:280px">
+                          <span style="font-size:10.5px;color:var(--muted)">Loading files...</span>
+                        </div>
+                      </details>
+                    ` : ((d.fault_quantity || r.qty) ? `
+                      <details style="margin-top:2px;cursor:pointer" onclick="fetchRowFilenamesIfEmpty(${item.idx})">
+                        <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none" id="row-files-sum-${item.idx}">
+                          ▶ ${d.fault_quantity||r.qty} files (click to view)
+                        </summary>
+                        <div id="row-files-div-${item.idx}" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;max-width:280px">
+                          <span style="font-size:10.5px;color:var(--muted)">Click to retrieve files...</span>
+                        </div>
+                      </details>
+                    ` : '')))
                   }
                 </td>
                 <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">${esc(d.fault_at||'—')}</td>
@@ -2230,6 +2248,39 @@ async function fetchLiveBatchDisputes(customQuery=null){
     render();
   } finally {
     hideLoading();
+  }
+}
+
+async function fetchRowFilenamesIfEmpty(idx) {
+  const b = S.batch || { disputes: [] };
+  const d = b.disputes[idx];
+  if(!d) return;
+  if(d.filenames && d.filenames.length) return;
+  const div = document.getElementById(`row-files-div-${idx}`);
+  const sum = document.getElementById(`row-files-sum-${idx}`);
+
+  try {
+    let url = '';
+    if(d.comment_link) {
+      url = `${API_BASE}/api/fetch_link_files?url=${encodeURIComponent(d.comment_link)}`;
+    } else {
+      url = `${API_BASE}/api/fetch_files?order_id=${encodeURIComponent(d.order_id || '')}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    const files = data.filenames || (data.files ? data.files.map(f => f.filename || f) : []);
+    if(files && files.length) {
+      d.filenames = files;
+      if(sum) sum.textContent = `▶ ${files.length} files (click to collapse)`;
+      if(div) {
+        div.innerHTML = files.map(f => `<span style="font-size:10px;font-family:var(--font-mono);background:var(--soft);padding:1px 5px;border-radius:3px;border:1px solid var(--line);">${esc(f)}</span>`).join('');
+      }
+      save();
+    } else {
+      if(div) div.innerHTML = `<span style="font-size:10.5px;color:var(--muted)">No filename links detected in comment</span>`;
+    }
+  } catch(e) {
+    if(div) div.innerHTML = `<span style="font-size:10.5px;color:var(--danger)">Error retrieving files: ${esc(e.message)}</span>`;
   }
 }
 
