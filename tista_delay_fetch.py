@@ -113,9 +113,10 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
     args = ["--disable-blink-features=AutomationControlled"]
     viewport = {"width": 1280, "height": 800}
 
+    ctx = None
     # 1. Try Google Chrome channel first
     try:
-        return p.chromium.launch_persistent_context(
+        ctx = p.chromium.launch_persistent_context(
             user_data_dir=str(profile),
             channel="chrome",
             headless=headless,
@@ -126,44 +127,61 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
         print(f"[*] Chrome channel launch note: {e1}")
 
     # 2. Try standard Playwright Chromium with primary profile
-    try:
-        return p.chromium.launch_persistent_context(
-            user_data_dir=str(profile),
-            headless=headless,
-            viewport=viewport,
-            args=args
-        )
-    except Exception as e2:
-        print(f"[*] Standard persistent profile locked or failed: {e2}")
+    if not ctx:
+        try:
+            ctx = p.chromium.launch_persistent_context(
+                user_data_dir=str(profile),
+                headless=headless,
+                viewport=viewport,
+                args=args
+            )
+        except Exception as e2:
+            print(f"[*] Standard persistent profile locked or failed: {e2}")
 
     # 3. Fallback to temp directory with copied cookies if primary profile is locked
-    temp_dir = Path(tempfile.mkdtemp(prefix="tista_chrome_"))
-    print(f"[*] Primary profile locked, falling back to temp profile: {temp_dir}")
-    try:
-        for c_src in [profile / "Default" / "Network" / "Cookies", profile / "Default" / "Cookies"]:
-            if c_src.exists():
-                target = temp_dir / "Default" / "Network"
-                target.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(c_src, target / "Cookies")
-                break
-    except Exception:
-        pass
+    if not ctx:
+        temp_dir = Path(tempfile.mkdtemp(prefix="tista_chrome_"))
+        print(f"[*] Primary profile locked, falling back to temp profile: {temp_dir}")
+        try:
+            for c_src in [profile / "Default" / "Network" / "Cookies", profile / "Default" / "Cookies"]:
+                if c_src.exists():
+                    target = temp_dir / "Default" / "Network"
+                    target.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(c_src, target / "Cookies")
+                    break
+        except Exception:
+            pass
 
-    try:
-        return p.chromium.launch_persistent_context(
-            user_data_dir=str(temp_dir),
-            channel="chrome",
-            headless=headless,
-            viewport=viewport,
-            args=args
-        )
-    except Exception:
-        return p.chromium.launch_persistent_context(
-            user_data_dir=str(temp_dir),
-            headless=headless,
-            viewport=viewport,
-            args=args
-        )
+        try:
+            ctx = p.chromium.launch_persistent_context(
+                user_data_dir=str(temp_dir),
+                channel="chrome",
+                headless=headless,
+                viewport=viewport,
+                args=args
+            )
+        except Exception:
+            ctx = p.chromium.launch_persistent_context(
+                user_data_dir=str(temp_dir),
+                headless=headless,
+                viewport=viewport,
+                args=args
+            )
+
+    # Automatically load saved session cookies (e.g. from Render cookie sync)
+    for c_path in [profile / "saved_cookies.json", APP_DIR / "saved_cookies.json", Path("/data/saved_cookies.json")]:
+        if c_path.exists():
+            try:
+                with open(c_path, "r", encoding="utf-8") as f:
+                    sc = json.load(f)
+                    if sc and isinstance(sc, list):
+                        ctx.add_cookies(sc)
+                        print(f"[✓] Loaded {len(sc)} saved cookies from {c_path.name}")
+                        break
+            except Exception as e:
+                print(f"[!] Error loading saved cookies: {e}")
+
+    return ctx
 
 KNOWN_SERVICES = [
     "Clipping path", "Multi-clipping path", "Image masking", "Drop shadow",
@@ -1496,7 +1514,7 @@ def check_tista_login_status():
     if not profile_dir.exists():
         return {"logged_in": False, "reason": "No profile directory"}
     has_cookies = False
-    for cp in [profile_dir / "Default" / "Network" / "Cookies", profile_dir / "Default" / "Cookies", profile_dir / "Cookies"]:
+    for cp in [profile_dir / "saved_cookies.json", APP_DIR / "saved_cookies.json", profile_dir / "Default" / "Network" / "Cookies", profile_dir / "Default" / "Cookies", profile_dir / "Cookies"]:
         if cp.exists() and cp.stat().st_size > 0:
             has_cookies = True
             break
@@ -1898,6 +1916,30 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             return
 
+        if parsed.path in ("/api/import_cookies", "/api/sync_cookies"):
+            cookies = data.get("cookies", [])
+            if cookies:
+                try:
+                    for d in [USER_DATA_DIR, APP_DIR, Path("/data")]:
+                        if d.exists():
+                            with open(d / "saved_cookies.json", "w", encoding="utf-8") as f:
+                                json.dump(cookies, f, indent=2)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "success", "message": f"Successfully imported {len(cookies)} cookies"}).encode("utf-8"))
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+            else:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "No cookies provided"}).encode("utf-8"))
+            return
+
         if parsed.path in ("/api/login", "/api/tista_login"):
             print("\n[API] Received Tista login request...")
             try:
@@ -2098,6 +2140,30 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 data = json.loads(post_body)
             except Exception:
                 pass
+
+        if parsed.path in ("/api/import_cookies", "/api/sync_cookies"):
+            cookies = data.get("cookies", [])
+            if cookies:
+                try:
+                    for d in [USER_DATA_DIR, APP_DIR, Path("/data")]:
+                        if d.exists():
+                            with open(d / "saved_cookies.json", "w", encoding="utf-8") as f:
+                                json.dump(cookies, f, indent=2)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "success", "message": f"Successfully imported {len(cookies)} cookies"}).encode("utf-8"))
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+            else:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "No cookies provided"}).encode("utf-8"))
+            return
 
         if parsed.path in ("/api/login", "/api/tista_login"):
             try:
