@@ -123,9 +123,9 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
       <span id="tista-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e3b341"></span>
       <span id="tista-status-text">🔑 Tista Login</span>
     </button>
-    <a href="BOOKMARKLET.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(32,178,170,0.15);border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:20px;" title="কোনো পাইথন বা সার্ভার ছাড়াই সরাসরি ব্রাউজারে Tista-র ভেতরে কাজ করুন">
-      ⚡ সার্ভার ছাড়া Tista-তে ব্যবহার করুন (Serverless)
-    </a>
+    <button id="btn-global-refresh" type="button" class="btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;" title="Reset all data and clear calculation history">
+      🔄 Reset / Refresh
+    </button>
   </div>
 </header>
 <nav role="tablist" id="tabs">
@@ -143,10 +143,10 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
 <div id="tista-login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
   <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;width:90%;max-width:420px;padding:24px;box-shadow:0 12px 36px rgba(0,0,0,0.6);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <h3 style="margin:0;font-size:18px;display:flex;align-items:center;gap:8px;">🔑 তিস্তা অ্যাকাউন্টে লগইন</h3>
+      <h3 style="margin:0;font-size:18px;display:flex;align-items:center;gap:8px;">🔑 Tista Account Login</h3>
       <button type="button" onclick="$('tista-login-modal').style.display='none'" style="background:transparent;border:none;color:#8b949e;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
     </div>
-    <p style="font-size:13px;color:#8b949e;margin:0 0 16px;line-height:1.5;">আপনার অফিসিয়াল তিস্তা ইমেইল ও পাসওয়ার্ড দিয়ে সাইন-ইন করুন। কেবল নিবন্ধিত তিস্তা ব্যবহারকারীরাই ডাটা অ্যাক্সেস করতে পারবেন।</p>
+    <p style="font-size:13px;color:#8b949e;margin:0 0 16px;line-height:1.5;">Sign in with your official Tista email and password. Only registered Tista accounts can access data.</p>
     <form id="tista-login-form" onsubmit="event.preventDefault(); submitTistaModalLogin();" style="display:flex;flex-direction:column;gap:14px;">
       <div>
         <label style="font-size:12px;font-weight:600;color:#c9d1d9;display:block;margin-bottom:4px;">Tista Email</label>
@@ -158,7 +158,7 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
       </div>
       <div id="modal-login-err" style="color:#f85149;font-size:12px;display:none;line-height:1.4;"></div>
       <button id="modal-btn-submit" type="submit" style="margin-top:6px;padding:12px;background:#238636;color:#fff;border:none;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-        সাইন-ইন করুন &rarr;
+        Sign In &rarr;
       </button>
     </form>
   </div>
@@ -1969,6 +1969,7 @@ function paneBatch(){
 
     <div class="tools" style="margin-top:14px">
       <button class="btn pri" id="bt-search">⚡ SEARCH & CALCULATE (LIVE TISTA)</button>
+      <button class="btn" id="bt-reset-all" style="background:#21262d;border:1px solid #30363d;color:#f0f6fc;font-weight:600">🔄 Reset / Clear All</button>
       <button class="btn" id="bt-sample">Load Sample (16 Disputes)</button>
       <button class="btn" id="bt-toggle-paste">Paste Multiple IDs</button>
       <button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>
@@ -1986,7 +1987,7 @@ function paneBatch(){
     <div id="bt-slides-drawer" style="margin-top:14px;border-top:1px solid var(--line);padding:14px 16px;background:var(--soft);border-radius:8px;${b.showSlides?'':'display:none'}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <strong style="font-size:13.5px;color:var(--ink)">📊 Import from Google Slides (Correction Report):</strong>
-        <span class="sub" style="font-size:12px">স্লাইড থেকে Order ID, Service, এবং File Names অটো নিয়ে চার্জব্যাক হিসেব করবে</span>
+        <span class="sub" style="font-size:12px">Automatically extract Order IDs, Services, and File Names from presentation slides to calculate chargebacks</span>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <input id="bt-slides-url" placeholder="Paste Google Slides Link (e.g. https://docs.google.com/presentation/d/...)" style="flex:1;min-width:280px;font-family:var(--font-mono);font-size:12.5px;padding:7px 10px" value="${esc(b.slideUrl||'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing')}">
@@ -2744,6 +2745,7 @@ pane.addEventListener('click',e=>{
   else if(t.id==='bt-preset-month') setBatchDatePreset('month');
   else if(t.id==='bt-preset-clear') setBatchDatePreset('clear');
   else if(t.id==='bt-search') fetchLiveBatchDisputes();
+  else if(t.id==='bt-reset-all') resetCalculatorState();
   else if(t.id==='bt-sample'){ S.batch.disputes = SAMPLE_BATCH_DATA.disputes || []; save(); render(); }
   else if(t.id==='bt-toggle-paste'){ S.batch.showPaste = !S.batch.showPaste; render(); }
   else if(t.id==='bt-toggle-slides'){ S.batch.showSlides = !S.batch.showSlides; render(); }
@@ -2805,7 +2807,39 @@ pane.addEventListener('click',e=>{
 });
 render();
 
+// ---------- Global Reset & Fresh State Helper ----------
+function resetCalculatorState() {
+  if (S.batch) {
+    S.batch.disputes = [];
+    S.batch.query = '';
+    S.batch.filterQ = '';
+    S.batchStatusText = '';
+  }
+  if ($('bt-query')) $('bt-query').value = '';
+  if ($('bt-filter-table')) $('bt-filter-table').value = '';
+  if ($('bt-status-text')) $('bt-status-text').textContent = '';
+  if ($('bt-paste-input')) $('bt-paste-input').value = '';
+  save();
+  render();
+  checkTistaLoginStatus();
+}
+
+if ($('btn-global-refresh')) {
+  $('btn-global-refresh').addEventListener('click', () => {
+    resetCalculatorState();
+    alert('✓ Calculator has been reset. All previous dispute data and search history have been cleared.');
+  });
+}
+
+// Clear leftover search history on page load / browser refresh
+if (S.batch && Array.isArray(S.batch.disputes)) {
+  S.batch.disputes = [];
+  S.batchStatusText = '';
+}
+
 // ---------- Tista Login Helper & Live Status ----------
+let isTistaCurrentlyLoggedIn = false;
+
 async function checkTistaLoginStatus() {
   try {
     const res = await fetch(`${API_BASE}/api/login_status`);
@@ -2814,8 +2848,9 @@ async function checkTistaLoginStatus() {
     const txt = $('tista-status-text');
     const dot = $('tista-status-dot');
     const savedUser = localStorage.getItem('tista_logged_user');
+    isTistaCurrentlyLoggedIn = Boolean(data.logged_in);
     if(data.logged_in) {
-      if(txt) txt.textContent = savedUser ? `🟢 ${savedUser}` : '🟢 Tista Logged In';
+      if(txt) txt.textContent = savedUser ? `🟢 ${savedUser} (Saved)` : '🟢 Tista Connected (Saved)';
       if(dot) dot.style.background = '#2ecc71';
     } else {
       if(txt) txt.textContent = '🔑 Tista Login';
@@ -2828,6 +2863,12 @@ async function checkTistaLoginStatus() {
 
 function triggerTistaLogin() {
   const isRemote = API_BASE.includes('onrender.com') || (window.location.protocol.startsWith('http') && !API_BASE.includes('127.0.0.1') && !API_BASE.includes('localhost'));
+
+  if (isTistaCurrentlyLoggedIn) {
+    const savedUser = localStorage.getItem('tista_logged_user') || 'Authorized User';
+    const switchUser = confirm(`Tista is already securely connected and saved as: ${savedUser}!\n\nDo you want to switch account or re-authenticate with different credentials?`);
+    if (!switchUser) return;
+  }
 
   if (isRemote) {
     const modal = $('tista-login-modal');
@@ -2868,7 +2909,7 @@ async function submitTistaModalLogin() {
   if(!email || !password) return;
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spinner"></span> তিস্তায় যাচাই করা হচ্ছে...';
+  btn.innerHTML = '<span class="btn-spinner"></span> Verifying with Tista...';
   errDiv.style.display = 'none';
 
   try {
@@ -2881,18 +2922,18 @@ async function submitTistaModalLogin() {
     if(data.status === 'success') {
       localStorage.setItem('tista_logged_user', email);
       $('tista-login-modal').style.display = 'none';
-      alert(`✓ স্বাগতম! তিস্তা অ্যাকাউন্ট (${email}) সফলভাবে লগইন হয়েছে।`);
+      alert(`✓ Welcome! Tista account (${email}) successfully authenticated and saved.`);
       checkTistaLoginStatus();
     } else {
-      errDiv.textContent = '❌ লগইন ব্যর্থ হয়েছে: ' + (data.error || 'ইমেইল বা পাসওয়ার্ড ভুল হয়েছে।');
+      errDiv.textContent = '❌ Login failed: ' + (data.error || 'Invalid email or password.');
       errDiv.style.display = 'block';
     }
   } catch(err) {
-    errDiv.textContent = '❌ সার্ভার সংযোগে ত্রুটি: ' + err.message;
+    errDiv.textContent = '❌ Server connection error: ' + err.message;
     errDiv.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = 'সাইন-ইন করুন &rarr;';
+    btn.innerHTML = 'Sign In &rarr;';
   }
 }
 
