@@ -3176,6 +3176,7 @@ function paneBatch(){
                 <button type="button" class="cal-preset-pill" onclick="applyCalPreset('14d')">14 Days</button>
                 <button type="button" class="cal-preset-pill" onclick="applyCalPreset('month')">This Month</button>
                 <button type="button" class="cal-preset-pill clear" onclick="applyCalPreset('clear')">Clear</button>
+                <button type="button" class="cal-preset-pill" onclick="closeCalDropdown()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700">Apply</button>
               </div>
             </div>
           </div>
@@ -4274,7 +4275,7 @@ function formatDisplayDateRange(start, end) {
   const s = start || calSelectionStart;
   const e = end || calSelectionEnd;
   if (!s && !e) return 'Select Date Range';
-  if (s && !e) return `${toDDMMYY(s)} - ...`;
+  if (s && !e) return `${toDDMMYY(s)} - ${toDDMMYY(s)}`;
   if (s && e) return `${toDDMMYY(s)} - ${toDDMMYY(e)}`;
   return 'Select Date Range';
 }
@@ -4298,6 +4299,89 @@ function toggleDateRangePicker() {
     }
     renderCalendarGrid();
   }
+}
+
+let calDragStart = null;
+let calDragCurrent = null;
+let isCalMouseDown = false;
+let isCalDragging = false;
+
+function applySelectedDateRange(s, e, autoClose) {
+  if (!s && !e) {
+    calSelectionStart = '';
+    calSelectionEnd = '';
+  } else if (s && !e) {
+    calSelectionStart = s;
+    calSelectionEnd = s;
+  } else if (!s && e) {
+    calSelectionStart = e;
+    calSelectionEnd = e;
+  } else {
+    if (s <= e) {
+      calSelectionStart = s;
+      calSelectionEnd = e;
+    } else {
+      calSelectionStart = e;
+      calSelectionEnd = s;
+    }
+  }
+
+  if (calSelectionStart) {
+    const p = calSelectionStart.split('-');
+    if (p.length === 3) {
+      calCurrentYear = parseInt(p[0], 10);
+      calCurrentMonth = parseInt(p[1], 10) - 1;
+    }
+  }
+
+  if (S.batch && S.batch.filters) {
+    S.batch.filters.dateStart = calSelectionStart;
+    S.batch.filters.dateEnd = calSelectionEnd;
+    save();
+  }
+
+  const textEl = $('bt-date-text');
+  if (textEl) textEl.textContent = formatDisplayDateRange(calSelectionStart, calSelectionEnd);
+
+  renderCalendarGrid();
+
+  if (autoClose) {
+    closeCalDropdown();
+  }
+}
+
+function closeCalDropdown() {
+  const dd = $('bt-calendar-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function updateCalGridClasses(sDate, eDate) {
+  const grid = $('cal-grid');
+  if (!grid) return;
+  const cells = grid.querySelectorAll('.cal-day-cell[data-date]');
+  const start = sDate <= eDate ? sDate : eDate;
+  const end = sDate <= eDate ? eDate : sDate;
+
+  cells.forEach(cell => {
+    const dStr = cell.dataset.date;
+    const colIdx = parseInt(cell.dataset.col, 10);
+    const inRange = (dStr >= start && dStr <= end);
+    const isStart = (dStr === start);
+    const isEnd = (dStr === end);
+
+    if (inRange) {
+      cell.classList.add('in-range');
+      if (isStart) cell.classList.add('range-start'); else cell.classList.remove('range-start');
+      if (isEnd) cell.classList.add('range-end'); else cell.classList.remove('range-end');
+      if (colIdx === 0) cell.classList.add('col-start'); else cell.classList.remove('col-start');
+      if (colIdx === 6) cell.classList.add('col-end'); else cell.classList.remove('col-end');
+    } else {
+      cell.classList.remove('in-range', 'range-start', 'range-end', 'col-start', 'col-end');
+    }
+  });
+
+  const textEl = $('bt-date-text');
+  if (textEl) textEl.textContent = formatDisplayDateRange(start, end);
 }
 
 function renderCalendarGrid() {
@@ -4352,7 +4436,7 @@ function renderCalendarGrid() {
       if (colIdx === 6) classes.push('col-end');
     }
 
-    html += `<div class="${classes.join(' ')}" onclick="onCalDayClick('${dateStr}')">${d}</div>`;
+    html += `<div class="${classes.join(' ')}" data-date="${dateStr}" data-col="${colIdx}">${d}</div>`;
   }
 
   // Next month leading days to complete grid (up to 42 cells total)
@@ -4363,44 +4447,111 @@ function renderCalendarGrid() {
   }
 
   grid.innerHTML = html;
+  bindCalGridEvents();
 }
 
-function onCalDayClick(dateStr) {
-  if (calPickingStart || !calSelectionStart) {
-    calSelectionStart = dateStr;
-    calSelectionEnd = '';
-    calPickingStart = false;
-  } else {
-    if (dateStr < calSelectionStart) {
-      calSelectionEnd = calSelectionStart;
-      calSelectionStart = dateStr;
+function bindCalGridEvents() {
+  const grid = $('cal-grid');
+  if (!grid || grid._eventsAttached) return;
+  grid._eventsAttached = true;
+
+  grid.addEventListener('mousedown', function(e) {
+    const cell = e.target.closest('.cal-day-cell[data-date]');
+    if (!cell) return;
+    e.preventDefault();
+    isCalMouseDown = true;
+    isCalDragging = false;
+    calDragStart = cell.dataset.date;
+    calDragCurrent = cell.dataset.date;
+    updateCalGridClasses(calDragStart, calDragStart);
+  });
+
+  grid.addEventListener('mouseover', function(e) {
+    if (!isCalMouseDown || !calDragStart) return;
+    const cell = e.target.closest('.cal-day-cell[data-date]');
+    if (!cell) return;
+    const dStr = cell.dataset.date;
+    if (dStr !== calDragCurrent) {
+      calDragCurrent = dStr;
+      isCalDragging = true;
+      updateCalGridClasses(calDragStart, calDragCurrent);
+    }
+  });
+
+  grid.addEventListener('touchstart', function(e) {
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = el ? el.closest('.cal-day-cell[data-date]') : null;
+    if (!cell) return;
+    isCalMouseDown = true;
+    isCalDragging = false;
+    calDragStart = cell.dataset.date;
+    calDragCurrent = cell.dataset.date;
+    updateCalGridClasses(calDragStart, calDragStart);
+  }, { passive: true });
+
+  grid.addEventListener('touchmove', function(e) {
+    if (!isCalMouseDown || !calDragStart) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cell = el ? el.closest('.cal-day-cell[data-date]') : null;
+    if (!cell) return;
+    const dStr = cell.dataset.date;
+    if (dStr !== calDragCurrent) {
+      calDragCurrent = dStr;
+      isCalDragging = true;
+      updateCalGridClasses(calDragStart, calDragCurrent);
+    }
+  }, { passive: true });
+
+  grid.addEventListener('touchend', function(e) {
+    if (!isCalMouseDown) return;
+    isCalMouseDown = false;
+    const start = calDragStart;
+    const current = calDragCurrent;
+    const wasDragging = isCalDragging;
+    calDragStart = null;
+    calDragCurrent = null;
+    isCalDragging = false;
+    if (!start) return;
+    if (wasDragging && current && current !== start) {
+      applySelectedDateRange(start, current);
     } else {
-      calSelectionEnd = dateStr;
+      applySelectedDateRange(start, start);
     }
-    if (calSelectionStart) {
-    const p = calSelectionStart.split('-');
-    if (p.length === 3) {
-      calCurrentYear = parseInt(p[0], 10);
-      calCurrentMonth = parseInt(p[1], 10) - 1;
-    }
-  }
-
-  calPickingStart = true;
-    // Auto-close after selecting end date
-    const dd = $('bt-calendar-dropdown');
-    if (dd) dd.style.display = 'none';
-  }
-
-  if (S.batch && S.batch.filters) {
-    S.batch.filters.dateStart = calSelectionStart;
-    S.batch.filters.dateEnd = calSelectionEnd;
-    save();
-  }
-
-  const textEl = $('bt-date-text');
-  if (textEl) textEl.textContent = formatDisplayDateRange(calSelectionStart, calSelectionEnd);
-  renderCalendarGrid();
+  });
 }
+
+// Global mouseup to finalize drag or single click
+document.addEventListener('mouseup', function(e) {
+  if (!isCalMouseDown) return;
+  isCalMouseDown = false;
+  const start = calDragStart;
+  const current = calDragCurrent;
+  const wasDragging = isCalDragging;
+  calDragStart = null;
+  calDragCurrent = null;
+  isCalDragging = false;
+
+  if (!start) return;
+
+  if (wasDragging && current && current !== start) {
+    // 1. Dragged across dates: Selects multiple dates in ONE single gesture!
+    applySelectedDateRange(start, current);
+  } else {
+    // 2. Single click on a date:
+    // If a single date was already selected and user clicks another date, smoothly extend to range
+    const isSingleDateSelected = (calSelectionStart && calSelectionEnd && calSelectionStart === calSelectionEnd);
+    if (isSingleDateSelected && calSelectionStart !== start && !e.shiftKey) {
+      applySelectedDateRange(calSelectionStart, start);
+    } else if (e.shiftKey && calSelectionStart) {
+      applySelectedDateRange(calSelectionStart, start);
+    } else {
+      // Immediate single-date selection in ONE single click!
+      applySelectedDateRange(start, start);
+    }
+  }
+});
 
 function changeCalMonth(delta) {
   calCurrentMonth += delta;
@@ -4455,8 +4606,6 @@ function applyCalPreset(type) {
       calCurrentMonth = parseInt(p[1], 10) - 1;
     }
   }
-
-  calPickingStart = true;
 
   if (S.batch && S.batch.filters) {
     S.batch.filters.dateStart = calSelectionStart;
