@@ -106,243 +106,179 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
 .result-card-dismiss:hover{background:rgba(0,0,0,0.22)}
 .btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 
-/* Modern Auth Gateway (Path HR Style) */
+/* Authentic Tista Sign-In Theme (tista.app/users/sign_in) */
 #auth-gateway {
   position: fixed;
   inset: 0;
-  background: #f8fafc;
+  background: #ffffff;
   z-index: 999999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
+  padding: 30px 16px;
   overflow-y: auto;
-  font-family: var(--font-body);
-  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333333;
 }
-.auth-card {
-  background: #ffffff;
-  border: 1px solid #edf2f7;
-  border-radius: 24px;
-  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.12);
-  max-width: 440px;
+.tista-login-container {
+  max-width: 380px;
   width: 100%;
-  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  animation: tistaFadeIn .25s ease;
+}
+@keyframes tistaFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tista-logo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.tista-logo-text {
+  font-size: 32px;
+  font-weight: 400;
+  color: #333333;
+  letter-spacing: -0.5px;
+  font-family: inherit;
+}
+.tista-auth-card {
+  background: #5caac2;
+  border-radius: 4px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  padding: 38px 32px 32px;
+  box-sizing: border-box;
+  color: #ffffff;
   text-align: left;
-  animation: authPop .3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes authPop {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-.auth-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.auth-logo-text {
-  font-family: var(--font-head);
-  font-size: 28px;
+.tista-card-title {
+  font-size: 22px;
   font-weight: 700;
-  color: #1e1b4b;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.5px;
+  margin: 0 0 24px;
+  color: #ffffff;
+  text-align: left;
 }
-.auth-title {
-  font-family: var(--font-head);
-  font-size: 23px;
-  font-weight: 700;
-  color: #1e1b4b;
-  text-align: center;
-  margin: 0 0 6px;
-}
-.auth-subtitle {
-  font-size: 13.5px;
-  color: #64748b;
-  text-align: center;
-  margin: 0 0 20px;
-  line-height: 1.4;
-}
-.auth-google-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  cursor: pointer;
-  transition: all .15s ease;
+.tista-field {
   margin-bottom: 18px;
 }
-.auth-google-btn:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-}
-.auth-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 20px;
-  color: #94a3b8;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-.auth-divider::before, .auth-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e2e8f0;
-}
-.auth-divider span {
-  padding: 0 12px;
-}
-.auth-tabs {
-  display: flex;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 10px;
-  margin-bottom: 22px;
-}
-.auth-tab-btn {
-  flex: 1;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all .15s ease;
-  text-align: center;
-}
-.auth-tab-btn.active {
-  background: #ffffff;
-  color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-.auth-field {
-  margin-bottom: 18px;
-}
-.auth-field label {
+.tista-field label {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #ffffff;
   margin-bottom: 6px;
 }
-.auth-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.auth-field input {
+.tista-field input {
   width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 11px 14px;
-  font-size: 14px;
-  color: #0f172a;
   background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #2d3748;
   box-sizing: border-box;
-  transition: border-color .15s, box-shadow .15s;
-}
-.auth-field input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   outline: none;
+  transition: box-shadow .15s ease, border-color .15s ease;
 }
-.auth-eye-btn {
+.tista-field input::placeholder {
+  color: #94a3b8;
+}
+.tista-field input:focus {
+  border-color: #2b6cb0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+.tista-eye-btn {
   position: absolute;
-  right: 8px;
+  right: 6px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
-  font-size: 15px;
-  opacity: 0.65;
+  padding: 4px 6px;
+  font-size: 14px;
+  opacity: 0.6;
 }
-.auth-eye-btn:hover { opacity: 1; }
-.auth-remember-row {
+.tista-eye-btn:hover { opacity: 1; }
+.tista-remember-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-  font-size: 13px;
-  color: #475569;
+  margin: 16px 0 22px;
 }
-.auth-checkbox-label {
+.tista-checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   user-select: none;
-}
-.auth-checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #6366f1;
-  cursor: pointer;
-}
-.auth-submit-btn {
-  width: 100%;
-  background: #6366f1;
+  font-size: 13.5px;
   color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 18px;
-  font-family: inherit;
-  font-size: 15px;
+}
+.tista-checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #5caac2;
+  border-radius: 2px;
+}
+.tista-submit-btn {
+  width: 100%;
+  background: transparent;
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
   transition: all .15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
-.auth-submit-btn:hover {
-  background: #4f46e5;
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+.tista-submit-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
-.auth-error-box {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  padding: 10px 14px;
-  border-radius: 10px;
+.tista-links-row {
+  margin-top: 18px;
+  text-align: left;
+}
+.tista-forgot-link {
+  color: #ffffff;
+  font-size: 13px;
+  text-decoration: underline;
+  transition: opacity .15s;
+}
+.tista-forgot-link:hover {
+  opacity: 0.85;
+}
+.tista-error-box {
+  background: rgba(255, 255, 255, 0.95);
+  border-left: 4px solid #e53e3e;
+  color: #c53030;
+  padding: 10px 12px;
+  border-radius: 3px;
   font-size: 13px;
   margin-bottom: 16px;
   line-height: 1.4;
-  animation: shake .25s ease;
+  font-weight: 500;
 }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-.auth-footer {
+.tista-guest-row {
+  margin-top: 18px;
+  width: 100%;
   text-align: center;
-  margin-top: 24px;
-  font-size: 13px;
-  color: #64748b;
 }
-.auth-footer a {
-  color: #6366f1;
-  font-weight: 600;
+.tista-guest-row a {
+  color: #718096;
+  font-size: 12.5px;
   text-decoration: none;
 }
-.auth-footer a:hover {
+.tista-guest-row a:hover {
+  color: #2d3748;
   text-decoration: underline;
 }
 </style>
@@ -356,77 +292,64 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
   </div>
 </div>
 
-<!-- Dedicated Modern Login Page (Matching Path HR Style) -->
+<!-- Authentic Tista Sign-In Theme (tista.app/users/sign_in) -->
 <div id="auth-gateway" style="display:none;">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <svg width="42" height="42" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 28C10.5 28 8 26.5 8 23C8 18.5 12 15 17 15C22.5 15 25.5 21 28.5 25C31.5 29 35 33 40 33C45 33 48 29.5 48 25C48 20.5 44 17 39 17C35.5 17 33 19 31.5 21" stroke="url(#paint0_linear)" stroke-width="4.5" stroke-linecap="round"/>
+  <div class="tista-login-container">
+    <div class="tista-logo-header">
+      <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="48" rx="12" fill="url(#tista_bg)" />
+        <path d="M16 12L34 24L16 36V12Z" fill="#ffffff" fill-opacity="0.95"/>
+        <path d="M16 12L27 24L16 24V12Z" fill="#ffffff" fill-opacity="0.35"/>
         <defs>
-          <linearGradient id="paint0_linear" x1="8" y1="24" x2="48" y2="24" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#38bdf8"/>
-            <stop offset="0.5" stop-color="#6366f1"/>
-            <stop offset="1" stop-color="#8b5cf6"/>
+          <linearGradient id="tista_bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#8cd5e8"/>
+            <stop offset="1" stop-color="#4ea1b8"/>
           </linearGradient>
         </defs>
       </svg>
-      <span class="auth-logo-text">path</span>
-    </div>
-    <h1 class="auth-title">HR Management System</h1>
-    <p class="auth-subtitle">Sign in with Google, a one-time code or your password</p>
-
-    <button type="button" class="auth-google-btn" onclick="switchAuthTab('password'); $('auth-email').focus();">
-      <svg width="18" height="18" viewBox="0 0 48 48">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.77l7.97-6.18z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
-      <span>Sign in with Google</span>
-    </button>
-
-    <div class="auth-divider">
-      <span>OR</span>
+      <span class="tista-logo-text">tista</span>
     </div>
 
-    <!-- Error Alert Box -->
-    <div id="auth-error-box" class="auth-error-box" style="display:none;"></div>
+    <div class="tista-auth-card">
+      <h2 class="tista-card-title">WELCOME</h2>
 
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab-btn" id="auth-tab-code" onclick="switchAuthTab('code')">One-time code</button>
-      <button type="button" class="auth-tab-btn active" id="auth-tab-pass" onclick="switchAuthTab('password')">Password</button>
-    </div>
+      <!-- Error Alert Box -->
+      <div id="auth-error-box" class="tista-error-box" style="display:none;"></div>
 
-    <form id="auth-form" onsubmit="handleAuthSubmit(event)">
-      <div class="auth-field">
-        <label for="auth-email">Work email <span style="color:#ef4444">*</span></label>
-        <input type="email" id="auth-email" placeholder="name@company.com" required autocomplete="email">
-      </div>
-
-      <div class="auth-field" id="auth-password-group">
-        <label for="auth-password">Password <span style="color:#ef4444">*</span></label>
-        <div class="auth-input-wrapper">
-          <input type="password" id="auth-password" placeholder="Enter your Tista password" required autocomplete="current-password">
-          <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">👁️</button>
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="tista-field">
+          <label for="auth-email">Email address</label>
+          <input type="email" id="auth-email" placeholder="user@email.com" required autocomplete="email">
         </div>
-      </div>
 
-      <div class="auth-remember-row">
-        <label class="auth-checkbox-label">
-          <input type="checkbox" id="auth-remember" checked>
-          <span>Remember me for 30 days</span>
-        </label>
-      </div>
+        <div class="tista-field">
+          <label for="auth-password">Password</label>
+          <div style="position:relative;display:flex;align-items:center;">
+            <input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password" style="width:100%;">
+            <button type="button" class="tista-eye-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">👁️</button>
+          </div>
+        </div>
 
-      <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
-        <span id="auth-submit-spinner" class="btn-spinner" style="display:none;"></span>
-        <span id="auth-submit-text">Sign In</span>
-      </button>
-    </form>
+        <div class="tista-remember-row">
+          <label class="tista-checkbox-label">
+            <input type="checkbox" id="auth-remember" checked>
+            <span>Remember me</span>
+          </label>
+        </div>
 
-    <div class="auth-footer">
-      <span>Not part of Path? </span>
-      <a href="javascript:void(0)" onclick="continueAsGuest()">Request access / Continue as Guest</a>
+        <button type="submit" id="auth-submit-btn" class="tista-submit-btn">
+          <span id="auth-submit-spinner" class="btn-spinner" style="display:none;border-color:rgba(255,255,255,0.4);border-top-color:#ffffff;"></span>
+          <span id="auth-submit-text">Log in</span>
+        </button>
+
+        <div class="tista-links-row">
+          <a href="https://tista.app/users/password/new" target="_blank" class="tista-forgot-link">Forgot your password?</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="tista-guest-row">
+      <a href="javascript:void(0)" onclick="continueAsGuest()">Need local offline mode? Continue as Guest</a>
     </div>
   </div>
 </div>
@@ -442,7 +365,7 @@ tfoot td{border-top:2px solid var(--line);font-weight:600;padding-top:8px}
       <button type="button" onclick="handleLogout()" class="btn" style="padding:2px 8px;font-size:11px;border-radius:12px;background:none;border:none;cursor:pointer;color:var(--muted);" title="Sign out from this account">Sign Out</button>
     </div>
     <button id="auth-login-link-btn" type="button" onclick="showAuthGateway()" class="btn" style="display:none;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);font-weight:600;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;">
-      🔑 Sign In
+      🔑 Tista Login
     </button>
     <a href="BOOKMARKLET.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(32,178,170,0.15);border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:20px;" title="কোনো পাইথন বা সার্ভার ছাড়াই সরাসরি ব্রাউজারে Tista-র ভেতরে কাজ করুন">
       ⚡ সার্ভার ছাড়া Tista-তে ব্যবহার করুন (Serverless)
@@ -3189,7 +3112,7 @@ async function handleAuthSubmit(event) {
   const password = passInput ? passInput.value.trim() : '';
 
   if (!email) {
-    if (errBox) { errBox.textContent = 'Please enter your work email.'; errBox.style.display = 'block'; }
+    if (errBox) { errBox.textContent = 'Please enter your email address.'; errBox.style.display = 'block'; }
     return;
   }
   if (!password) {
@@ -3199,7 +3122,7 @@ async function handleAuthSubmit(event) {
 
   if (spinner) spinner.style.display = 'inline-block';
   if (submitBtn) submitBtn.disabled = true;
-  if (submitTxt) submitTxt.textContent = 'Signing in to Tista...';
+  if (submitTxt) submitTxt.textContent = 'Logging in...';
 
   try {
     const res = await fetch(`${API_BASE}/api/login`, {
@@ -3227,7 +3150,7 @@ async function handleAuthSubmit(event) {
   } finally {
     if (spinner) spinner.style.display = 'none';
     if (submitBtn) submitBtn.disabled = false;
-    if (submitTxt) submitTxt.textContent = 'Sign In';
+    if (submitTxt) submitTxt.textContent = 'Log in';
   }
 }
 
