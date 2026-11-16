@@ -1455,14 +1455,36 @@ function paneCor(){
   return `
   <!-- Order Search Card -->
   <div class="order-search-card">
-    <label class="field-label">Order ID</label>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label class="field-label" style="margin:0">Order ID</label>
+      <button class="btn btn-sm" id="cor-toggle-slide" style="padding:2px 10px;font-size:11.5px;font-weight:600;color:var(--accent);border-color:rgba(59,91,240,0.3);background:rgba(59,91,240,0.06);border-radius:6px;cursor:pointer">
+        ${S.showCorSlide ? '▲ Hide Slide Link' : '📊 Google Slide Link Option'}
+      </button>
+    </div>
     <div class="order-search-row">
-      <input id="cor-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID" value="${esc(S.corAutoId||'')}">
-      <button class="btn-primary-action" id="cor-quick-fetch">
+      <input id="cor-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID (e.g. 457696)" value="${esc(S.corAutoId||'')}">
+      <button class="btn-primary-action" id="cor-quick-fetch" title="Fetch live order from Tista">
         Fetch & Calculate
+      </button>
+      <button class="btn" id="cor-quick-slide" style="background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px" title="Find this ID in Google Slides & calculate chargeback">
+        📊 Calculate from Slide
       </button>
       <button class="btn" id="cor-quick-files" title="Open file-by-file selection in Auto Correction tab">Select Files</button>
       <span id="cor-quick-status" class="sub" style="font-weight:500;margin-left:8px"></span>
+    </div>
+
+    <!-- Google Slide Link Option Drawer -->
+    <div id="cor-slide-drawer" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);${S.showCorSlide ? '' : 'display:none'}">
+      <label class="field-label" style="font-size:12px;margin-bottom:5px">Google Slide Presentation Link:</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="cor-slide-url" placeholder="Paste Google Slides URL: https://docs.google.com/presentation/d/.../edit" value="${esc(S.corSlideUrl || S.batch?.slideUrl || '')}" style="flex:1;min-width:280px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font-size:13px;background:var(--bg)">
+        <button class="btn" id="cor-slide-calc-btn" style="background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;white-space:nowrap">
+          🔍 Find ID & Calculate
+        </button>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:5px">
+        Provide the presentation link and Order ID. The system will search all slides for this ID, extract its service, contractor, severity, files, and calculate this single order's chargeback.
+      </div>
     </div>
   </div>
 
@@ -1547,13 +1569,35 @@ function paneDel(){
   return `
   <!-- Order Search Card -->
   <div class="order-search-card">
-    <label class="field-label">Order ID</label>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label class="field-label" style="margin:0">Order ID</label>
+      <button class="btn btn-sm" id="del-toggle-slide" style="padding:2px 10px;font-size:11.5px;font-weight:600;color:var(--accent);border-color:rgba(59,91,240,0.3);background:rgba(59,91,240,0.06);border-radius:6px;cursor:pointer">
+        ${S.showDelSlide ? '▲ Hide Slide Link' : '📊 Google Slide Link Option'}
+      </button>
+    </div>
     <div class="order-search-row">
       <input id="del-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID (e.g. 371289)" value="${esc(S.autoId||'')}">
-      <button class="btn-primary-action" id="del-quick-fetch">
+      <button class="btn-primary-action" id="del-quick-fetch" title="Fetch live order details from Tista">
         Fetch from Tista
       </button>
+      <button class="btn" id="del-quick-slide" style="background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px" title="Find this ID in Google Slides & calculate delay chargeback">
+        📊 Calculate from Slide
+      </button>
       <span id="del-quick-status" class="sub" style="font-weight:500;margin-left:8px"></span>
+    </div>
+
+    <!-- Google Slide Link Option Drawer -->
+    <div id="del-slide-drawer" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);${S.showDelSlide ? '' : 'display:none'}">
+      <label class="field-label" style="font-size:12px;margin-bottom:5px">Google Slide Presentation Link:</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="del-slide-url" placeholder="Paste Google Slides URL: https://docs.google.com/presentation/d/.../edit" value="${esc(S.corSlideUrl || S.batch?.slideUrl || '')}" style="flex:1;min-width:280px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font-size:13px;background:var(--bg)">
+        <button class="btn" id="del-slide-calc-btn" style="background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;white-space:nowrap">
+          🔍 Find ID & Calculate
+        </button>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:5px">
+        Provide the presentation link and Order ID. The system will search all slides for this ID and calculate delay chargeback.
+      </div>
     </div>
   </div>
 
@@ -2681,6 +2725,190 @@ async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
     if(btnAfter){
       btnAfter.disabled = false;
       btnAfter.innerHTML = origBtnText || '⚡ Fetch & Calculate';
+    }
+  }
+}
+
+async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
+  const cleanOid = String(oid || (targetTab === 'cor' ? ($('cor-quick-id') ? $('cor-quick-id').value : S.corAutoId) : ($('del-quick-id') ? $('del-quick-id').value : S.autoId)) || '').trim().replace(/\D/g, '');
+  if (!cleanOid) {
+    alert('Please enter an Order ID first.');
+    const el = $(targetTab === 'cor' ? 'cor-quick-id' : 'del-quick-id');
+    if (el) el.focus();
+    return;
+  }
+
+  const url = String(slideUrl || (targetTab === 'cor' ? ($('cor-slide-url') ? $('cor-slide-url').value : '') : ($('del-slide-url') ? $('del-slide-url').value : '')) || S.corSlideUrl || S.batch?.slideUrl || '').trim();
+  if (!url) {
+    if (targetTab === 'cor') S.showCorSlide = true;
+    else S.showDelSlide = true;
+    save();
+    render();
+    alert('Please enter or paste your Google Slides link in the box.');
+    const el = $(targetTab === 'cor' ? 'cor-slide-url' : 'del-slide-url');
+    if (el) el.focus();
+    return;
+  }
+
+  S.corSlideUrl = url;
+  if (S.batch) S.batch.slideUrl = url;
+  save();
+
+  const statusId = targetTab === 'cor' ? 'cor-quick-status' : 'del-quick-status';
+  const statusEl = $(statusId);
+  const btnEl = $(targetTab === 'cor' ? 'cor-quick-slide' : 'del-quick-slide') || $(targetTab === 'cor' ? 'cor-slide-calc-btn' : 'del-slide-calc-btn');
+  const origBtnText = btnEl ? btnEl.innerHTML : '';
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="btn-spinner"></span> Searching Slide...';
+  }
+  if (statusEl) {
+    statusEl.textContent = `Searching Google Slides for Order #${cleanOid}...`;
+    statusEl.style.color = 'var(--accent)';
+  }
+
+  showTopProgress();
+  showLoading(`Searching Slide for #${cleanOid}`, `Parsing presentation slides and matching Order #${cleanOid}...`, true);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}&order_id=${encodeURIComponent(cleanOid)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed to fetch slides');
+
+    const jobs = data.jobs || [];
+    if (!jobs.length) {
+      throw new Error('No dispute or correction jobs found in this Google Slides presentation.');
+    }
+
+    const targetJob = data.target_job 
+                   || jobs.find(j => String(j.order_id).replace(/\D/g, '') === cleanOid)
+                   || jobs.find(j => String(j.order_id).includes(cleanOid));
+
+    if (!targetJob) {
+      throw new Error(`Order #${cleanOid} was not found in this Google Slides presentation. (Checked ${data.total_slides || jobs.length} slides)`);
+    }
+
+    if (targetTab === 'cor') {
+      S.corAutoId = cleanOid;
+      S.corDisputeId = targetJob.dispute_id || '';
+
+      // Match Contractor
+      if (targetJob.contractor) {
+        const knownCons = contractors();
+        const rawCon = targetJob.contractor.toLowerCase().trim();
+        const matchedCon = knownCons.find(c => c.toLowerCase() === rawCon)
+                        || knownCons.find(c => c.toLowerCase().includes(rawCon) || rawCon.includes(c.toLowerCase()));
+        if (matchedCon) {
+          S.cor.contractor = matchedCon;
+        } else {
+          S.cor.contractor = targetJob.contractor;
+          if (!S.cfg.contractors.includes(targetJob.contractor)) {
+            S.cfg.contractors.push(targetJob.contractor);
+          }
+        }
+      }
+
+      // Match Service
+      const rawSvc = String(targetJob.service || 'Clipping path').trim();
+      const allKnownSvcs = services();
+      const matchedSvc = allKnownSvcs.find(k => k.toLowerCase() === rawSvc.toLowerCase())
+                      || allKnownSvcs.find(k => rawSvc.toLowerCase().includes(k.toLowerCase()))
+                      || allKnownSvcs.find(k => k.toLowerCase().includes(rawSvc.toLowerCase()))
+                      || rawSvc;
+      S.cor.service = matchedSvc;
+
+      // Match Category
+      if (targetJob.category) {
+        S.cor.cat = targetJob.category;
+      } else {
+        const cats = catsOf(matchedSvc);
+        S.cor.cat = cats[0] || 'Category 1';
+      }
+
+      // Match Severity
+      if (targetJob.severity) {
+        const canonSev = canonicalSeverity(targetJob.severity);
+        S.cor.fault_severity = canonSev;
+        S.cor.sev = canonSev;
+      } else {
+        S.cor.fault_severity = 'Minor';
+        S.cor.sev = 'Minor';
+      }
+
+      // Match Quantity & Files
+      const files = targetJob.filenames || [];
+      const faultQty = targetJob.fault_qty != null ? targetJob.fault_qty : (targetJob.quantity != null ? targetJob.quantity : (files.length || 1));
+      S.cor.qty = faultQty;
+      if (files.length) {
+        S.cor.filenames = files;
+      }
+
+      // Pixel range
+      if (targetJob.pixel) {
+        S.cor.pix = targetJob.pixel;
+      } else {
+        S.cor.pix = '> 5000';
+      }
+
+      // Populate order line items
+      S.cor.order = [{
+        s: S.cor.service,
+        c: S.cor.cat,
+        p: S.cor.pix,
+        q: S.cor.qty
+      }];
+
+      S.tab = 'cor';
+      save();
+      render();
+
+      const p = price(S.cor.service, S.cor.cat, S.cor.pix) || 0;
+      const sevKey = canonicalSeverity(S.cor.fault_severity || S.cor.sev || 'Low');
+      const m = getSeverityMultiplier(sevKey);
+      const calcTot = p * m * S.cor.qty;
+      const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
+
+      const st = $(statusId);
+      if (st) {
+        st.textContent = `✓ Calculated Order #${cleanOid} from Slide: $${tot.toFixed(2)} (${S.cor.service}, ${sevKey}, Qty: ${S.cor.qty})`;
+        st.style.color = '#27ae60';
+      }
+    } else {
+      // Delay Delivery tab
+      S.autoId = cleanOid;
+      if (targetJob.contractor) S.del.contractor = targetJob.contractor;
+      if (targetJob.service) S.del.service = targetJob.service;
+      if (targetJob.category) S.del.cat = targetJob.category;
+      if (targetJob.severity) S.del.fault_severity = canonicalSeverity(targetJob.severity);
+      if (targetJob.quantity != null) S.del.qty = targetJob.quantity;
+      if (targetJob.filenames && targetJob.filenames.length) S.del.filenames = targetJob.filenames;
+
+      S.tab = 'del';
+      save();
+      render();
+
+      const st = $(statusId);
+      if (st) {
+        st.textContent = `✓ Loaded Order #${cleanOid} from Slide into Delay tab!`;
+        st.style.color = '#27ae60';
+      }
+    }
+
+  } catch(err) {
+    console.error('fetchSingleOrderFromSlide error:', err);
+    alert('Slide error: ' + err.message);
+    const st = $(statusId);
+    if (st) {
+      st.textContent = '⚠️ ' + err.message;
+      st.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideLoading();
+    hideTopProgress();
+    const curBtn = $(targetTab === 'cor' ? 'cor-quick-slide' : 'del-quick-slide') || $(targetTab === 'cor' ? 'cor-slide-calc-btn' : 'del-slide-calc-btn');
+    if (curBtn) {
+      curBtn.disabled = false;
+      curBtn.innerHTML = origBtnText || '📊 Calculate from Slide';
     }
   }
 }
@@ -4391,8 +4619,14 @@ pane.addEventListener('click',e=>{
   else if(t.id==='au-import'){ const v=$('au-json').value.trim(); if(v) importAuto(v); else $('au-err').textContent='Choose a file or paste the JSON.'; }
   else if(t.id==='au-fetch-live') fetchLiveTista('au-id','au-status',false);
   else if(t.id==='del-quick-fetch') fetchLiveTista('del-quick-id','del-quick-status',true);
+  else if(t.id==='del-quick-slide') fetchSingleOrderFromSlide($('del-quick-id') ? $('del-quick-id').value : '', $('del-slide-url') ? $('del-slide-url').value : '', 'del');
+  else if(t.id==='del-slide-calc-btn') fetchSingleOrderFromSlide($('del-quick-id') ? $('del-quick-id').value : '', $('del-slide-url') ? $('del-slide-url').value : '', 'del');
+  else if(t.id==='del-toggle-slide'){ S.showDelSlide = !S.showDelSlide; save(); render(); }
   else if(t.id==='del-link-extract-btn') extractFilesFromDelLink();
   else if(t.id==='cor-quick-fetch') fetchQuickCorrectionTab($('cor-quick-id').value, 'cor-quick-status');
+  else if(t.id==='cor-quick-slide') fetchSingleOrderFromSlide($('cor-quick-id') ? $('cor-quick-id').value : '', $('cor-slide-url') ? $('cor-slide-url').value : '', 'cor');
+  else if(t.id==='cor-slide-calc-btn') fetchSingleOrderFromSlide($('cor-quick-id') ? $('cor-quick-id').value : '', $('cor-slide-url') ? $('cor-slide-url').value : '', 'cor');
+  else if(t.id==='cor-toggle-slide'){ S.showCorSlide = !S.showCorSlide; save(); render(); }
   else if(t.id==='cor-quick-files') fetchLiveCorrection($('cor-quick-id').value, 'cor-quick-status');
   else if(t.id==='aucor-fetch-live') fetchLiveCorrection($('aucor-id').value, 'aucor-status');
   else if(t.id==='aucor-import-toggle'){ S.corShowImport=!S.corShowImport; render(); }

@@ -2218,6 +2218,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing url parameter"}).encode("utf-8"))
                 return
             res = parse_google_slides_presentation(slide_url)
+            order_id = qs.get("order_id", [""])[0].strip()
+            if order_id and "jobs" in res:
+                clean_oid = re.sub(r"\D", "", order_id)
+                res["target_job"] = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
             self.send_response(200 if "error" not in res else 400)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -2383,6 +2387,10 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing url in body"}).encode("utf-8"))
                 return
             res = parse_google_slides_presentation(slide_url)
+            order_id = str(data.get("order_id", "")).strip()
+            if order_id and "jobs" in res:
+                clean_oid = re.sub(r"\D", "", order_id)
+                res["target_job"] = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
             self.send_response(200 if "error" not in res else 400)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
