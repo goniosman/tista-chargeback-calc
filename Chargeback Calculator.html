@@ -3616,10 +3616,10 @@ function paneBatch(){
                   }
                 </td>
                 <td style="text-align:center;white-space:nowrap">
-                  <button class="btn" data-bt-open="${item.idx}" style="padding:3px 7px;font-size:11px" title="Open this dispute in calculator">Open</button>
+                  <button class="btn" data-bt-open="${item.idx}" style="padding:4px 9px;font-size:11.5px;border-radius:6px;font-weight:600" title="Open this dispute in calculator">Open</button>
                   ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
-                    `<button class="btn btn-done" id="bt-close-btn-${item.idx}" style="padding:3px 10px;font-size:11px;background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;margin-left:4px;border-radius:4px;cursor:default;" disabled title="Dispute is closed">Done</button>` : 
-                    `<button class="btn pri" id="bt-close-btn-${item.idx}" data-bt-close="${item.idx}" style="padding:3px 7px;font-size:11px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:4px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
+                    `<button class="btn btn-done" id="bt-close-btn-${item.idx}" style="padding:4px 10px;font-size:11.5px;background:#47a9b8;border-color:#47a9b8;color:#fff;font-weight:600;margin-left:5px;border-radius:6px;cursor:default;" disabled title="Dispute is closed">Dispute Done</button>` : 
+                    `<button class="btn pri" id="bt-close-btn-${item.idx}" data-bt-close="${item.idx}" style="padding:4px 9px;font-size:11.5px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:5px;border-radius:6px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
                   }
                 </td>
               </tr>`;
@@ -4036,10 +4036,10 @@ async function closeBatchRow(idx){
     S.batchStatusColor = '#27ae60';
 
     if(btnEl){
-      btnEl.style.background = '#27ae60';
-      btnEl.style.borderColor = '#27ae60';
+      btnEl.style.background = '#47a9b8';
+      btnEl.style.borderColor = '#47a9b8';
       btnEl.style.color = '#fff';
-      btnEl.innerHTML = 'Done';
+      btnEl.innerHTML = 'Dispute Done';
       btnEl.disabled = true;
       btnEl.title = 'Dispute is closed';
     }
@@ -4159,10 +4159,10 @@ async function closeBatchAll(){
       closedCount++;
 
       if(rowBtn){
-        rowBtn.style.background = '#27ae60';
-        rowBtn.style.borderColor = '#27ae60';
+        rowBtn.style.background = '#47a9b8';
+        rowBtn.style.borderColor = '#47a9b8';
         rowBtn.style.color = '#fff';
-        rowBtn.innerHTML = 'Done';
+        rowBtn.innerHTML = 'Dispute Done';
         rowBtn.disabled = true;
         rowBtn.title = 'Dispute is closed';
       }
