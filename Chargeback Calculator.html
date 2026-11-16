@@ -3206,6 +3206,8 @@ function calcDisputeChargeback(d){
     };
   }
 
+  const isCustom = d.custom_chargeback !== undefined && d.custom_chargeback !== null && d.custom_chargeback !== '' && !isNaN(d.custom_chargeback);
+
   if(reason.toLowerCase() === 'delay'){
     const durStr = d.order_duration || d.dur || '24:00:00';
     const durDays = parseDur(durStr) || 1;
@@ -3214,7 +3216,7 @@ function calcDisputeChargeback(d){
     const pct = durDays > 0 ? delayDays / durDays : 0;
     const share = getDelayTierShare(sevCanonical, pct);
     const raw = pr * share * qty;
-    const finalAmount = raw > 0 ? Math.max(2.0, raw) : 0;
+    const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
     return {
       reason: 'Delay',
       svc, cat, pix, pr, qty,
@@ -3223,13 +3225,14 @@ function calcDisputeChargeback(d){
       factorDetail: sevCanonical + ' (' + Math.round(share * 100) + '% Tier)',
       rawAmount: raw,
       chargeback: finalAmount,
-      minApplied: raw > 0 && raw < 2.0
+      isCustom: isCustom,
+      minApplied: !isCustom && raw > 0 && raw < 2.0
     };
   } else {
     // Correction and Quality share the EXACT same rule!
     const mult = getSeverityMultiplier(sevCanonical);
     const raw = pr * mult * qty;
-    const finalAmount = raw > 0 ? Math.max(2.0, raw) : 0;
+    const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
     return {
       reason: reason,
       svc, cat, pix, pr, qty,
@@ -3238,7 +3241,8 @@ function calcDisputeChargeback(d){
       factorDetail: Math.round(mult * 100) + '% Multiplier',
       rawAmount: raw,
       chargeback: finalAmount,
-      minApplied: raw > 0 && raw < 2.0
+      isCustom: isCustom,
+      minApplied: !isCustom && raw > 0 && raw < 2.0
     };
   }
 }
@@ -3576,15 +3580,24 @@ function paneBatch(){
                 </td>
                 <td class="n" style="font-family:var(--font-mono);font-weight:600">${r.qty}</td>
                 <td class="n" style="font-family:var(--font-mono)">${money(r.pr)}</td>
-                <td class="n" style="font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--accent)">
-                  ${money(r.chargeback)}
-                  ${r.minApplied ? '<span class="badge-min">Min $2</span>' : ''}
+                <td class="n" style="font-family:var(--font-mono);white-space:nowrap">
+                  <div style="display:inline-flex;align-items:center;justify-content:flex-end;gap:3px">
+                    <span style="font-size:12px;font-weight:700;color:var(--accent)">$</span>
+                    <input type="number" step="0.01" min="0" class="bt-row-chargeback" data-idx="${item.idx}" value="${r.chargeback.toFixed(2)}" style="width:72px;text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);padding:2px 5px;border-radius:4px;border:1px solid ${r.isCustom ? 'var(--accent)' : 'var(--line)'};background:var(--bg);" title="Click to manually edit chargeback amount">
+                  </div>
+                  ${r.minApplied ? '<div style="font-size:10px;margin-top:1px"><span class="badge-min">Min $2</span></div>' : ''}
+                  ${r.isCustom ? '<div style="font-size:9.5px;color:var(--accent);font-weight:600;margin-top:1px">Custom</div>' : ''}
                 </td>
-                <td style="font-size:12px;color:var(--muted)">${esc(d.status)}</td>
+                <td style="font-size:12px;">
+                  ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
+                    `<span style="color:#27ae60;font-weight:600">Closed</span>` : 
+                    `<span style="color:var(--muted)">${esc(d.status || 'Awaiting response')}</span>`
+                  }
+                </td>
                 <td style="text-align:center;white-space:nowrap">
                   <button class="btn" data-bt-open="${item.idx}" style="padding:3px 7px;font-size:11px" title="Open this dispute in calculator">Open</button>
-                  ${(d.status && d.status.toLowerCase().includes('close')) ? 
-                    `<span style="color:#27ae60;font-weight:600;font-size:11px;margin-left:4px">✓ Closed</span>` : 
+                  ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
+                    `<button class="btn" style="padding:3px 9px;font-size:11px;background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;margin-left:4px;border-radius:4px;cursor:default;" disabled title="Dispute is already closed on Tista">✓ Done</button>` : 
                     `<button class="btn pri" data-bt-close="${item.idx}" style="padding:3px 7px;font-size:11px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:4px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
                   }
                 </td>
@@ -3953,6 +3966,7 @@ async function closeBatchRow(idx){
     return;
   }
 
+  const cleanDid = (d.dispute_id && !String(d.dispute_id).startsWith('SLIDE-') && /^\d+$/.test(String(d.dispute_id))) ? d.dispute_id : '';
   const statusEl = $('bt-status-text');
   if(statusEl){
     statusEl.textContent = `Updating Order ${d.order_id} on Tista...`;
@@ -3965,7 +3979,7 @@ async function closeBatchRow(idx){
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        dispute_id: d.dispute_id,
+        dispute_id: cleanDid,
         order_id: d.order_id,
         amount: amt,
         fault_severity: d.fault_severity || r.sevKey || 'Low'
@@ -3975,8 +3989,11 @@ async function closeBatchRow(idx){
     if(!res.ok || data.error) throw new Error(data.error || 'Failed to update dispute');
 
     d.status = 'Closed';
-    d.charge = data.amount;
-    S.batchStatusText = `✓ Successfully charged $${data.amount.toFixed(2)} to Vendor & closed Order ${d.order_id}!`;
+    d.charge = data.amount || amt;
+    if(data.dispute_id && /^\d+$/.test(String(data.dispute_id))) {
+      d.dispute_id = data.dispute_id;
+    }
+    S.batchStatusText = `✓ Successfully charged $${(data.amount || amt).toFixed(2)} to Vendor & closed Order ${d.order_id}!`;
     S.batchStatusColor = '#27ae60';
     save();
     render();
@@ -4002,7 +4019,7 @@ async function closeBatchAll(){
     return text.includes(q);
   });
 
-  const unclosed = visibleList.filter(it => !it.orig.status || !it.orig.status.toLowerCase().includes('close'));
+  const unclosed = visibleList.filter(it => !it.orig.status || (!it.orig.status.toLowerCase().includes('close') && !it.orig.status.toLowerCase().includes('done')));
   if(!unclosed.length){
     alert('All visible disputes are already closed.');
     return;
@@ -4017,12 +4034,15 @@ async function closeBatchAll(){
   const btnEl = $('bt-close-all');
   if(btnEl) btnEl.disabled = true;
 
-  const items = unclosed.map(it => ({
-    dispute_id: it.orig.dispute_id,
-    order_id: it.orig.order_id,
-    amount: it.res.chargeback,
-    fault_severity: it.orig.fault_severity || it.res.sevKey || 'Low'
-  }));
+  const items = unclosed.map(it => {
+    const cleanDid = (it.orig.dispute_id && !String(it.orig.dispute_id).startsWith('SLIDE-') && /^\d+$/.test(String(it.orig.dispute_id))) ? it.orig.dispute_id : '';
+    return {
+      dispute_id: cleanDid,
+      order_id: it.orig.order_id,
+      amount: it.res.chargeback,
+      fault_severity: it.orig.fault_severity || it.res.sevKey || 'Low'
+    };
+  });
 
   if(statusEl){
     statusEl.textContent = `Batch closing ${items.length} disputes on Tista... (please wait)`;
@@ -4153,11 +4173,26 @@ pane.addEventListener('change',e=>{
     }
     return;
   }
+  if(e.target.classList.contains('bt-row-chargeback')){
+    const idx = +e.target.dataset.idx;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      const val = e.target.value.trim();
+      if(val === ''){
+        delete S.batch.disputes[idx].custom_chargeback;
+      } else {
+        S.batch.disputes[idx].custom_chargeback = Math.max(0, parseFloat(val) || 0);
+      }
+      save();
+      render();
+    }
+    return;
+  }
   if(e.target.classList.contains('bt-row-svc')){
     const idx = +e.target.dataset.idx;
     if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
       const newSvc = e.target.value;
       S.batch.disputes[idx].service = newSvc;
+      delete S.batch.disputes[idx].custom_chargeback;
       const validCats = catsOf(newSvc);
       if(validCats.length && !validCats.includes(S.batch.disputes[idx].cat)){
         S.batch.disputes[idx].cat = validCats[0];
@@ -4171,6 +4206,7 @@ pane.addEventListener('change',e=>{
     const idx = +e.target.dataset.idx;
     if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
       S.batch.disputes[idx].cat = e.target.value;
+      delete S.batch.disputes[idx].custom_chargeback;
       save();
       render();
     }
@@ -4180,6 +4216,7 @@ pane.addEventListener('change',e=>{
     const idx = +e.target.dataset.idx;
     if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
       S.batch.disputes[idx].fault_severity = e.target.value;
+      delete S.batch.disputes[idx].custom_chargeback;
       save();
       render();
     }
@@ -4192,7 +4229,7 @@ pane.addEventListener('change',e=>{
     if(!S.batch.filters) S.batch.filters = {};
     if(id === 'bt-reason'){
       S.batch.filters.reason = e.target.value;
-      const valMap = { '1': 'Delay', '2': 'Correction', '4': 'Quality', '3': 'Revision', '5': 'Technical fault' };
+      const valMap = { '1': 'Delay', '2': 'Correction', '4': 'Quality', '5': 'Technical fault' };
       const selReason = valMap[e.target.value];
       if(selReason && S.batch.disputes && S.batch.disputes.length){
         S.batch.disputes.forEach(d => { d.dispute_reason = selReason; });

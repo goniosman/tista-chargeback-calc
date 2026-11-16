@@ -1359,6 +1359,10 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
     Charges the specified amount to vendor and closes the dispute on Tista.
     """
     clean_dispute_id = str(dispute_id or "").strip()
+    if clean_dispute_id and not clean_dispute_id.isdigit():
+        print(f"[*] Dispute ID '{clean_dispute_id}' is synthetic/non-numeric. Will resolve real Tista dispute ID...")
+        clean_dispute_id = ""
+
     raw_oid = re.sub(r"\D", "", str(order_id or ""))
     charge_amt = round(max(2.0, float(amount or 2.0)), 2)
 
@@ -1372,31 +1376,44 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
         ctx = launch_playwright_context(p, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-        # Step 1: Resolve dispute_id if missing
+        def find_dispute_info_by_oid(oid_str):
+            for q_cand in [f"%23{oid_str}", oid_str]:
+                try:
+                    search_url = f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={q_cand}"
+                    page.goto(search_url)
+                    page.wait_for_load_state("domcontentloaded")
+                    time.sleep(1.2)
+                    trs = page.locator("tbody tr")
+                    if trs.count() > 0 and "no data" not in trs.first.inner_text().lower():
+                        tds = trs.first.locator("td")
+                        did_val = tds.first.inner_text().strip()
+                        status_val = tds.nth(11).inner_text().strip() if tds.count() >= 12 else ""
+                        return did_val, status_val
+                except Exception as ef:
+                    print(f"Error querying dispute for {oid_str}: {ef}")
+            return None, None
+
+        # Step 1: Resolve dispute_id if missing or check if already closed
         if not clean_dispute_id and raw_oid:
             print(f"[*] Resolving dispute_id for order #{raw_oid}...")
-            # Try search with #
-            page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={quote('#' + raw_oid)}")
-            page.wait_for_load_state("domcontentloaded")
-            time.sleep(1.5)
-            row = page.locator("tbody tr").first
-            if row.count() > 0:
-                first_cell = row.locator("td").first
-                clean_dispute_id = first_cell.inner_text().strip()
-            
-            if not clean_dispute_id:
-                # Try search without #
-                page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={quote(raw_oid)}")
-                page.wait_for_load_state("domcontentloaded")
-                time.sleep(1.5)
-                row = page.locator("tbody tr").first
-                if row.count() > 0:
-                    first_cell = row.locator("td").first
-                    clean_dispute_id = first_cell.inner_text().strip()
+            found_did, found_status = find_dispute_info_by_oid(raw_oid)
+            if found_did and found_did.isdigit():
+                clean_dispute_id = found_did
+            if found_status and "close" in found_status.lower():
+                print(f"[✓] Order #{raw_oid} is already marked as CLOSED on Tista!")
+                ctx.close()
+                return {
+                    "success": True,
+                    "dispute_id": found_did or clean_dispute_id,
+                    "order_id": order_id or f"#{raw_oid}",
+                    "amount": charge_amt,
+                    "status": "Closed",
+                    "message": f"Dispute for Order #{raw_oid} is already closed on Tista."
+                }
 
         if not clean_dispute_id:
             ctx.close()
-            return {"error": f"Could not find dispute ID for Order #{raw_oid or order_id}"}
+            return {"error": f"Could not find dispute ID for Order #{raw_oid or order_id} on Tista."}
 
         print(f"[*] Opening dispute edit page for Dispute #{clean_dispute_id}...")
         edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
@@ -1407,8 +1424,104 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
         # Check if form exists
         charge_input = page.locator("#order_dispute_charge_to_vendor")
         if charge_input.count() == 0:
-            ctx.close()
-            return {"error": f"Dispute #{clean_dispute_id} edit form not found or cannot be edited."}
+            # Check if dispute is already closed on Tista
+            body_text = page.locator("body").inner_text().lower()
+            if "closed" in body_text:
+                print(f"[✓] Dispute #{clean_dispute_id} is already closed on Tista.")
+                ctx.close()
+                return {
+                    "success": True,
+                    "dispute_id": clean_dispute_id,
+                    "order_id": order_id or f"#{raw_oid}",
+                    "amount": charge_amt,
+                    "status": "Closed",
+                    "message": f"Dispute #{clean_dispute_id} is already closed on Tista."
+                }
+
+            # If not found, try searching by raw_oid to see if another dispute exists or is closed
+            if raw_oid:
+                found_did, found_status = find_dispute_info_by_oid(raw_oid)
+                if found_status and "close" in found_status.lower():
+                    ctx.close()
+                    return {
+                        "success": True,
+                        "dispute_id": found_did or clean_dispute_id,
+                        "order_id": order_id or f"#{raw_oid}",
+                        "amount": charge_amt,
+                        "status": "Closed",
+                        "message": f"Dispute for Order #{raw_oid} is already closed on Tista."
+                    }
+                if found_did and found_did.isdigit() and found_did != clean_dispute_id:
+                    clean_dispute_id = found_did
+                    edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
+                    page.goto(edit_url)
+                    page.wait_for_load_state("domcontentloaded")
+                    time.sleep(1.5)
+                    charge_input = page.locator("#order_dispute_charge_to_vendor")
+
+            if charge_input.count() == 0:
+                ctx.close()
+                return {"error": f"Dispute #{clean_dispute_id} edit form not found or cannot be edited on Tista."}
+
+        # Select Chargeable to: Vendor
+        try:
+            page.select_option("#order_dispute_chargeable_to", "vendor")
+        except Exception as e:
+            print(f"Warning setting chargeable_to: {e}")
+
+        # Set Charge to Vendor amount
+        charge_input.fill(f"{charge_amt:.2f}")
+
+        # Select Status: Closed
+        try:
+            page.select_option("#order_dispute_status", "closed")
+        except Exception as e:
+            print(f"Warning setting status: {e}")
+
+        # Select Fault severity if provided
+        if fault_severity:
+            try:
+                page.select_option("#order_dispute_fault_severity", label=str(fault_severity))
+            except Exception:
+                try:
+                    page.select_option("#order_dispute_fault_severity", value=str(fault_severity))
+                except Exception as e:
+                    print(f"Warning setting fault_severity: {e}")
+
+        # If comment provided
+        if comment:
+            try:
+                cur_comment = page.locator("#order_dispute_comment").input_value()
+                page.locator("#order_dispute_comment").fill((cur_comment + "\n" + comment).strip())
+            except Exception:
+                pass
+
+        print(f"[*] Submitting update: Charge ${charge_amt:.2f} to vendor, Status: Closed...")
+        # Submit the form
+        page.locator('input[value="Update Order dispute"]').click()
+        time.sleep(2)
+
+        # Handle confirmation modal if any
+        try:
+            confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
+            if confirm_btn.count() > 0 and confirm_btn.is_visible():
+                confirm_btn.click()
+                time.sleep(2)
+        except Exception:
+            pass
+
+        page.wait_for_load_state("domcontentloaded")
+        time.sleep(1)
+
+        ctx.close()
+        return {
+            "success": True,
+            "dispute_id": clean_dispute_id,
+            "order_id": order_id or f"#{raw_oid}",
+            "amount": charge_amt,
+            "status": "Closed",
+            "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
+        }
 
         # Select Chargeable to: Vendor
         try:
@@ -1491,20 +1604,34 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
 
         for it in items:
             did = str(it.get("dispute_id") or "").strip()
+            if did and not did.isdigit():
+                did = ""
             oid = str(it.get("order_id") or "").strip()
             raw_oid = re.sub(r"\D", "", oid)
             amount = round(max(2.0, float(it.get("amount") or 2.0)), 2)
 
             if not did and raw_oid:
                 try:
-                    page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={quote('#' + raw_oid)}")
-                    page.wait_for_load_state("domcontentloaded")
-                    time.sleep(1)
-                    row = page.locator("tbody tr").first
-                    if row.count() > 0:
-                        did = row.locator("td").first.inner_text().strip()
-                except Exception:
-                    pass
+                    for q_cand in [f"%23{raw_oid}", raw_oid]:
+                        page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={q_cand}")
+                        page.wait_for_load_state("domcontentloaded")
+                        time.sleep(1)
+                        row = page.locator("tbody tr").first
+                        if row.count() > 0 and "no data" not in row.inner_text().lower():
+                            tds = row.locator("td")
+                            found_id = tds.first.inner_text().strip()
+                            found_status = tds.nth(11).inner_text().strip() if tds.count() >= 12 else ""
+                            if "close" in found_status.lower():
+                                results.append({"dispute_id": found_id, "order_id": oid, "status": "Closed", "amount": amount, "success": True})
+                                break
+                            if found_id and found_id.isdigit():
+                                did = found_id
+                                break
+                except Exception as ex:
+                    print(f"Error resolving dispute ID: {ex}")
+
+            if any(r.get("order_id") == oid and r.get("success") for r in results):
+                continue
 
             if not did:
                 results.append({"order_id": oid, "error": "Dispute ID not found", "success": False})
@@ -1517,6 +1644,10 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
 
                 charge_input = page.locator("#order_dispute_charge_to_vendor")
                 if charge_input.count() == 0:
+                    body_text = page.locator("body").inner_text().lower()
+                    if "closed" in body_text:
+                        results.append({"dispute_id": did, "order_id": oid, "status": "Closed", "amount": amount, "success": True})
+                        continue
                     results.append({"dispute_id": did, "order_id": oid, "error": "Edit form not found", "success": False})
                     continue
 
