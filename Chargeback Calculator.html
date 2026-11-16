@@ -1323,20 +1323,33 @@ function getDelaySeverityFromPct(pct) {
 const blank = n => Array.from({length:n},()=>({s:'',c:'',p:'',q:''}));
 const DEF = () => ({
   tab:'cor', prices: DEFAULT_CFG.prices.map(r=>({s:r[0],c:r[1],p:r[2],v:r[3]})),
-  autoId:'458305', auto:null,
-  corAutoId:'457696', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:true, corPasteText:'',
-  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', showPaste: false, showSlides: false, slideUrl: 'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing' }, 
-  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:4,
-    order:[['Clipping path','Category 1','> 5000',56],['Clipping path','Category 1','4001-5000'],['Clipping path','Category 4','> 5000'],['Clipping path','Category 3.5','4001-5000'],['Clipping path','Category 1.5','4001-5000'],['Clipping path','Category 2','4001-5000'],['Clipping path','Category 4','4001-5000'],['Clipping path','Category 3.5','> 5000'],['Clipping path','Category 2.5','3001-4000'],['Image masking','Category 2.5','4001-5000'],['Image masking','Category 2','4001-5000']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
-    cb:[['Clipping path','Category 1.5','> 5000'],['Multi-clipping path','Category 2','> 5000'],['Image masking','','> 5000'],['Clipping path','','4001-5000'],['',' ',''],['','','']].map(a=>({s:a[0],c:a[1].trim(),p:a[2],q:''}))},
-  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',fault_severity:'Low',qty:10,dur:'24:00:00',sec:-82273.432024749,
-    order:[['Image masking','Category 3','> 5000',2],['Dust, spot and scratch removal','Category 1','> 5000',141],['Beauty airbrushing','Category 1','> 5000',141],['Wrinkle on clothing','Category 1','> 5000',141],['Multi-clipping path','Category 2.5','> 5000'],['Image masking','Category 2','> 5000'],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:a[3]??''})),
-    cb:[['Clipping path','Category 2.5','1001-2000'],['','',''],['','',''],['','',''],['','',''],['','','']].map(a=>({s:a[0],c:a[1],p:a[2],q:''}))},
+  autoId:'', auto:null,
+  corAutoId:'', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:false, corPasteText:'',
+  showCorSlide:false, showDelSlide:false, corSlideUrl:'', delSlideUrl:'',
+  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', showPaste: false, showSlides: false, slideUrl: '' }, 
+  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:'',
+    order:[],
+    cb:[]},
+  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',fault_severity:'Low',qty:'',dur:'00:00:00',sec:0,
+    order:[],
+    cb:[]},
   cfgFilter:{q:'',s:''}
 });
 let S = DEF();
-try{ const raw=localStorage.getItem('chargeback-calc-v1'); if(raw){ const o=JSON.parse(raw); if(o&&o.cor&&o.del&&o.prices) S=Object.assign(DEF(),o,{cfgFilter:{q:'',s:''}}); } }catch(e){}
-function save(){ try{ localStorage.setItem('chargeback-calc-v1',JSON.stringify(S)); }catch(e){} }
+try{
+  const raw = localStorage.getItem('chargeback-calc-v1');
+  if(raw){
+    const o = JSON.parse(raw);
+    if(o && Array.isArray(o.prices) && o.prices.length > 0){
+      S.prices = o.prices;
+    }
+  }
+}catch(e){}
+function save(){
+  try{
+    localStorage.setItem('chargeback-calc-v1', JSON.stringify({ prices: S.prices }));
+  }catch(e){}
+}
 
 function getApiBase(){
   const custom = localStorage.getItem('tista_api_base');
@@ -1590,7 +1603,7 @@ function paneDel(){
     <div id="del-slide-drawer" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);${S.showDelSlide ? '' : 'display:none'}">
       <label class="field-label" style="font-size:12px;margin-bottom:5px">Google Slide Presentation Link:</label>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input id="del-slide-url" placeholder="Paste Google Slides URL: https://docs.google.com/presentation/d/.../edit" value="${esc(S.corSlideUrl || S.batch?.slideUrl || '')}" style="flex:1;min-width:280px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font-size:13px;background:var(--bg)">
+        <input id="del-slide-url" placeholder="Paste Google Slides URL: https://docs.google.com/presentation/d/.../edit" value="${esc(S.delSlideUrl || S.batch?.slideUrl || '')}" style="flex:1;min-width:280px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font-size:13px;background:var(--bg)">
         <button class="btn" id="del-slide-calc-btn" style="background:#27ae60;border-color:#27ae60;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;white-space:nowrap">
           🔍 Find ID & Calculate
         </button>
@@ -1781,7 +1794,7 @@ function refreshDel(){
   const r = getDelayTierShare(sevKey, pct);
   const pEl = $('d-price'); if(pEl) pEl.textContent = p===null?'Not in price list':money(p);
   const pctEl = $('d-pct'); if(pctEl) pctEl.textContent=(pct*100).toFixed(2)+'%';
-  const w=$('d-warn'); if(w){ w.hidden = days>0; w.textContent='Order duration must be greater than zero (hh:mm:ss).'; }
+  const w=$('d-warn'); if(w){ w.hidden = (!d.dur || d.dur==='00:00:00' || days>0); w.textContent='Order duration must be greater than zero (hh:mm:ss).'; }
   const calcTot=pr*r*q;
   const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
   const totEl = $('d-total'); if(totEl) totEl.textContent=money(tot);
@@ -3714,7 +3727,7 @@ function paneBatch(){
         <span class="sub" style="font-size:12px">Automatically extract Order IDs, Services, and File Names from presentation slides to calculate chargebacks</span>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="bt-slides-url" placeholder="Paste Google Slides Link (e.g. https://docs.google.com/presentation/d/...)" style="flex:1;min-width:280px;font-family:var(--font-mono);font-size:12.5px;padding:7px 10px" value="${esc(b.slideUrl||'https://docs.google.com/presentation/d/1J5hbOxC0wdNUXTqe3oy-fKRlrPwybMdnRCRf8fHIskI/edit?usp=sharing')}">
+        <input id="bt-slides-url" placeholder="Paste Google Slides Link (e.g. https://docs.google.com/presentation/d/...)" style="flex:1;min-width:280px;font-family:var(--font-mono);font-size:12.5px;padding:7px 10px" value="${esc(b.slideUrl||'')}">
         <button class="btn pri" id="bt-slides-go" style="padding:7px 16px;font-weight:600">⚡ Fetch Slides & Calculate</button>
       </div>
       <div id="bt-slides-status" class="sub" style="margin-top:8px;font-weight:600"></div>
@@ -4720,16 +4733,39 @@ render();
 
 // ---------- Global Reset & Fresh State Helper ----------
 function resetCalculatorState() {
-  if (S.batch) {
-    S.batch.disputes = [];
-    S.batch.query = '';
-    S.batch.filterQ = '';
-    S.batchStatusText = '';
-  }
-  if ($('bt-query')) $('bt-query').value = '';
-  if ($('bt-filter-table')) $('bt-filter-table').value = '';
-  if ($('bt-status-text')) $('bt-status-text').textContent = '';
-  if ($('bt-paste-input')) $('bt-paste-input').value = '';
+  const currentPrices = S.prices;
+  const currentTab = S.tab;
+  S = DEF();
+  S.prices = currentPrices;
+  S.tab = currentTab;
+  try {
+    localStorage.removeItem('chargeback-calc-v1');
+    localStorage.setItem('chargeback-calc-v1', JSON.stringify({ prices: currentPrices }));
+  } catch(e) {}
+
+  // Clear all DOM inputs directly if they exist
+  const inputIds = [
+    'cor-quick-id', 'del-quick-id', 'cor-slide-url', 'del-slide-url', 'bt-slides-url',
+    'bt-query', 'bt-filter-table', 'bt-paste-input', 'au-id', 'aucor-id', 'aucor-paste-names',
+    'del-link-input', 'au-json', 'aucor-json'
+  ];
+  inputIds.forEach(id => {
+    const el = $(id);
+    if (el) el.value = '';
+  });
+
+  const statusIds = [
+    'cor-quick-status', 'del-quick-status', 'bt-status-text', 'bt-slides-status',
+    'au-status', 'aucor-status', 'aucor-match-status', 'del-link-status',
+    'cor-close-status', 'del-close-status', 'au-err', 'aucor-err'
+  ];
+  statusIds.forEach(id => {
+    const el = $(id);
+    if (el) el.textContent = '';
+  });
+
+  hideCardLoading();
+  hideLoading();
   save();
   render();
   checkTistaLoginStatus();
@@ -4738,7 +4774,6 @@ function resetCalculatorState() {
 if ($('btn-global-refresh')) {
   $('btn-global-refresh').addEventListener('click', () => {
     resetCalculatorState();
-    alert('✓ Calculator has been reset. All previous dispute data and search history have been cleared.');
   });
 }
 
