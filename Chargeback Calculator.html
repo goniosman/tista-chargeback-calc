@@ -899,6 +899,56 @@ tfoot td {
   letter-spacing: -0.01em;
 }
 
+.batch-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+
+@media (max-width: 1050px) {
+  .batch-filter-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+.batch-filter-item {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.batch-filter-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.batch-filter-input,
+.batch-filter-select {
+  font: inherit;
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 13.5px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.batch-filter-input:focus,
+.batch-filter-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 91, 240, 0.12);
+}
+
 .calendar-dropdown-card {
   position: absolute;
   top: calc(100% + 8px);
@@ -3651,12 +3701,14 @@ function paneBatch(){
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end">
-      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Search (Order or Dispute ID)</label>
-        <input id="bt-query" placeholder="e.g. #458192 or blank for all" value="${esc(f.query||'')}">
+    <div class="batch-filter-grid">
+      <div class="batch-filter-item">
+        <label>Search (Order or Dispute ID)</label>
+        <input id="bt-query" class="batch-filter-input" placeholder="e.g. #458192 or blank for all" value="${esc(f.query||'')}">
       </div>
-      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Dispute Reason</label>
-        <select id="bt-reason">
+      <div class="batch-filter-item">
+        <label>Dispute Reason</label>
+        <select id="bt-reason" class="batch-filter-select">
           <option value="2"${f.reason==='2'?' selected':''}>Correction</option>
           <option value="1"${f.reason==='1'?' selected':''}>Delay</option>
           <option value="4"${f.reason==='4'?' selected':''}>Quality</option>
@@ -3664,15 +3716,17 @@ function paneBatch(){
           <option value="5"${f.reason==='5'?' selected':''}>Technical fault</option>
         </select>
       </div>
-      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Status</label>
-        <select id="bt-status">
+      <div class="batch-filter-item">
+        <label>Status</label>
+        <select id="bt-status" class="batch-filter-select">
           <option value="1"${f.status==='1'?' selected':''}>Awaiting response from vendor</option>
           <option value="2"${f.status==='2'?' selected':''}>Under review</option>
           <option value=""${f.status===''?' selected':''}>All statuses</option>
         </select>
       </div>
-      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Location</label>
-        <select id="bt-location">
+      <div class="batch-filter-item">
+        <label>Location</label>
+        <select id="bt-location" class="batch-filter-select">
           <option value="">All locations</option>
           <option value="1"${f.location==='1'?' selected':''}>Path</option>
           <option value="48"${f.location==='48'?' selected':''}>Creative Path (P1)</option>
@@ -3689,8 +3743,9 @@ function paneBatch(){
           <option value="2"${f.location==='2'?' selected':''}>Subs</option>
         </select>
       </div>
-      <div class="f" style="display:block;margin:0"><label style="display:block;margin-bottom:4px;font-size:12.5px">Chargeable to</label>
-        <select id="bt-chargeable">
+      <div class="batch-filter-item">
+        <label>Chargeable to</label>
+        <select id="bt-chargeable" class="batch-filter-select">
           <option value="1"${f.chargeable==='1'?' selected':''}>Vendor</option>
           <option value=""${f.chargeable===''?' selected':''}>All</option>
         </select>
@@ -3707,7 +3762,6 @@ function paneBatch(){
     <div class="tools" style="margin-top:14px">
       <button class="btn pri" id="bt-search">⚡ SEARCH & CALCULATE (LIVE TISTA)</button>
       <button class="btn" id="bt-reset-all" style="background:#21262d;border:1px solid #30363d;color:#f0f6fc;font-weight:600">🔄 Reset / Clear All</button>
-      <button class="btn" id="bt-sample">Load Sample (16 Disputes)</button>
       <button class="btn" id="bt-toggle-paste">Paste Multiple IDs</button>
       <button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>
       <button class="btn pri" id="bt-close-all" style="background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">🔒 Charge & Close All Visible (${visibleList.length})</button>
@@ -3738,7 +3792,7 @@ function paneBatch(){
     <div class="card" style="text-align:center;padding:45px 20px">
       <div style="font-size:36px;margin-bottom:10px">📋</div>
       <h3 style="font-family:var(--font-head);margin:0 0 8px">No batch disputes loaded</h3>
-      <p class="sub" style="max-width:560px;margin:0 auto 16px">Click <strong>⚡ SEARCH & CALCULATE</strong> to fetch live disputes matching the filters from Tista, or click <strong>Load Sample (16 Disputes)</strong> to test immediately.</p>
+      <p class="sub" style="max-width:560px;margin:0 auto 16px">Click <strong>⚡ SEARCH & CALCULATE</strong> to fetch live disputes matching the filters from Tista, or import from Google Slides.</p>
     </div>
   ` : `
     <div class="kpi-row">
