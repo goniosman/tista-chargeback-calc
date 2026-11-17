@@ -1050,6 +1050,44 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             if not cached_delay.exists():
                 cached_delay = APP_DIR / f"tista_{raw_oid}.json"
 
+            disp_comment = ""
+            disp_link = ""
+            disp_files = []
+
+            # First, check if cached delay already has comment, link, and filenames
+            if cached_delay.exists():
+                try:
+                    ddata = json.loads(cached_delay.read_text(encoding="utf-8"))
+                    disp_comment = ddata.get("comment", "")
+                    disp_link = ddata.get("comment_link", "")
+                    disp_files = ddata.get("filenames", [])
+                    if disp_files and reason_name.lower() == "delay":
+                        qty = len(disp_files)
+                except Exception:
+                    pass
+
+            # If not in cache, check dispute edit page for delay / single search / deep scan
+            if r.get("dispute_id") and not disp_files and (single_clean_id or reason_name.lower() == "delay" or (deep_scan and len(rows) <= 15)):
+                try:
+                    edit_page = ctx.new_page()
+                    edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
+                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
+                    time.sleep(1.2)
+                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
+                    if c_el.count() > 0:
+                        c_val = c_el.input_value().strip()
+                        if c_val:
+                            disp_comment = c_val
+                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
+                            if urls:
+                                disp_link = urls[0]
+                                disp_files = extract_filenames_from_page(edit_page, disp_link)
+                                if disp_files and reason_name.lower() == "delay":
+                                    qty = len(disp_files)
+                    edit_page.close()
+                except Exception as bce:
+                    print(f"Batch dispute #{r.get('dispute_id')} edit check note: {bce}")
+
             detected_svc = ""
             detected_cat = ""
             detected_dur = "24:00:00"
@@ -1062,25 +1100,50 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             if cached_corr.exists():
                 try:
                     cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
-                    for f0 in cdata.get("files", []):
+                    raw_files = cdata.get("files", [])
+
+                    # For Delay disputes, filter strictly to the delayed files
+                    target_files = raw_files
+                    if reason_name.lower() == "delay":
+                        if disp_files:
+                            disp_set = set(Path(f).name.lower().strip() for f in disp_files)
+                            matched = [f for f in raw_files if Path(f.get("filename", "")).name.lower().strip() in disp_set]
+                            if matched:
+                                target_files = matched
+                        elif qty and qty < len(raw_files):
+                            # Fallback: slice to fault quantity so we never show full order files when only a few are delayed
+                            target_files = raw_files[:qty]
+
+                    for f0 in target_files:
                         fn = f0.get("filename", "")
                         svcs0 = f0.get("services", [])
-                        s0 = svcs0[0] if svcs0 else {}
-                        cat_val = s0.get("category") or ""
-                        if not cat_val and s0.get("complexity"):
-                            cat_val = f"Category {re.sub(r'^[Cc]', '', s0.get('complexity')).strip()}"
-                        order_file_details.append({
-                            "filename": fn,
-                            "category": cat_val,
-                            "service": s0.get("service") or ""
-                        })
+                        clean_file_services = []
                         for s_item in svcs0:
                             s_name = s_item.get("service")
                             c_name = s_item.get("category")
+                            if not c_name and s_item.get("complexity"):
+                                c_name = f"Category {re.sub(r'^[Cc]', '', s_item.get('complexity')).strip()}"
+                            clean_file_services.append({
+                                "service": s_name or "Clipping path",
+                                "category": c_name or "Category 1.5",
+                                "complexity": s_item.get("complexity") or "",
+                                "numeric_cat": s_item.get("numeric_cat") or 1.0
+                            })
                             if s_name and s_name not in order_svcs:
                                 order_svcs.append(s_name)
                             if c_name and c_name not in order_cats:
                                 order_cats.append(c_name)
+
+                        primary_cat = clean_file_services[0]["category"] if clean_file_services else "Category 1.5"
+                        primary_svc = clean_file_services[0]["service"] if clean_file_services else "Clipping path"
+
+                        order_file_details.append({
+                            "filename": fn,
+                            "category": primary_cat,
+                            "service": primary_svc,
+                            "services": clean_file_services
+                        })
+
                     if order_svcs and not detected_svc:
                         detected_svc = order_svcs[0]
                     if order_cats and not detected_cat:
@@ -1155,30 +1218,6 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 detected_cat = "Category 1.5"
 
             delay_sec = hours_to_seconds(r["delayed_by"]) if reason_name.lower() == "delay" else 0
-
-            disp_comment = ""
-            disp_link = ""
-            disp_files = []
-            if r.get("dispute_id") and (single_clean_id or (deep_scan and len(rows) <= 3)):
-                try:
-                    edit_page = ctx.new_page()
-                    edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
-                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
-                    time.sleep(1.2)
-                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
-                    if c_el.count() > 0:
-                        c_val = c_el.input_value().strip()
-                        if c_val:
-                            disp_comment = c_val
-                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
-                            if urls:
-                                disp_link = urls[0]
-                                disp_files = extract_filenames_from_page(edit_page, disp_link)
-                                if disp_files:
-                                    qty = len(disp_files)
-                    edit_page.close()
-                except Exception as bce:
-                    print(f"Batch dispute #{r.get('dispute_id')} edit check note: {bce}")
 
             out_list.append({
                 "dispute_id": r["dispute_id"],
