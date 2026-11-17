@@ -1342,18 +1342,22 @@ const TIERS = [ // delay % (lower, upper] -> share of service price
   {lo:0, hi:.05, r:.2},{lo:.05,hi:.15,r:.4},{lo:.15,hi:.30,r:.6},{lo:.30,hi:.50,r:.8},{lo:.50,hi:Infinity,r:1}];
 
 function getDelayTierShare(severity, pct) {
+  // Official Google Sheet Delay Formula:
+  // 0% - 5% = 20%
+  // 5% - 15% = 40%
+  // 15% - 30% = 60%
+  // 30% - 50% = 80%
+  // > 50% = 100%
+  if (pct > 0) {
+    const t = tierFor(pct);
+    if (t) return t.r;
+  }
   const s = canonicalSeverity(severity);
   if (s === 'Critical') return 1.0;
   if (s === 'High') return 0.8;
   if (s === 'Medium') return 0.6;
-  if (s === 'Low') {
-    return (pct > 0 && pct <= 0.05) ? 0.2 : 0.4;
-  }
-  if (s === 'Not applicable') {
-    return (pct > 0 && pct <= 0.05) ? 0.2 : 0.2;
-  }
-  const t = tierFor(pct);
-  return t ? t.r : 0.4;
+  if (s === 'Low') return 0.4;
+  return 0.2;
 }
 
 function getDelaySeverityFromPct(pct) {
