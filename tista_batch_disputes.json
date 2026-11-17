@@ -235,7 +235,7 @@
       "fault_at": "2026-11-10",
       "delayed_by": "03:10:49",
       "delay_seconds": 11449,
-      "order_duration": "24:00:00",
+      "order_duration": "12:00:00",
       "fault_quantity": 17,
       "fault_severity": "Not applicable",
       "status": "Awaiting res...",

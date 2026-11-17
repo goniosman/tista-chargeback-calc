@@ -1189,5 +1189,6 @@
       "services_display": "Clipping path (Category 2), Dust, spot and scratch removal (Category 1), Wrinkle on clothing (Category 1)"
     }
   ],
-  "warnings": []
+  "warnings": [],
+  "order_duration": "12:00:00"
 }

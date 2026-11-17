@@ -929,11 +929,15 @@ def extract_order_files_with_page(page, order_id: str):
         order_row = page.locator(f'tr:has-text("{oid}")').first
         internal_id = ""
         contractor = ""
+        turnaround = "24:00:00"
         if order_row.count() > 0:
             row_id = order_row.get_attribute("id") or ""
             m = re.search(r"\d+", row_id)
             if m: internal_id = m[0]
             row_text = order_row.inner_text()
+            t_match = re.search(r"\b(\d+)\s*h\b", row_text)
+            if t_match:
+                turnaround = f"{int(t_match[1])}:00:00"
             for w in [c.strip() for c in ["Creative Path (P1)", "Pixel Path (P2)", "Perfect Pixel (GB2)", "Path", "Grasigner Kitchen", "Khandoker Graphics", "Graphics Picture", "Vectorio", "Cutout Edge", "Edgebo", "Healing Image", "Photo Fix Zone", "ClippingPix"]]:
                 if w.lower() in row_text.lower():
                     contractor = w
@@ -1031,6 +1035,7 @@ def extract_order_files_with_page(page, order_id: str):
         corr_res = {
             "order_id": oid,
             "contractor": contractor,
+            "order_duration": turnaround,
             "pixel": "> 5000",
             "total_files": len(files_list),
             "files": files_list
@@ -1244,6 +1249,8 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             if cached_corr.exists():
                 try:
                     cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
+                    if cdata.get("order_duration"):
+                        detected_dur = cdata.get("order_duration")
                     raw_files = cdata.get("files", [])
 
                     # For Delay disputes, filter strictly to the delayed files
