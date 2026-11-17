@@ -18,7 +18,7 @@ import shutil
 import tempfile
 import urllib.request
 from pathlib import Path
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
 
 # Safe stream wrappers so print never fails in windowed/GUI mode
@@ -1066,8 +1066,8 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 except Exception:
                     pass
 
-            # If not in cache, check dispute edit page for delay / single search / deep scan
-            if r.get("dispute_id") and not disp_files and (single_clean_id or reason_name.lower() == "delay" or (deep_scan and len(rows) <= 15)):
+            # If not in cache, check dispute edit page for single search, small batch, or deep scan
+            if r.get("dispute_id") and not disp_files and (single_clean_id or (deep_scan and len(rows) <= 10) or len(rows) <= 3):
                 try:
                     edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
@@ -2141,30 +2141,6 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             return
 
-        if parsed.path in ("/api/import_cookies", "/api/sync_cookies"):
-            cookies = data.get("cookies", [])
-            if cookies:
-                try:
-                    for d in [USER_DATA_DIR, APP_DIR, Path("/data")]:
-                        if d.exists():
-                            with open(d / "saved_cookies.json", "w", encoding="utf-8") as f:
-                                json.dump(cookies, f, indent=2)
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"status": "success", "message": f"Successfully imported {len(cookies)} cookies"}).encode("utf-8"))
-                except Exception as e:
-                    self.send_response(500)
-                    self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
-            else:
-                self.send_response(400)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "No cookies provided"}).encode("utf-8"))
-            return
-
         if parsed.path in ("/api/login", "/api/tista_login"):
             print("\n[API] Received Tista login request...")
             try:
@@ -2540,7 +2516,7 @@ def start_server(port=None, host=None):
     server_address = (host, port)
     serve_dir = BUNDLE_DIR if (BUNDLE_DIR / "Chargeback Calculator.html").exists() else APP_DIR
     os.chdir(serve_dir)
-    httpd = HTTPServer(server_address, TistaRequestHandler)
+    httpd = ThreadingHTTPServer(server_address, TistaRequestHandler)
     local_ip = get_local_ip()
     print(f"\n========================================================")
     print(f"  Tista Chargeback Calculator Server is RUNNING!")

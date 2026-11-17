@@ -4222,7 +4222,12 @@ async function fetchLiveBatchDisputes(customQuery=null){
     save();
     render();
   } catch(err){
-    S.batchStatusText = '⚠️ ' + (err.message || 'Could not connect to helper.');
+    const msg = (err && err.message) || '';
+    if(msg.includes('Failed to fetch') || msg.includes('NetworkError')){
+      S.batchStatusText = '⚠️ Server is not running! Please launch "start_calculator.bat" or "Chargeback_Calculator.exe".';
+    } else {
+      S.batchStatusText = '⚠️ ' + (msg || 'Could not connect to helper.');
+    }
     S.batchStatusColor = 'var(--danger)';
     save();
     render();
