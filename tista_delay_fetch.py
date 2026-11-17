@@ -902,6 +902,150 @@ def format_tista_date_range(date_str=None, start_date=None, end_date=None):
         return date_str.strip()
     return ""
 
+def extract_order_files_with_page(page, order_id: str):
+    """
+    Extracts order files, services, and categories directly using an already active Playwright page.
+    Saves cache to tista_correction_{oid}.json and returns the parsed files list.
+    """
+    raw_id = str(order_id).strip()
+    digits = re.sub(r"\D", "", raw_id)
+    oid = digits or raw_id.replace("#", "")
+    if not oid:
+        return []
+
+    cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+    if not cached_corr.exists():
+        cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+    if cached_corr.exists():
+        try:
+            return json.loads(cached_corr.read_text(encoding="utf-8")).get("files", [])
+        except Exception:
+            pass
+
+    print(f"[*] Extracting files for Order #{oid} using active page...")
+    try:
+        page.goto(f"{BASE_URL}/orders?location=all&dateRange=any&query={oid}", wait_until="domcontentloaded", timeout=18000)
+        time.sleep(1.2)
+        order_row = page.locator(f'tr:has-text("{oid}")').first
+        internal_id = ""
+        contractor = ""
+        if order_row.count() > 0:
+            row_id = order_row.get_attribute("id") or ""
+            m = re.search(r"\d+", row_id)
+            if m: internal_id = m[0]
+            row_text = order_row.inner_text()
+            for w in [c.strip() for c in ["Creative Path (P1)", "Pixel Path (P2)", "Perfect Pixel (GB2)", "Path", "Grasigner Kitchen", "Khandoker Graphics", "Graphics Picture", "Vectorio", "Cutout Edge", "Edgebo", "Healing Image", "Photo Fix Zone", "ClippingPix"]]:
+                if w.lower() in row_text.lower():
+                    contractor = w
+                    break
+
+        if not internal_id:
+            return []
+
+        page.goto(f"{BASE_URL}/orders/{internal_id}/files", wait_until="domcontentloaded", timeout=18000)
+        time.sleep(1.2)
+        tbl_btn = page.locator('button[data-order-files-layout-param="table"]').first
+        if tbl_btn.count() > 0:
+            tbl_btn.click()
+            time.sleep(0.8)
+
+        files_raw = page.evaluate("""() => {
+            const rows = document.querySelectorAll('table.files-container-table tbody tr');
+            return [...rows].map((r, idx) => {
+                const cells = [...r.querySelectorAll('td')];
+                if (cells.length < 5) return null;
+                const svcs = [];
+                const svcBlocks = cells[3].querySelectorAll('.services-block .service');
+                svcBlocks.forEach(sb => {
+                    const mainTitle = sb.querySelector('.service-title') ? sb.querySelector('.service-title').innerText.trim() : '';
+                    const cats = sb.querySelectorAll('.service-category');
+                    if (cats.length > 0) {
+                        cats.forEach(c => {
+                            const subTitleEl = c.querySelector('.service-category-title');
+                            const subTitle = subTitleEl ? subTitleEl.innerText.trim() : '';
+                            const compEl = c.querySelector('.complexity');
+                            const comp = compEl ? compEl.innerText.trim() : '';
+                            svcs.push({
+                                group: mainTitle,
+                                name: subTitle || mainTitle,
+                                complexity: comp,
+                                category: comp ? 'Category ' + comp.replace(/^[Cc]/, '').trim() : ''
+                            });
+                        });
+                    } else if (mainTitle) {
+                        svcs.push({
+                            group: mainTitle,
+                            name: mainTitle,
+                            complexity: '',
+                            category: ''
+                        });
+                    }
+                });
+                return {
+                    id: idx + 1,
+                    filename: cells[2] ? cells[2].innerText.trim() : '',
+                    services: svcs,
+                    services_raw: cells[3] ? cells[3].innerText.trim() : '',
+                    location: cells[4] ? cells[4].innerText.trim() : '',
+                    dimension: cells[5] ? cells[5].innerText.trim() : '',
+                    date: cells[6] ? cells[6].innerText.trim() : '',
+                    created_by: cells[7] ? cells[7].innerText.trim() : ''
+                };
+            }).filter(Boolean);
+        }""")
+
+        files_list = []
+        for f in files_raw:
+            svcs = f.get("services") or []
+            clean_svcs = []
+            for s in svcs:
+                s_name = s.get("name") or s.get("group") or ""
+                matched_svc = ""
+                for ks in KNOWN_SERVICES:
+                    if ks.lower() == s_name.lower() or ks.lower() in s_name.lower():
+                        matched_svc = ks
+                        break
+                if not matched_svc:
+                    matched_svc = s_name or "Clipping path"
+                comp = s.get("complexity") or ""
+                cat_m = re.search(r"(\d+(?:\.\d+)?)", comp)
+                num_cat = float(cat_m[1]) if cat_m else 1.0
+                cat_label = f"Category {cat_m[1]}" if cat_m else "Category 1"
+                clean_svcs.append({
+                    "service": matched_svc,
+                    "raw_name": s_name,
+                    "complexity": comp,
+                    "category": cat_label,
+                    "numeric_cat": num_cat
+                })
+            svcs_display = ", ".join([f"{s['service']} ({s['category']})" for s in clean_svcs]) if clean_svcs else "Clipping path (Category 1)"
+            files_list.append({
+                "id": f.get("id"),
+                "filename": f.get("filename"),
+                "location": f.get("location") or contractor,
+                "dimension": f.get("dimension") or ">5000px",
+                "services": clean_svcs,
+                "services_display": svcs_display
+            })
+
+        corr_res = {
+            "order_id": oid,
+            "contractor": contractor,
+            "pixel": "> 5000",
+            "total_files": len(files_list),
+            "files": files_list
+        }
+        for path_cand in [DATA_DIR, APP_DIR]:
+            try:
+                (path_cand / f"tista_correction_{oid}.json").write_text(json.dumps(corr_res, indent=2, ensure_ascii=False), encoding="utf-8")
+            except Exception:
+                pass
+        print(f"[✓] Extracted & cached {len(files_list)} files for Order #{oid}")
+        return files_list
+    except Exception as e:
+        print(f"[!] Note on extract_order_files_with_page for #{oid}: {e}")
+        return []
+
 def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False):
     """
     Fetches list of disputes based on filters (Dispute reason, Status, Chargeable to, Location, Order ID),
@@ -1036,9 +1180,9 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             if not cached_corr.exists():
                 cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
 
-            if not cached_corr.exists() and raw_oid and (single_clean_id or (deep_scan and len(rows) <= 5)):
+            if not cached_corr.exists() and raw_oid:
                 try:
-                    fetch_order_files_from_tista(raw_oid, headless=headless)
+                    extract_order_files_with_page(page, raw_oid)
                     if (DATA_DIR / f"tista_correction_{raw_oid}.json").exists():
                         cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
                     elif (APP_DIR / f"tista_correction_{raw_oid}.json").exists():
@@ -1067,7 +1211,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                     pass
 
             # If not in cache, check dispute edit page for single search, small batch, or deep scan
-            if r.get("dispute_id") and not disp_files and (single_clean_id or (deep_scan and len(rows) <= 10) or len(rows) <= 3):
+            if r.get("dispute_id") and not disp_files and (single_clean_id or (deep_scan and len(rows) <= 15) or len(rows) <= 10):
                 try:
                     edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
@@ -1230,11 +1374,11 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 "delayed_by": r["delayed_by"],
                 "delay_seconds": delay_sec,
                 "order_duration": detected_dur,
-                "fault_quantity": qty,
+                "fault_quantity": len(order_file_details) if (order_file_details and reason_name.lower() == "delay") else qty,
                 "fault_severity": r["fault_severity"],
                 "status": r["status"],
-                "service": detected_svc,
-                "cat": detected_cat,
+                "service": detected_svc or "Clipping path",
+                "cat": detected_cat or "Category 1.5",
                 "pix": detected_pix,
                 "order_services": order_svcs,
                 "order_cats": order_cats,

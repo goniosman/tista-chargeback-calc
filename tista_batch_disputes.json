@@ -242,8 +242,15 @@
       "service": "Clipping path",
       "cat": "Category 1.5",
       "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
+      "order_services": [
+        "Clipping path",
+        "Dust, spot and scratch removal",
+        "Wrinkle on clothing"
+      ],
+      "order_cats": [
+        "Category 2",
+        "Category 1"
+      ],
       "comment": "17 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/xTYmBTdpIX9fBRkz",
       "comment_link": "https://www.dropbox.com/t/xTYmBTdpIX9fBRkz",
       "filenames": [
@@ -265,7 +272,484 @@
         "Greenstone Plaid Shirt_1409.jpg",
         "Greenstone Plaid Shirt_1414.jpg"
       ],
-      "file_details": [],
+      "file_details": [
+        {
+          "filename": "batch-1/Black Fjord Down Jacket_1141.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Black Fjord Down Jacket_1146.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Black Fjord Down Jacket_1150.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Black Fjord Down Jacket_1174.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1335.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1344.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1345.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1355.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1337.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1361.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1359.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1384.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1392.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1399.jpg",
+          "category": "Category 1",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1409.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1414.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/Greenstone Plaid Shirt_1402.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "raw_name": "Clipping path",
+              "complexity": "C2",
+              "category": "Category 2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Wrinkle on clothing",
+              "raw_name": "Wrinkle on clothing removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
       "filenames_count": 17
     },
     {

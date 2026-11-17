@@ -1467,8 +1467,53 @@ const money = v => '$'+(Number.isFinite(v)?v:0).toLocaleString('en-US',{minimumF
 const num = v => { const n=parseFloat(v); return Number.isFinite(n)?n:0; };
 const services = () => [...new Set(S.prices.map(r=>r.s))];
 const catsOf = s => [...new Set(S.prices.filter(r=>r.s===s).map(r=>r.c))];
+function normalizeServiceName(s) {
+  if (!s) return 'Clipping path';
+  const str = String(s).trim();
+  const exact = S.prices.find(r => r.s.toLowerCase() === str.toLowerCase());
+  if (exact) return exact.s;
+  const low = str.toLowerCase();
+  if (low.includes('wrinkle')) return 'Wrinkle on clothing';
+  if (low.includes('dust') || low.includes('scratch')) return 'Dust, spot and scratch removal';
+  if (low.includes('multi-clipping') || low.includes('multiclipping') || low.includes('multi clipping')) return 'Multi-clipping path';
+  if (low.includes('clip') || low.includes('path')) return 'Clipping path';
+  if (low.includes('mask')) return 'Image masking';
+  if (low.includes('drop shadow')) return 'Drop shadow';
+  if (low.includes('natural shadow')) return 'Natural shadow';
+  if (low.includes('reflection shadow')) return 'Reflection shadow';
+  if (low.includes('existing shadow')) return 'Existing shadow';
+  if (low.includes('floating shadow')) return 'Floating shadow';
+  if (low.includes('ghost') || low.includes('mannequin')) return 'Ghost mannequin';
+  if (low.includes('beauty') || low.includes('airbrush')) return 'Beauty airbrushing';
+  if (low.includes('camera reflection')) return 'Camera reflection removal';
+  if (low.includes('color variant')) return 'Color variants';
+  if (low.includes('logo')) return 'Logo';
+  if (low.includes('artwork')) return 'Artwork';
+  if (low.includes('line drawing')) return 'Line drawing';
+  if (low.includes('illustration')) return 'Illustration';
+  if (low.includes('background removal')) return 'Background removal';
+  if (low.includes('symmetrical')) return 'Symmetrical edit';
+  return str;
+}
+
+function normalizeCategoryName(c, comp) {
+  let str = String(c || '').trim();
+  if (!str && comp) str = String(comp).trim();
+  if (!str) return 'Category 1';
+  if (str.startsWith('Category ')) return str;
+  const m = str.match(/(\d+(?:\.\d+)?)/);
+  if (m) return 'Category ' + m[1];
+  return str;
+}
+
 // Excel: VLOOKUP(Service&Category&Pixel, Config!D:H, 5, 0). Not found -> "" (treated as 0)
-function price(s,c,p){ const r=S.prices.find(r=>r.s===s&&r.c===c&&r.p===p); return r?num(r.v):null; }
+function price(s,c,p){
+  const normS = normalizeServiceName(s);
+  const normC = normalizeCategoryName(c);
+  const normP = p || '> 5000';
+  const r = S.prices.find(r => r.s === normS && r.c === normC && r.p === normP);
+  return r ? num(r.v) : null;
+}
 const opts = (list,sel,blank) => (blank!==undefined?`<option value="">${blank}</option>`:'')+list.map(x=>`<option${x===sel?' selected':''}>${esc(x)}</option>`).join('');
 const contractors = () => DEFAULT_CFG.contractors;
 
@@ -3552,7 +3597,13 @@ function calcDisputeChargeback(d){
     // Only delayed files are counted, and every service on those files is counted according to its category
     let delayedFiles = [];
     if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
-      delayedFiles = d.file_details;
+      if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
+        const delayedNames = new Set(d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
+        const matched = d.file_details.filter(f => delayedNames.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
+        delayedFiles = matched.length > 0 ? matched : d.file_details.slice(0, d.fault_quantity || d.filenames.length);
+      } else {
+        delayedFiles = d.file_details;
+      }
     } else if (d.filenames && Array.isArray(d.filenames) && d.filenames.length) {
       delayedFiles = d.filenames.map(fn => ({
         filename: typeof fn === 'string' ? fn : (fn.filename || ''),
@@ -3582,11 +3633,8 @@ function calcDisputeChargeback(d){
         }];
 
         fSvcs.forEach(sItem => {
-          const sName = sItem.service || svc;
-          let cName = sItem.category || cat;
-          if (!cName && sItem.complexity) {
-            cName = 'Category ' + String(sItem.complexity).replace(/^[Cc]/, '').trim();
-          }
+          const sName = normalizeServiceName(sItem.service || svc);
+          const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
           const pVal = price(sName, cName, pix);
           const prc = pVal != null ? pVal : 0;
           totalBasePrice += prc;
@@ -4054,26 +4102,47 @@ function paneBatch(){
                   </select>
                 </td>
                 <td style="font-weight:500">${esc(d.contractor)}</td>
-                <td style="min-width:140px">
+                <td style="min-width:180px">
                   ${r.hasMultiService ? `
-                    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px;display:flex;align-items:center;gap:4px" title="All Services: ${esc((r.uniqueSvcsList||[]).join(', '))} (${r.totalServiceCount} total items across ${r.qty} delayed files)">
-                      <span style="background:rgba(43,175,149,0.15);padding:1px 5px;border-radius:4px;border:1px solid rgba(43,175,149,0.3)">✨ ${r.uniqueServicesCount} Services</span>
-                      <span style="font-size:10px;color:var(--muted)">(${r.totalServiceCount} items)</span>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap">
+                        <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(43,175,149,0.18);color:var(--accent);border:1px solid rgba(43,175,149,0.4)" title="${r.totalServiceCount} service items across ${r.qty} delayed files">
+                          ✨ ${r.uniqueServicesCount} Services (${r.totalServiceCount} items)
+                        </span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px;margin-top:2px">
+                        ${(r.uniqueSvcsList || []).map(sn => `
+                          <span style="font-size:11.5px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:4px">
+                            <span style="color:var(--accent);font-size:10px">●</span> ${esc(sn)}
+                          </span>
+                        `).join('')}
+                      </div>
                     </div>
-                  ` : ''}
-                  <select class="bt-row-svc" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:170px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
-                    ${allSvcList.map(s => `<option value="${esc(s)}"${s===curSvc?' selected':''}>${esc(s)}</option>`).join('')}
-                  </select>
+                  ` : `
+                    <select class="bt-row-svc" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:170px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
+                      ${allSvcList.map(s => `<option value="${esc(s)}"${s===curSvc?' selected':''}>${esc(s)}</option>`).join('')}
+                    </select>
+                  `}
                 </td>
-                <td style="min-width:115px">
+                <td style="min-width:120px">
                   ${r.hasMultiService ? `
-                    <div style="font-size:10.5px;font-weight:600;color:var(--ink-secondary);margin-bottom:3px;white-space:nowrap" title="Categories: ${esc((r.uniqueCatsList||[]).join(', '))}">
-                      ${(r.uniqueCatsList||[]).map(c => esc(c.replace('Category ', 'C'))).join(', ')}
+                    <div style="display:flex;flex-direction:column;gap:3px">
+                      <div style="display:flex;gap:4px;flex-wrap:wrap">
+                        ${(r.uniqueCatsList || []).map(cn => `
+                          <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,91,240,0.12);color:var(--primary);border:1px solid rgba(59,91,240,0.3)">
+                            ${esc(cn.replace('Category ', 'C'))}
+                          </span>
+                        `).join('')}
+                      </div>
+                      <div style="font-size:10px;color:var(--muted);font-weight:500;margin-top:2px">
+                        ${esc((r.uniqueCatsList || []).join(', '))}
+                      </div>
                     </div>
-                  ` : ''}
-                  <select class="bt-row-cat" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:125px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
-                    ${allCatList.map(c => `<option value="${esc(c)}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('')}
-                  </select>
+                  ` : `
+                    <select class="bt-row-cat" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:125px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
+                      ${allCatList.map(c => `<option value="${esc(c)}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('')}
+                    </select>
+                  `}
                 </td>
                 <td>
                   <select class="bt-row-sev" data-idx="${item.idx}" style="font-size:12px;padding:3px 6px;max-width:130px;border-radius:4px;border:1px solid var(--line);background:var(--bg);font-weight:600">
@@ -4093,8 +4162,12 @@ function paneBatch(){
                   ${r.hasMultiService ? `<div style="font-size:9.5px;font-weight:normal;color:var(--muted)" title="${r.totalServiceCount} service items across ${r.qty} delayed files">${r.totalServiceCount} svcs</div>` : ''}
                 </td>
                 <td class="n" style="font-family:var(--font-mono)">
-                  ${money(r.pr)}
-                  ${r.hasMultiService ? `<div style="font-size:9px;color:var(--muted)" title="Total base: ${money(r.totalBasePrice)} across ${r.totalServiceCount} services (~${money(r.pr)}/file)">avg/file</div>` : ''}
+                  ${r.hasMultiService ? `
+                    <div style="font-weight:700;color:var(--ink)" title="Sum of all services across all delayed files">${money(r.totalBasePrice)} <span style="font-size:9.5px;font-weight:normal;color:var(--muted)">base</span></div>
+                    <div style="font-size:10px;color:var(--muted);margin-top:1px" title="${money(r.totalBasePrice)} / ${r.qty} delayed files">~${money(r.avgUnitPrice)}/file</div>
+                  ` : `
+                    ${money(r.pr)}
+                  `}
                 </td>
                 <td class="n" style="font-family:var(--font-mono);white-space:nowrap">
                   <div style="display:inline-flex;align-items:center;justify-content:flex-end;gap:3px">
@@ -4221,6 +4294,46 @@ async function fetchLiveBatchDisputes(customQuery=null){
     S.batchStatusColor = 'green';
     save();
     render();
+
+    // Auto-enrich file details for any disputes missing them
+    const missing = S.batch.disputes.map((d, i) => ({ d, i })).filter(item => (!item.d.file_details || !item.d.file_details.length) && item.d.order_id);
+    if(missing.length > 0) {
+      (async () => {
+        for(const item of missing) {
+          try {
+            const rawOid = String(item.d.order_id).replace(/\D/g, '');
+            if(!rawOid) continue;
+            const fRes = await fetch(`${API_BASE}/api/fetch_files?order_id=${encodeURIComponent(rawOid)}`);
+            const fileData = await fRes.json();
+            if(fileData && fileData.files && fileData.files.length) {
+              let targetFiles = fileData.files;
+              const isDelay = String(item.d.dispute_reason || '').toLowerCase().includes('delay') || !!item.d.delayed_by;
+              if(isDelay) {
+                if(item.d.filenames && item.d.filenames.length) {
+                  const delayedSet = new Set(item.d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
+                  const matched = targetFiles.filter(f => delayedSet.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
+                  if(matched.length > 0) targetFiles = matched;
+                } else if(item.d.fault_quantity && item.d.fault_quantity < targetFiles.length) {
+                  targetFiles = targetFiles.slice(0, item.d.fault_quantity);
+                }
+              }
+              item.d.file_details = targetFiles.map(f => ({
+                filename: f.filename,
+                category: (f.services && f.services[0] && f.services[0].category) || 'Category 1',
+                service: (f.services && f.services[0] && f.services[0].service) || 'Clipping path',
+                services: f.services || []
+              }));
+              item.d.filenames = item.d.file_details.map(f => f.filename);
+              item.d.fault_quantity = item.d.file_details.length;
+              save();
+              render();
+            }
+          } catch(e) {
+            console.warn('Auto file fetch error for order', item.d.order_id, e);
+          }
+        }
+      })();
+    }
   } catch(err){
     const msg = (err && err.message) || '';
     if(msg.includes('Failed to fetch') || msg.includes('NetworkError')){
