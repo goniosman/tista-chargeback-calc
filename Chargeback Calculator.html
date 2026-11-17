@@ -1370,7 +1370,7 @@ const DEF = () => ({
   autoId:'', auto:null,
   corAutoId:'', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:false, corPasteText:'',
   showCorSlide:false, showDelSlide:false, corSlideUrl:'', delSlideUrl:'',
-  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', showPaste: false, showSlides: false, slideUrl: '' }, 
+  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '' }, 
   cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:'',
     order:[],
     cb:[]},
@@ -1842,10 +1842,19 @@ function refreshDel(){
   const calcTot=pr*r*q;
   const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 0;
   const totEl = $('d-total'); if(totEl) totEl.textContent=money(tot);
+  const durH = days * 24;
+  const delH = delayDays * 24;
+  const fmtH = h => {
+    if (h == null || isNaN(h)) return '0h';
+    const rounded = Math.round(h * 10) / 10;
+    return Number.isInteger(rounded) ? `${rounded}h` : `${rounded.toFixed(1)}h`;
+  };
   let steps = `
     <div class="summary-row"><span>Service price</span><strong>${money(pr)}</strong></div>
     <div class="summary-row"><span>Fault severity</span><strong>${sevKey} (${Math.round(r*100)}% Tier)</strong></div>
-    <div class="summary-row"><span>Delay %</span><strong>${(pct*100).toFixed(2)}%</strong></div>
+    <div class="summary-row"><span>Order duration</span><strong>${fmtH(durH)}</strong></div>
+    <div class="summary-row"><span>Delay time</span><strong>${fmtH(delH)}</strong></div>
+    <div class="summary-row"><span>Delay distance (%)</span><strong>${(pct*100).toFixed(2)}%</strong></div>
     <div class="summary-row"><span>Severity / Tier</span><strong>${Math.round(r*100)}%</strong></div>
     <div class="summary-row"><span>Quantity</span><strong>${q}</strong></div>
   `;
@@ -3517,17 +3526,34 @@ function calcDisputeChargeback(d){
   if(reason.toLowerCase() === 'delay'){
     const durStr = d.order_duration || d.dur || '24:00:00';
     const durDays = parseDur(durStr) || 1;
-    const sec = num(d.delay_seconds || d.sec || 0);
+    let sec = num(d.delay_seconds || d.sec || 0);
+    if (!sec && d.delayed_by) {
+      sec = parseDur(d.delayed_by) * 86400;
+    }
     const delayDays = Math.abs(sec) / 86400;
     const pct = durDays > 0 ? delayDays / durDays : 0;
     const share = getDelayTierShare(sevCanonical, pct);
     const raw = pr * share * qty;
     const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
+
+    const durH = durDays * 24;
+    const delH = delayDays * 24;
+    const fmtH = h => {
+      if (h == null || isNaN(h)) return '0h';
+      const rounded = Math.round(h * 10) / 10;
+      return Number.isInteger(rounded) ? `${rounded}h` : `${rounded.toFixed(1)}h`;
+    };
+    const durFormatted = fmtH(durH);
+    const delFormatted = fmtH(delH);
+    const pctFormatted = (pct * 100).toFixed(1) + '%';
+
     return {
       reason: 'Delay',
       svc, cat, pix, pr, qty,
       sevKey: sevCanonical,
-      factorLabel: (pct * 100).toFixed(1) + '% (Tier: ' + Math.round(share * 100) + '%)',
+      durH, delH, durFormatted, delFormatted, pctFormatted,
+      delayDistance: `Dur: ${durFormatted} ➔ Delay: ${delFormatted} (${pctFormatted})`,
+      factorLabel: pctFormatted + ' (Tier: ' + Math.round(share * 100) + '%)',
       factorDetail: sevCanonical + ' (' + Math.round(share * 100) + '% Tier)',
       rawAmount: raw,
       chargeback: finalAmount,
@@ -3609,6 +3635,11 @@ function paneBatch(){
   const f = b.filters || {};
   const disputes = (b.disputes || []).filter(d => !String(d.dispute_reason || '').toLowerCase().includes('revision'));
   const q = (b.filterQ || '').toLowerCase().trim();
+  const cFilter = (b.contractorFilter || '').toLowerCase().trim();
+  const rFilter = (b.reasonFilter || '').toLowerCase().trim();
+
+  // Extract all unique contractors from the loaded disputes
+  const uniqueContractors = [...new Set(disputes.map(d => d.contractor).filter(Boolean))].sort();
 
   // Calculate results for all disputes
   const computedList = disputes.map((d, i) => ({
@@ -3618,6 +3649,14 @@ function paneBatch(){
   }));
 
   const visibleList = computedList.filter(item => {
+    if(cFilter){
+      const c = (item.orig.contractor || '').toLowerCase();
+      if(!c.includes(cFilter)) return false;
+    }
+    if(rFilter){
+      const r = (item.orig.dispute_reason || item.res.reason || '').toLowerCase();
+      if(!r.includes(rFilter)) return false;
+    }
     if(!q) return true;
     const text = [item.orig.order_id, item.orig.dispute_id, item.orig.contractor, item.orig.dispute_reason, item.orig.service, item.orig.status].join(' ').toLowerCase();
     return text.includes(q);
@@ -3719,9 +3758,9 @@ function paneBatch(){
         </select>
       </div>
       <div class="batch-filter-item">
-        <label>Location</label>
+        <label>Contractor</label>
         <select id="bt-location" class="batch-filter-select">
-          <option value="">All locations</option>
+          <option value="">All Contractors</option>
           <option value="1"${f.location==='1'?' selected':''}>Path</option>
           <option value="48"${f.location==='48'?' selected':''}>Creative Path (P1)</option>
           <option value="47"${f.location==='47'?' selected':''}>Pixel Path (P2)</option>
@@ -3797,15 +3836,22 @@ function paneBatch(){
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <h3 style="font-size:14px;font-family:var(--font-head);margin:0 0 8px">Contractor Breakdown:</h3>
-      <div>
-        ${Object.keys(contractorTotals).map(c=>`
-          <span class="contractor-pill">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <h3 style="font-size:14px;font-family:var(--font-head);margin:0">Contractor Breakdown:</h3>
+        <span class="sub" style="font-size:11.5px">Click contractor pill to filter table</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${Object.keys(contractorTotals).map(c=>{
+          const isSelected = (b.contractorFilter || '').toLowerCase() === c.toLowerCase();
+          return `
+          <button type="button" class="contractor-pill" data-filter-contractor="${esc(c)}" style="cursor:pointer;border:1px solid ${isSelected ? 'var(--accent)' : 'var(--line)'};background:${isSelected ? 'rgba(59,91,240,0.14)' : 'var(--soft)'};font-weight:${isSelected ? '700' : '500'};outline:none;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:12px;color:var(--ink);transition:all 0.15s ease" title="Click to filter by ${esc(c)}">
             <span>${esc(c)}:</span>
-            <strong>${money(contractorTotals[c].sum)}</strong>
+            <strong style="color:var(--accent)">${money(contractorTotals[c].sum)}</strong>
             <span style="color:var(--muted);font-size:11px">(${contractorTotals[c].count} orders)</span>
-          </span>
-        `).join('')}
+            ${isSelected ? '<span style="color:var(--accent);font-weight:700;margin-left:2px">✕</span>' : ''}
+          </button>
+          `;
+        }).join('')}
       </div>
     </div>
 
@@ -3816,7 +3862,26 @@ function paneBatch(){
           <p class="sub" style="margin:0">Calculated list with individual dispute details and one-click calculator links:</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input id="bt-filter-table" value="${esc(b.filterQ||'')}" placeholder="Filter orders, contractor..." style="max-width:220px;padding:6px 10px">
+          <select id="bt-table-contractor" style="max-width:180px;padding:6px 10px;font-size:12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)" title="Filter disputes by contractor">
+            <option value="">All Contractors</option>
+            ${uniqueContractors.map(c => `
+              <option value="${esc(c)}"${(b.contractorFilter||'').toLowerCase()===c.toLowerCase()?' selected':''}>${esc(c)}</option>
+            `).join('')}
+          </select>
+
+          <select id="bt-table-reason" style="max-width:140px;padding:6px 10px;font-size:12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)" title="Filter disputes by reason (Delay, Correction, Quality)">
+            <option value="">All Reasons</option>
+            <option value="Delay"${(b.reasonFilter||'')==='Delay'?' selected':''}>Delay</option>
+            <option value="Correction"${(b.reasonFilter||'')==='Correction'?' selected':''}>Correction</option>
+            <option value="Quality"${(b.reasonFilter||'')==='Quality'?' selected':''}>Quality</option>
+          </select>
+
+          <input id="bt-filter-table" value="${esc(b.filterQ||'')}" placeholder="Search orders..." style="max-width:170px;padding:6px 10px;font-size:12px">
+
+          ${(b.contractorFilter || b.reasonFilter || b.filterQ) ? `
+            <button class="btn" id="bt-clear-filters" style="padding:6px 10px;font-size:12px;color:var(--danger);border-color:rgba(192,57,43,0.3);background:rgba(192,57,43,0.06);font-weight:600" title="Clear all table filters">✕ Clear</button>
+          ` : ''}
+
           <button class="btn" id="bt-export-csv" style="padding:6px 12px">📥 Export CSV</button>
           <button class="btn" id="bt-copy-table" style="padding:6px 12px">📋 Copy Table</button>
         </div>
@@ -3862,7 +3927,10 @@ function paneBatch(){
                   <div style="font-size:13px">${esc(d.order_id)}</div>
                   ${renderBatchFileItems(d, item.idx)}
                 </td>
-                <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">${esc(d.fault_at||'—')}</td>
+                <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">
+                  <div>${esc(d.fault_at||'—')}</div>
+                  ${r.reason === 'Delay' && r.delFormatted ? `<div style="font-size:10.5px;color:#d9531e;font-weight:600;margin-top:2px" title="Delay: ${r.delFormatted}">+${r.delFormatted} delay</div>` : ''}
+                </td>
                 <td>
                   <select class="bt-row-reason badge-reason ${r.reason.includes('Quality')?'Quality':esc(r.reason)}" data-idx="${item.idx}" style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid var(--line);cursor:pointer;outline:none">
                     <option value="Quality"${(d.dispute_reason==='Quality'||d.dispute_reason==='Quality Audit')?' selected':''}>Quality</option>
@@ -3886,7 +3954,14 @@ function paneBatch(){
                   <select class="bt-row-sev" data-idx="${item.idx}" style="font-size:12px;padding:3px 6px;max-width:130px;border-radius:4px;border:1px solid var(--line);background:var(--bg);font-weight:600">
                     ${FAULT_SEVERITIES.map(s => `<option value="${esc(s)}"${s === canonicalSeverity(d.fault_severity || r.sevKey || 'Low') ? ' selected' : ''}>${esc(s)}</option>`).join('')}
                   </select>
-                  <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${esc(r.factorDetail || r.factorLabel)}</div>
+                  ${r.reason === 'Delay' ? `
+                    <div style="margin-top:4px;font-size:11px;font-family:var(--font-mono);color:#d9531e;background:rgba(217,83,30,0.08);padding:3px 6px;border-radius:4px;border:1px solid rgba(217,83,30,0.22);line-height:1.35" title="Order Duration: ${r.durFormatted} | Delay Time: ${r.delFormatted} (${r.pctFormatted})">
+                      <div style="white-space:nowrap">⏱️ <strong>Dur:</strong> ${r.durFormatted} ➔ <strong>Delay:</strong> ${r.delFormatted}</div>
+                      <div style="font-weight:600;color:var(--ink-secondary);margin-top:1px">${r.pctFormatted} · ${r.factorDetail}</div>
+                    </div>
+                  ` : `
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${esc(r.factorDetail || r.factorLabel)}</div>
+                  `}
                 </td>
                 <td class="n" style="font-family:var(--font-mono);font-weight:600">${r.qty}</td>
                 <td class="n" style="font-family:var(--font-mono)">${money(r.pr)}</td>
@@ -4628,6 +4703,18 @@ pane.addEventListener('change',e=>{
   if(id && id.startsWith('bt-')){
     if(!S.batch) S.batch = { filters: {} };
     if(!S.batch.filters) S.batch.filters = {};
+    if(id === 'bt-table-contractor'){
+      S.batch.contractorFilter = e.target.value;
+      save();
+      render();
+      return;
+    }
+    if(id === 'bt-table-reason'){
+      S.batch.reasonFilter = e.target.value;
+      save();
+      render();
+      return;
+    }
     if(id === 'bt-reason'){
       S.batch.filters.reason = e.target.value;
       const valMap = { '1': 'Delay', '2': 'Correction', '4': 'Quality', '5': 'Technical fault' };
@@ -4671,12 +4758,29 @@ pane.addEventListener('click',e=>{
     save(); render(); return;
   }
 
+  const pillBtn = e.target.closest('[data-filter-contractor]');
+  if(pillBtn){
+    const c = pillBtn.dataset.filterContractor;
+    if((S.batch.contractorFilter || '').toLowerCase() === c.toLowerCase()){
+      S.batch.contractorFilter = '';
+    } else {
+      S.batch.contractorFilter = c;
+    }
+    save(); render(); return;
+  }
+
   const t=e.target.closest('button'); if(!t) return;
   const tr=t.closest('tr[data-w]');
   if(t.dataset.del&&tr){ S[tr.dataset.k][tr.dataset.w].splice(+tr.dataset.i,1); save(); render(); }
   else if(t.dataset.add){ const [k,w]=t.dataset.add.split(':'); S[k][w].push({s:'',c:'',p:'',q:''}); save(); render(); }
   else if(t.dataset.clear){ const [k,w]=t.dataset.clear.split(':'); S[k][w]=blank(6); save(); render(); }
   else if(t.dataset.cdel){ S.prices.splice(+t.closest('tr').dataset.i,1); save(); fillCfg(); }
+  else if(t.id==='bt-clear-filters'){
+    S.batch.contractorFilter = '';
+    S.batch.reasonFilter = '';
+    S.batch.filterQ = '';
+    save(); render(); return;
+  }
   else if(t.id==='au-import'){ const v=$('au-json').value.trim(); if(v) importAuto(v); else $('au-err').textContent='Choose a file or paste the JSON.'; }
   else if(t.id==='au-fetch-live') fetchLiveTista('au-id','au-status',false);
   else if(t.id==='del-quick-fetch') fetchLiveTista('del-quick-id','del-quick-status',true);
