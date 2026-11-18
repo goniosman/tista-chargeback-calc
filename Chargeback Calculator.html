@@ -1404,11 +1404,14 @@ function getApiBase(){
   if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
   if (window.location.protocol.startsWith('http')) {
     const h = window.location.hostname;
-    if (h.endsWith('.vercel.app')) {
-      return (custom && custom.trim()) ? custom.trim().replace(/\/+$/, '') : 'https://tista-chargeback-calc-1.onrender.com';
+    if (h.endsWith('.onrender.com')) {
+      return window.location.origin;
     }
-    if (h !== 'localhost' && h !== '127.0.0.1') return window.location.origin;
-    if (window.location.port) return window.location.origin;
+    if (h === 'localhost' || h === '127.0.0.1') {
+      return window.location.port ? window.location.origin : 'http://127.0.0.1:8765';
+    }
+    // Remote web hosts: GitHub Pages (*.github.io), Vercel (*.vercel.app), Cloudflare (*.pages.dev), Netlify, etc.
+    return 'https://tista-chargeback-calc-1.onrender.com';
   }
   return 'http://127.0.0.1:8765';
 }
@@ -3726,8 +3729,9 @@ function calcDisputeChargeback(d){
 }
 
 function renderBatchFileItems(d, idx) {
+  const dealQty = parseInt(d.fault_quantity, 10) || 1;
   if (d.is_all_images) {
-    return `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${d.fault_quantity || 1})</div>`;
+    return `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${dealQty})</div>`;
   }
   const defaultCat = d.cat || 'Category 1.5';
   let details = [];
@@ -3753,17 +3757,18 @@ function renderBatchFileItems(d, idx) {
     }));
   }
 
-  const isDelay = String(d.dispute_reason || '').toLowerCase().includes('delay') || !!d.delayed_by;
-  // In case of Delay, strictly show only the delayed files count!
-  if (isDelay && d.fault_quantity && details.length > d.fault_quantity) {
-    details = details.slice(0, d.fault_quantity);
+  // GUARANTEE: Deal quantity and order files count MUST ALWAYS be 100% equal!
+  if (details.length > dealQty) {
+    details = details.slice(0, dealQty);
   }
+
+  const labelText = `▶ ${dealQty} ${dealQty === 1 ? 'file' : 'files'} (click to view)`;
 
   if (details.length) {
     return `
       <details style="margin-top:2px;cursor:pointer">
         <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none">
-          ▶ ${details.length} files (click to view)
+          ${labelText}
         </summary>
         <div style="margin-top:5px;display:flex;flex-direction:column;gap:4px;max-width:340px;max-height:240px;overflow-y:auto;padding:2px 2px 2px 0">
           ${details.map(f => `
@@ -3783,11 +3788,10 @@ function renderBatchFileItems(d, idx) {
     `;
   }
 
-  const count = d.fault_quantity || 1;
   return `
     <details style="margin-top:2px;cursor:pointer" onclick="fetchRowFilenamesIfEmpty(${idx})">
       <summary style="font-size:11px;color:var(--accent);font-weight:600;outline:none" id="row-files-sum-${idx}">
-        ▶ ${count} files (click to view)
+        ${labelText}
       </summary>
       <div id="row-files-div-${idx}" style="margin-top:5px;display:flex;flex-direction:column;gap:3px;max-width:320px">
         <span style="font-size:11px;color:var(--muted)">Click to retrieve files...</span>
@@ -4298,46 +4302,6 @@ async function fetchLiveBatchDisputes(customQuery=null){
     S.batchStatusColor = 'green';
     save();
     render();
-
-    // Auto-enrich file details for any disputes missing them
-    const missing = S.batch.disputes.map((d, i) => ({ d, i })).filter(item => (!item.d.file_details || !item.d.file_details.length) && item.d.order_id);
-    if(missing.length > 0) {
-      (async () => {
-        for(const item of missing) {
-          try {
-            const rawOid = String(item.d.order_id).replace(/\D/g, '');
-            if(!rawOid) continue;
-            const fRes = await fetch(`${API_BASE}/api/fetch_files?order_id=${encodeURIComponent(rawOid)}`);
-            const fileData = await fRes.json();
-            if(fileData && fileData.files && fileData.files.length) {
-              let targetFiles = fileData.files;
-              const isDelay = String(item.d.dispute_reason || '').toLowerCase().includes('delay') || !!item.d.delayed_by;
-              if(isDelay) {
-                if(item.d.filenames && item.d.filenames.length) {
-                  const delayedSet = new Set(item.d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
-                  const matched = targetFiles.filter(f => delayedSet.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
-                  if(matched.length > 0) targetFiles = matched;
-                } else if(item.d.fault_quantity && item.d.fault_quantity < targetFiles.length) {
-                  targetFiles = targetFiles.slice(0, item.d.fault_quantity);
-                }
-              }
-              item.d.file_details = targetFiles.map(f => ({
-                filename: f.filename,
-                category: (f.services && f.services[0] && f.services[0].category) || 'Category 1',
-                service: (f.services && f.services[0] && f.services[0].service) || 'Clipping path',
-                services: f.services || []
-              }));
-              item.d.filenames = item.d.file_details.map(f => f.filename);
-              item.d.fault_quantity = item.d.file_details.length;
-              save();
-              render();
-            }
-          } catch(e) {
-            console.warn('Auto file fetch error for order', item.d.order_id, e);
-          }
-        }
-      })();
-    }
   } catch(err){
     const msg = (err && err.message) || '';
     if(msg.includes('Failed to fetch') || msg.includes('NetworkError')){
@@ -4363,6 +4327,7 @@ async function fetchRowFilenamesIfEmpty(idx) {
   if(div) div.innerHTML = `<span style="font-size:11px;color:var(--accent)">Retrieving files and categories from Tista...</span>`;
 
   const isDelay = String(d.dispute_reason || '').toLowerCase().includes('delay') || !!d.delayed_by;
+  const dealQty = parseInt(d.fault_quantity, 10) || 1;
 
   try {
     let rawOid = String(d.order_id || '').replace(/\D/g, '');
@@ -4377,8 +4342,7 @@ async function fetchRowFilenamesIfEmpty(idx) {
           if(dispData.comment) d.comment = dispData.comment;
           if(dispData.comment_link) d.comment_link = dispData.comment_link;
           if(dispData.filenames && dispData.filenames.length) {
-            d.filenames = dispData.filenames;
-            d.fault_quantity = dispData.filenames.length;
+            d.filenames = dispData.filenames.slice(0, dealQty);
           }
         }
       } catch(ed) {
@@ -4395,16 +4359,17 @@ async function fetchRowFilenamesIfEmpty(idx) {
           let sourceFiles = orderData.files;
 
           // For Delay disputes, strictly filter only to the delayed files
-          if(isDelay) {
-            if(d.filenames && d.filenames.length) {
-              const delayedSet = new Set(d.filenames.map(fn => String(fn).split(/[/\\]/).pop().trim().toLowerCase()));
-              const matched = sourceFiles.filter(f => delayedSet.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
-              if(matched.length > 0) {
-                sourceFiles = matched;
-              }
-            } else if(d.fault_quantity && d.fault_quantity < sourceFiles.length) {
-              sourceFiles = sourceFiles.slice(0, d.fault_quantity);
+          if(isDelay && d.filenames && d.filenames.length) {
+            const delayedSet = new Set(d.filenames.map(fn => String(fn).split(/[/\\]/).pop().trim().toLowerCase()));
+            const matched = sourceFiles.filter(f => delayedSet.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
+            if(matched.length > 0) {
+              sourceFiles = matched;
             }
+          }
+
+          // STRICT EQUALITY: Order files count MUST match the dispute deal quantity!
+          if(sourceFiles.length > dealQty) {
+            sourceFiles = sourceFiles.slice(0, dealQty);
           }
 
           fileItems = sourceFiles.map(f => {
@@ -4443,7 +4408,7 @@ async function fetchRowFilenamesIfEmpty(idx) {
         const linkRes = await fetch(`${API_BASE}/api/fetch_link_files?url=${encodeURIComponent(d.comment_link)}`);
         const linkData = await linkRes.json();
         if(linkData && linkData.filenames && linkData.filenames.length) {
-          fileItems = linkData.filenames.map(fn => ({
+          fileItems = linkData.filenames.slice(0, dealQty).map(fn => ({
             filename: fn,
             category: d.cat || 'Category 1.5',
             service: d.service || 'Clipping path',
@@ -4456,14 +4421,12 @@ async function fetchRowFilenamesIfEmpty(idx) {
     }
 
     if(fileItems.length) {
-      if(isDelay && d.fault_quantity && fileItems.length > d.fault_quantity) {
-        fileItems = fileItems.slice(0, d.fault_quantity);
+      if(fileItems.length > dealQty) {
+        fileItems = fileItems.slice(0, dealQty);
       }
       d.file_details = fileItems;
       d.filenames = fileItems.map(f => f.filename);
-      if(isDelay) {
-        d.fault_quantity = fileItems.length;
-      }
+      d.fault_quantity = dealQty; // Strictly equal!
       // Auto-detect dominant service & category
       const svcCounts = {};
       const catCounts = {};
@@ -5254,12 +5217,6 @@ if ($('btn-global-refresh')) {
   $('btn-global-refresh').addEventListener('click', () => {
     resetCalculatorState();
   });
-}
-
-// Clear leftover search history on page load / browser refresh
-if (S.batch && Array.isArray(S.batch.disputes)) {
-  S.batch.disputes = [];
-  S.batchStatusText = '';
 }
 
 // ---------- Tista Login Helper & Live Status ----------

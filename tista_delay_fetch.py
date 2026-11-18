@@ -1185,7 +1185,8 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             if not cached_corr.exists():
                 cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
 
-            if not cached_corr.exists() and raw_oid:
+            # Only perform deep navigation if explicitly requested via single search or deep_scan
+            if not cached_corr.exists() and raw_oid and (single_clean_id or deep_scan):
                 try:
                     extract_order_files_with_page(page, raw_oid)
                     if (DATA_DIR / f"tista_correction_{raw_oid}.json").exists():
@@ -1210,18 +1211,16 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                     disp_comment = ddata.get("comment", "")
                     disp_link = ddata.get("comment_link", "")
                     disp_files = ddata.get("filenames", [])
-                    if disp_files and reason_name.lower() == "delay":
-                        qty = len(disp_files)
                 except Exception:
                     pass
 
-            # If not in cache, check dispute edit page for single search, small batch, or deep scan
-            if r.get("dispute_id") and not disp_files and (single_clean_id or (deep_scan and len(rows) <= 15) or len(rows) <= 10):
+            # If not in cache, check dispute edit page ONLY for single search or deep scan
+            if r.get("dispute_id") and not disp_files and (single_clean_id or deep_scan):
                 try:
                     edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
-                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
-                    time.sleep(1.2)
+                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
+                    time.sleep(0.5)
                     c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
                     if c_el.count() > 0:
                         c_val = c_el.input_value().strip()
@@ -1231,8 +1230,6 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                             if urls:
                                 disp_link = urls[0]
                                 disp_files = extract_filenames_from_page(edit_page, disp_link)
-                                if disp_files and reason_name.lower() == "delay":
-                                    qty = len(disp_files)
                     edit_page.close()
                 except Exception as bce:
                     print(f"Batch dispute #{r.get('dispute_id')} edit check note: {bce}")
@@ -1253,7 +1250,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                         detected_dur = cdata.get("order_duration")
                     raw_files = cdata.get("files", [])
 
-                    # For Delay disputes, filter strictly to the delayed files
+                    # For Delay disputes, filter strictly to the delayed files and slice to dispute qty
                     target_files = raw_files
                     if reason_name.lower() == "delay":
                         if disp_files:
@@ -1261,9 +1258,10 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                             matched = [f for f in raw_files if Path(f.get("filename", "")).name.lower().strip() in disp_set]
                             if matched:
                                 target_files = matched
-                        elif qty and qty < len(raw_files):
-                            # Fallback: slice to fault quantity so we never show full order files when only a few are delayed
-                            target_files = raw_files[:qty]
+                        if qty and len(target_files) > qty:
+                            target_files = target_files[:qty]
+                    elif qty and len(target_files) > qty:
+                        target_files = target_files[:qty]
 
                     for f0 in target_files:
                         fn = f0.get("filename", "")
@@ -1381,7 +1379,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 "delayed_by": r["delayed_by"],
                 "delay_seconds": delay_sec,
                 "order_duration": detected_dur,
-                "fault_quantity": len(order_file_details) if (order_file_details and reason_name.lower() == "delay") else qty,
+                "fault_quantity": qty,
                 "fault_severity": r["fault_severity"],
                 "status": r["status"],
                 "service": detected_svc or "Clipping path",
@@ -1391,9 +1389,9 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 "order_cats": order_cats,
                 "comment": disp_comment,
                 "comment_link": disp_link,
-                "filenames": [f["filename"] for f in order_file_details] if order_file_details else disp_files,
-                "file_details": order_file_details,
-                "filenames_count": len(order_file_details) if order_file_details else len(disp_files)
+                "filenames": [f["filename"] for f in order_file_details][:qty] if order_file_details else disp_files[:qty],
+                "file_details": order_file_details[:qty],
+                "filenames_count": len(order_file_details[:qty]) if order_file_details else min(qty, len(disp_files))
             })
 
         ctx.close()
