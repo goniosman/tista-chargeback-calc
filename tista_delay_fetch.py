@@ -1972,39 +1972,103 @@ def clean_file_names_list(raw_list):
 
 def extract_slide_services(slide_text: str) -> list:
     """
-    Extracts all services mentioned in a Google Slide.
-    Checks Service: / Services: lines, comma/slash/plus separated service names, and known services.
-    Returns a deduplicated list of matched known services.
+    Extracts services ONLY from the 'Service:' block/field in a Google Slide.
+    Strictly ignores instructions, notes, investigations, feedbacks, and error descriptions.
+    Supports single service or multiple services separated by commas, slashes, pluses, ampersands, or newlines.
     """
     found = []
-    # 1. Match all Service: or Services: occurrences
-    svc_matches = re.findall(r"Services?\s*[:#-]+\s*([^\n\r<]+)", slide_text, re.I)
-    for s_line in svc_matches:
-        clean_s = s_line.strip()
-        if not clean_s or any(clean_s.lower().startswith(x) for x in ["format", "instruction", "image", "note"]):
-            continue
-        # Split tokens by comma, slash, plus, ampersand, or ' and '
-        tokens = re.split(r"[,/\\+&]|\band\b", clean_s, flags=re.I)
-        for t in tokens:
-            t_clean = t.strip()
-            if not t_clean or len(t_clean) < 2:
-                continue
-            matched_ks = None
-            for ks in KNOWN_SERVICES:
-                if ks.lower() == t_clean.lower() or ks.lower() in t_clean.lower() or t_clean.lower() in ks.lower():
-                    matched_ks = ks
-                    break
-            if matched_ks and matched_ks not in found:
-                found.append(matched_ks)
-            elif not matched_ks and len(t_clean) > 2 and t_clean not in found:
-                found.append(t_clean)
+    # Match ONLY the Service: block up to the next section header or boundary
+    pattern = r"Services?\s*[:#-]*\s*([\s\S]*?)(?=(?:\b(?:Format|Instruction|Note|Image\s*name|Checked\s*by|Report\s*type|Job\s*ID|Order\s*ID|Quantity|Date|Subs?|Correction|Error\s*Severity|Severity|Investigation|Feedback|Issue\s*report|Original\s*image|Completed\s*image)\b|<div|</section>|$))"
+    svc_blocks = re.findall(pattern, slide_text, re.I)
 
-    # 2. Also search if any other KNOWN_SERVICES appear explicitly in the slide_text
-    for ks in KNOWN_SERVICES:
-        if ks not in found and re.search(r"\b" + re.escape(ks) + r"\b", slide_text, re.I):
-            found.append(ks)
+    def match_single_service(text):
+        t = text.strip()
+        if not t:
+            return None
+        for ks in KNOWN_SERVICES:
+            if ks.lower() == t.lower():
+                return ks
+        tl = t.lower()
+        if "wrinkle" in tl:
+            return "Wrinkle on clothing"
+        if "dust" in tl or "scratch" in tl:
+            return "Dust, spot and scratch removal"
+        if "multi-clipping" in tl or "multiclipping" in tl or "multi clipping" in tl:
+            return "Multi-clipping path"
+        if "ghost" in tl or "mannequin" in tl or "neck joint" in tl:
+            return "Ghost mannequin"
+        if "mask" in tl:
+            return "Image masking"
+        if "natural shadow" in tl:
+            return "Natural shadow"
+        if "drop shadow" in tl:
+            return "Drop shadow"
+        if "reflection shadow" in tl:
+            return "Reflection shadow"
+        if "existing shadow" in tl:
+            return "Existing shadow"
+        if "floating shadow" in tl:
+            return "Floating shadow"
+        if "clip" in tl or "path" in tl:
+            return "Clipping path"
+        if "beauty" in tl or "airbrush" in tl:
+            return "Beauty airbrushing"
+        if "camera reflection" in tl:
+            return "Camera reflection removal"
+        if "color variant" in tl:
+            return "Color variants"
+        if "symmetrical" in tl:
+            return "Symmetrical edit"
+        if "background removal" in tl:
+            return "Background removal"
+        if "straighten" in tl or "crop" in tl:
+            return "Straighten, crop and set margin"
+        if "resize" in tl:
+            return "Resize"
+        if "renaming" in tl:
+            return "Renaming"
+        if "file format" in tl:
+            return "File format change"
+        for ks in KNOWN_SERVICES:
+            if tl in ks.lower() or ks.lower() in tl:
+                return ks
+        return t
+
+    for block in svc_blocks:
+        b_clean = block.strip()
+        if not b_clean:
+            continue
+        # Pre-check multi-word services with punctuation like 'Dust, spot and scratch removal'
+        remaining = b_clean
+        for special_svc in ["Dust, spot and scratch removal", "Straighten, crop and set margin"]:
+            sp_pat = re.compile(r"\b" + re.escape(special_svc) + r"\b", re.I)
+            if sp_pat.search(remaining):
+                if special_svc not in found:
+                    found.append(special_svc)
+                remaining = sp_pat.sub(" ", remaining)
+
+        dust_abbr = re.search(r"\bdust[,\s]+spot[^\n\r,+/&]*", remaining, re.I)
+        if dust_abbr:
+            if "Dust, spot and scratch removal" not in found:
+                found.append("Dust, spot and scratch removal")
+            remaining = remaining[:dust_abbr.start()] + " " + remaining[dust_abbr.end():]
+
+        lines = re.split(r"[\r\n\x0b]+", remaining)
+        for l in lines:
+            tokens = re.split(r"[,/\\+&]|\band\b", l, flags=re.I)
+            for tok in tokens:
+                tok = tok.strip()
+                if not tok or len(tok) < 2:
+                    continue
+                # Skip any stray label words
+                if tok.lower() in ("service", "services", "format", "instruction", "note", "none"):
+                    continue
+                matched = match_single_service(tok)
+                if matched and matched not in found:
+                    found.append(matched)
 
     if not found:
+        # Fallback if Service: keyword was not found or empty
         found = ["Clipping path"]
     return found
 
