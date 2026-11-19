@@ -1754,6 +1754,29 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
                 "status": "Closed",
                 "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
             }
+
+        # If first submission returned non-200/302/303, retry once with minimal essential payload
+        print(f"[*] [Fast HTTP] Initial PATCH returned status {post_resp.status_code}. Retrying with core payload...")
+        min_form = {
+            "_method": "patch",
+            "authenticity_token": csrf_token,
+            "order_dispute[chargeable_to]": "vendor",
+            "order_dispute[charge_to_vendor]": f"{charge_amt:.2f}",
+            "order_dispute[status]": "closed",
+            "commit": "Update Order dispute"
+        }
+        retry_resp = s.post(post_url, data=min_form, headers=headers, timeout=10, allow_redirects=True)
+        print(f"[✓] [Fast HTTP Retry] Tista status: {retry_resp.status_code}, url: {retry_resp.url}")
+        if retry_resp.status_code in (200, 302, 303) and "sign_in" not in str(retry_resp.url):
+            return True, {
+                "success": True,
+                "dispute_id": clean_did,
+                "order_id": order_id or f"#{raw_oid}",
+                "amount": charge_amt,
+                "status": "Closed",
+                "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
+            }
+
         return False, f"POST returned status {post_resp.status_code}"
     except Exception as pe:
         print(f"[!] Fast HTTP close error: {pe}")
