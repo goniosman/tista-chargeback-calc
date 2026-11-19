@@ -4855,88 +4855,99 @@ async function closeBatchAll(){
   showTopProgress();
 
   let closedCount = 0;
-  for(let i = 0; i < unclosed.length; i++){
-    const it = unclosed[i];
-    const curIdx = it.idx;
-    const curD = it.orig;
-    const curRes = it.res;
-    const amt = curRes.chargeback || 2.0;
+  let cursor = 0;
+  const CONCURRENCY = Math.min(3, unclosed.length);
 
-    const rowBtn = $(`bt-close-btn-${curIdx}`);
-    const rowStatus = $(`bt-status-td-${curIdx}`);
-    const rowEl = $(`bt-row-${curIdx}`);
+  async function closeWorker(){
+    while(cursor < unclosed.length){
+      const i = cursor++;
+      const it = unclosed[i];
+      const curIdx = it.idx;
+      const curD = it.orig;
+      const curRes = it.res;
+      const amt = curRes.chargeback || 2.0;
 
-    if(rowEl){
-      try { rowEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(e){}
-      rowEl.style.backgroundColor = 'rgba(245, 158, 11, 0.08)';
-    }
-    if(rowBtn){
-      rowBtn.disabled = true;
-      rowBtn.style.background = '#f59e0b';
-      rowBtn.style.borderColor = '#d97706';
-      rowBtn.style.color = '#fff';
-      rowBtn.innerHTML = '<span class="btn-spinner"></span> Loading...';
-    }
-    if(rowStatus){
-      rowStatus.innerHTML = '<span style="color:#f59e0b;font-weight:600"><span class="btn-spinner" style="border-top-color:#f59e0b;border-color:rgba(245,158,11,0.25)"></span> Closing...</span>';
-    }
-    if(statusEl){
-      statusEl.textContent = `Closing Order ${curD.order_id} (${i + 1} of ${unclosed.length})...`;
-      statusEl.style.color = 'var(--accent)';
-    }
+      const rowBtn = $(`bt-close-btn-${curIdx}`);
+      const rowStatus = $(`bt-status-td-${curIdx}`);
+      const rowEl = $(`bt-row-${curIdx}`);
 
-    const cleanDid = (curD.dispute_id && !String(curD.dispute_id).startsWith('SLIDE-') && /^\d+$/.test(String(curD.dispute_id))) ? curD.dispute_id : '';
-    try {
-      const res = await fetch(`${API_BASE}/api/close_dispute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dispute_id: cleanDid,
-          order_id: curD.order_id,
-          amount: amt,
-          fault_severity: curD.fault_severity || curRes.sevKey || 'Low'
-        })
-      });
-      const data = await res.json();
-      if(!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
-
-      curD.status = 'Closed';
-      curD.charge = data.amount || amt;
-      if(data.dispute_id && /^\d+$/.test(String(data.dispute_id))) {
-        curD.dispute_id = data.dispute_id;
+      if(rowEl){
+        rowEl.style.backgroundColor = 'rgba(245, 158, 11, 0.08)';
       }
-      closedCount++;
-
       if(rowBtn){
-        rowBtn.style.background = '#47a9b8';
-        rowBtn.style.borderColor = '#47a9b8';
-        rowBtn.style.color = '#fff';
-        rowBtn.innerHTML = 'Dispute Done';
         rowBtn.disabled = true;
-        rowBtn.title = 'Dispute is closed';
+        rowBtn.style.background = '#f59e0b';
+        rowBtn.style.borderColor = '#d97706';
+        rowBtn.style.color = '#fff';
+        rowBtn.innerHTML = '<span class="btn-spinner"></span> Closing...';
       }
       if(rowStatus){
-        rowStatus.innerHTML = '<span style="color:#27ae60;font-weight:600">Closed</span>';
+        rowStatus.innerHTML = '<span style="color:#f59e0b;font-weight:600"><span class="btn-spinner" style="border-top-color:#f59e0b;border-color:rgba(245,158,11,0.25)"></span> Closing...</span>';
       }
-      if(rowEl){
-        rowEl.style.backgroundColor = '';
+      if(statusEl){
+        statusEl.textContent = `Closing disputes (${closedCount + 1} of ${unclosed.length} in progress)...`;
+        statusEl.style.color = 'var(--accent)';
       }
-    } catch(err){
-      console.error('Error closing order ' + curD.order_id, err);
-      if(rowBtn){
-        rowBtn.disabled = false;
-        rowBtn.style.background = '#c0392b';
-        rowBtn.style.borderColor = '#c0392b';
-        rowBtn.innerHTML = '🔒 Close';
-      }
-      if(rowStatus){
-        rowStatus.innerHTML = `<span style="color:var(--danger);font-weight:600" title="${esc(err.message)}">Error</span>`;
-      }
-      if(rowEl){
-        rowEl.style.backgroundColor = '';
+
+      const cleanDid = (curD.dispute_id && !String(curD.dispute_id).startsWith('SLIDE-') && /^\d+$/.test(String(curD.dispute_id))) ? curD.dispute_id : '';
+      try {
+        const res = await fetch(`${API_BASE}/api/close_dispute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dispute_id: cleanDid,
+            order_id: curD.order_id,
+            amount: amt,
+            fault_severity: curD.fault_severity || curRes.sevKey || 'Low'
+          })
+        });
+        const data = await res.json();
+        if(!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
+
+        curD.status = 'Closed';
+        curD.charge = data.amount || amt;
+        if(data.dispute_id && /^\d+$/.test(String(data.dispute_id))) {
+          curD.dispute_id = data.dispute_id;
+        }
+        closedCount++;
+
+        if(rowBtn){
+          rowBtn.style.background = '#47a9b8';
+          rowBtn.style.borderColor = '#47a9b8';
+          rowBtn.style.color = '#fff';
+          rowBtn.innerHTML = 'Dispute Done';
+          rowBtn.disabled = true;
+          rowBtn.title = 'Dispute is closed';
+        }
+        if(rowStatus){
+          rowStatus.innerHTML = '<span style="color:#27ae60;font-weight:600">Closed</span>';
+        }
+        if(rowEl){
+          rowEl.style.backgroundColor = '';
+        }
+        if(statusEl){
+          statusEl.textContent = `✓ Closed ${closedCount} of ${unclosed.length} disputes...`;
+        }
+      } catch(err){
+        console.error('Error closing order ' + curD.order_id, err);
+        if(rowBtn){
+          rowBtn.disabled = false;
+          rowBtn.style.background = '#c0392b';
+          rowBtn.style.borderColor = '#c0392b';
+          rowBtn.innerHTML = '🔒 Close';
+        }
+        if(rowStatus){
+          rowStatus.innerHTML = `<span style="color:var(--danger);font-weight:600" title="${esc(err.message)}">Error</span>`;
+        }
+        if(rowEl){
+          rowEl.style.backgroundColor = '';
+        }
       }
     }
   }
+
+  const workers = Array.from({ length: CONCURRENCY }, () => closeWorker());
+  await Promise.all(workers);
 
   hideTopProgress();
   S.batchStatusText = `✓ Successfully charged & closed ${closedCount} of ${unclosed.length} disputes on Tista!`;
