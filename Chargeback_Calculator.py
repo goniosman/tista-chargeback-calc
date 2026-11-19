@@ -61,7 +61,7 @@ except ImportError:
 
 import json
 
-CURRENT_VERSION = "2026.11.19.v2"
+CURRENT_VERSION = "2026.11.19.v3"
 
 def kill_existing_server_on_port(port=8765):
     """Terminates any old/outdated server process listening on port."""
@@ -133,6 +133,8 @@ def ensure_server(port=8765):
     for _ in range(32):
         time.sleep(0.25)
         if verify_server_http(port):
+            if tista_delay_fetch:
+                threading.Thread(target=tista_delay_fetch.prepopulate_dispute_cache, daemon=True).start()
             return True
     return False
 

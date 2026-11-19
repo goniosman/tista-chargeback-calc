@@ -47,7 +47,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.19.v2"
+SERVER_VERSION = "2026.11.19.v3"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -1177,6 +1177,12 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
 
         for r in rows:
             raw_oid = re.sub(r"\D", "", r["order_id"])
+            d_id = str(r.get("dispute_id") or "").strip()
+            if raw_oid and d_id and d_id.isdigit():
+                _ORDER_TO_DISPUTE_CACHE[raw_oid] = d_id
+                if r.get("status"):
+                    _DISPUTE_STATUS_CACHE[d_id] = r.get("status")
+
             qty = int(re.sub(r"\D", "", r["fault_quantity"]) or 1)
             reason_name = r["dispute_reason"] or "Correction"
 
@@ -1548,7 +1554,9 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
 
 # --- Ultra-Fast Direct HTTP Tista Session & Cache ---
 _TISTA_HTTP_SESSION = None
+_CACHED_CSRF_TOKEN = ""
 _ORDER_TO_DISPUTE_CACHE = {}
+_DISPUTE_STATUS_CACHE = {}
 
 def get_tista_http_session(force_refresh: bool = False):
     """
@@ -1593,10 +1601,55 @@ def sync_cookies_from_playwright_context(ctx):
                         json.dump(cookies, f, indent=2)
                 except Exception:
                     pass
-            get_tista_http_session(force_refresh=True)
+            s = get_tista_http_session(force_refresh=True)
             print(f"[✓] Synced {len(cookies)} cookies from Playwright to fast HTTP session")
+            try:
+                get_cached_csrf_token(s, force_refresh=True)
+            except Exception:
+                pass
     except Exception as e:
         print(f"[!] Cookie sync note: {e}")
+
+def get_cached_csrf_token(session=None, force_refresh: bool = False):
+    """
+    Returns the cached CSRF token. If missing or forced, fetches once from disputes list.
+    Also opportunistically pre-populates _ORDER_TO_DISPUTE_CACHE and _DISPUTE_STATUS_CACHE.
+    """
+    global _CACHED_CSRF_TOKEN
+    if _CACHED_CSRF_TOKEN and not force_refresh:
+        return _CACHED_CSRF_TOKEN
+
+    s = session or get_tista_http_session()
+    try:
+        resp = s.get(f"{BASE_URL}/manage/vendors/1/order_disputes?per_page=100", timeout=8)
+        if resp.status_code == 200:
+            html = resp.text
+            m = re.search(r'<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"', html) or re.search(r'<meta[^>]+content="([^"]+)"[^>]+name="csrf-token"', html)
+            if m:
+                _CACHED_CSRF_TOKEN = m.group(1)
+
+            # Pre-cache all visible disputes
+            for tr in re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL):
+                tds = [re.sub(r'<[^>]+>', '', td).strip() for td in re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)]
+                if len(tds) >= 12 and tds[0].isdigit():
+                    d_id = tds[0]
+                    o_id = re.sub(r"\D", "", tds[1])
+                    if o_id:
+                        _ORDER_TO_DISPUTE_CACHE[o_id] = d_id
+                    _DISPUTE_STATUS_CACHE[d_id] = tds[11]
+    except Exception as e:
+        print(f"[!] Error pre-fetching CSRF & dispute cache: {e}")
+
+    return _CACHED_CSRF_TOKEN
+
+def prepopulate_dispute_cache(session=None):
+    """Pre-warms the HTTP session and loads active disputes + CSRF token into memory."""
+    try:
+        s = session or get_tista_http_session()
+        get_cached_csrf_token(s, force_refresh=True)
+        print(f"[✓] Pre-warmed Tista cache: {len(_ORDER_TO_DISPUTE_CACHE)} order disputes cached.")
+    except Exception as e:
+        print(f"[!] Pre-warming dispute cache note: {e}")
 
 def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, fault_severity: str = None):
     """
@@ -1605,27 +1658,45 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
     Returns (True, result_dict) on success, or (False, error_reason) on failure.
     """
     clean_did = str(dispute_id or "").strip()
-    if clean_did and not clean_did.isdigit():
+    if clean_did and (not clean_did.isdigit() or clean_did.startswith("SLIDE-")):
         clean_did = ""
     raw_oid = re.sub(r"\D", "", str(order_id or ""))
     charge_amt = round(max(2.0, float(amount or 2.0)), 2)
 
     s = get_tista_http_session()
 
-    # 1. Check in-memory cache
+    # 1. Resolve dispute_id from cache if missing
     if not clean_did and raw_oid and raw_oid in _ORDER_TO_DISPUTE_CACHE:
         clean_did = _ORDER_TO_DISPUTE_CACHE[raw_oid]
         print(f"[*] [Fast HTTP] Using cached Dispute ID #{clean_did} for Order #{raw_oid}")
 
-    # 2. Search dispute ID if not known
+    # 2. Check if already marked closed in cache
+    if clean_did and clean_did in _DISPUTE_STATUS_CACHE:
+        c_status = str(_DISPUTE_STATUS_CACHE[clean_did]).lower()
+        if "close" in c_status or "done" in c_status:
+            print(f"[✓] [Fast HTTP] Dispute #{clean_did} is already CLOSED in cache.")
+            return True, {
+                "success": True,
+                "dispute_id": clean_did,
+                "order_id": order_id or f"#{raw_oid}",
+                "amount": charge_amt,
+                "status": "Closed",
+                "message": f"Dispute #{clean_did} is already closed on Tista."
+            }
+
+    # 3. If dispute_id still unknown, do ONE fast search
     if not clean_did and raw_oid:
         try:
             search_url = f"{BASE_URL}/manage/vendors/1/order_disputes?q[fulfillment_order_order_name_cont]={raw_oid}"
-            resp = s.get(search_url, timeout=10)
+            resp = s.get(search_url, timeout=8)
             if resp.status_code == 200:
-                if "sign_in" in resp.url:
-                    return False, "Not logged in (redirected to sign_in)"
                 html = resp.text
+                global _CACHED_CSRF_TOKEN
+                if not _CACHED_CSRF_TOKEN:
+                    m_csrf = re.search(r'<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"', html) or re.search(r'<meta[^>]+content="([^"]+)"[^>]+name="csrf-token"', html)
+                    if m_csrf:
+                        _CACHED_CSRF_TOKEN = m_csrf.group(1)
+
                 for tr in re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL):
                     tds = [re.sub(r'<[^>]+>', '', td).strip() for td in re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)]
                     if tds and len(tds) >= 2 and tds[0].strip().isdigit():
@@ -1635,7 +1706,9 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
                             clean_did = cand_did
                             _ORDER_TO_DISPUTE_CACHE[raw_oid] = clean_did
                             status_cand = tds[11].strip() if len(tds) >= 12 else ""
-                            if "close" in status_cand.lower():
+                            if status_cand:
+                                _DISPUTE_STATUS_CACHE[clean_did] = status_cand
+                            if "close" in status_cand.lower() or "done" in status_cand.lower():
                                 return True, {
                                     "success": True,
                                     "dispute_id": clean_did,
@@ -1646,117 +1719,110 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
                                 }
                             break
         except Exception as se:
-            print(f"[!] Fast HTTP search error: {se}")
+            print(f"[!] Fast HTTP search note: {se}")
 
     if not clean_did:
         return False, f"Dispute ID not found for Order #{raw_oid or order_id}"
 
-    # 3. Fetch edit page for CSRF and status check
+    # 4. Get session CSRF token (instant if cached)
+    csrf_token = get_cached_csrf_token(s)
+    if not csrf_token:
+        try:
+            edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}/edit"
+            resp = s.get(edit_url, timeout=8)
+            if resp.status_code == 200:
+                html = resp.text
+                m_status = re.search(r'<select[^>]+name="order_dispute\[status\]"[^>]*>([\s\S]*?)</select>', html, re.I)
+                if m_status and "closed" in m_status.group(1).lower() and 'selected="selected"' in m_status.group(1):
+                    _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
+                    return True, {
+                        "success": True,
+                        "dispute_id": clean_did,
+                        "order_id": order_id or f"#{raw_oid}",
+                        "amount": charge_amt,
+                        "status": "Closed",
+                        "message": f"Dispute #{clean_did} is already closed on Tista."
+                    }
+                m_csrf = re.search(r'<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"', html) or re.search(r'name="authenticity_token"\s+value="([^"]+)"', html)
+                if m_csrf:
+                    csrf_token = m_csrf.group(1)
+                    _CACHED_CSRF_TOKEN = csrf_token
+        except Exception as ee:
+            print(f"[!] Edit page check note: {ee}")
+
+    if not csrf_token:
+        return False, "Could not obtain CSRF token for Tista session"
+
+    # 5. Build payload & headers
+    post_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}"
+    form_data = {
+        "_method": "patch",
+        "authenticity_token": csrf_token,
+        "order_dispute[chargeable_to]": "vendor",
+        "order_dispute[charge_to_vendor]": f"{charge_amt:.2f}",
+        "order_dispute[status]": "closed",
+        "commit": "Update Order dispute"
+    }
+    if fault_severity:
+        raw_sev = str(fault_severity).strip().lower().replace(" ", "_")
+        sev_map = {
+            "minor": "low", "low": "low",
+            "medium": "medium",
+            "major": "high", "high": "high",
+            "critical": "critical",
+            "not_applicable": "not_applicable"
+        }
+        form_data["order_dispute[fault_severity]"] = sev_map.get(raw_sev, "low")
+    if comment:
+        form_data["order_dispute[comment]"] = comment
+
+    headers = {
+        "X-CSRF-Token": csrf_token,
+        "Referer": f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}/edit",
+        "Origin": BASE_URL,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+
+    # 6. Execute direct POST
+    t0 = time.time()
     try:
-        edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}/edit"
-        resp = s.get(edit_url, timeout=10)
-        if resp.status_code != 200:
-            return False, f"Edit page returned status {resp.status_code}"
-        if "sign_in" in resp.url:
-            return False, "Not logged in (redirected to sign_in)"
+        post_resp = s.post(post_url, data=form_data, headers=headers, timeout=10, allow_redirects=True)
+        elapsed = time.time() - t0
+        print(f"[✓] [Fast HTTP] POST to dispute #{clean_did} status: {post_resp.status_code} ({elapsed:.3f}s)")
 
-        html = resp.text
-        # Check if already closed via status select or page content
-        m_status = re.search(r'<select[^>]+name="order_dispute\[status\]"[^>]*>([\s\S]*?)</select>', html, re.I)
-        if m_status:
-            m_sel = re.search(r'<option[^>]+selected[^>]*value="([^"]*)"', m_status.group(1), re.I) or re.search(r'value="([^"]*)"[^>]+selected', m_status.group(1), re.I)
-            if m_sel and m_sel.group(1).lower() == "closed":
-                print(f"[✓] Dispute #{clean_did} is already CLOSED on Tista.")
-                return True, {
-                    "success": True,
-                    "dispute_id": clean_did,
-                    "order_id": order_id or f"#{raw_oid}",
-                    "amount": charge_amt,
-                    "status": "Closed",
-                    "message": f"Dispute #{clean_did} is already closed on Tista."
-                }
-
-        if "charge_to_vendor" not in html and "closed" in html.lower():
-            return True, {
-                "success": True,
-                "dispute_id": clean_did,
-                "order_id": order_id or f"#{raw_oid}",
-                "amount": charge_amt,
-                "status": "Closed",
-                "message": f"Dispute #{clean_did} is already closed on Tista."
-            }
-
-        csrf_token = ""
-        form_match = re.search(rf'<form[^>]+action="/manage/vendors/1/order_disputes/{clean_did}"[^>]*>(.*?)</form>', html, re.DOTALL)
-        if form_match:
-            f_csrf = re.search(r'name="authenticity_token"\s+value="([^"]+)"', form_match.group(1))
-            if f_csrf:
-                csrf_token = f_csrf.group(1)
-        if not csrf_token:
-            m_csrf = re.search(r'<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"', html) or re.search(r'<meta[^>]+content="([^"]+)"[^>]+name="csrf-token"', html)
-            if m_csrf:
-                csrf_token = m_csrf.group(1)
-        if not csrf_token:
-            any_csrf = re.search(r'name="authenticity_token"\s+value="([^"]+)"', html)
-            if any_csrf:
-                csrf_token = any_csrf.group(1)
-
-        if not csrf_token:
-            return False, "Could not extract CSRF token"
-
-        cur_comment = ""
-        comment_box = re.search(r'<textarea[^>]+name="order_dispute\[comment\]"[^>]*>(.*?)</textarea>', html, re.DOTALL)
-        if comment_box:
-            cur_comment = comment_box.group(1).strip()
-        full_comment = cur_comment
-        if comment:
-            full_comment = f"{cur_comment}\n{comment}".strip() if cur_comment else comment
-
-        post_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}"
-        form_data = {
-            "_method": "patch",
-            "authenticity_token": csrf_token,
-            "order_dispute[chargeable_to]": "vendor",
-            "order_dispute[charge_to_vendor]": f"{charge_amt:.2f}",
-            "order_dispute[status]": "closed",
-            "commit": "Update Order dispute"
-        }
-        if fault_severity:
-            raw_sev = str(fault_severity).strip().lower().replace(" ", "_")
-            sev_map = {
-                "minor": "low",
-                "low": "low",
-                "medium": "medium",
-                "major": "high",
-                "high": "high",
-                "critical": "critical",
-                "not_applicable": "not_applicable"
-            }
-            form_data["order_dispute[fault_severity]"] = sev_map.get(raw_sev, "low")
-        if full_comment:
-            form_data["order_dispute[comment]"] = full_comment
-
-        headers = {
-            "X-CSRF-Token": csrf_token,
-            "Referer": edit_url,
-            "Origin": BASE_URL,
-        }
-
-        print(f"[*] [Fast HTTP] Submitting PATCH to {post_url} (Amount: ${charge_amt:.2f})...")
-        post_resp = s.post(post_url, data=form_data, headers=headers, timeout=12, allow_redirects=True)
-        print(f"[✓] [Fast HTTP] Tista close status: {post_resp.status_code}, url: {post_resp.url}")
         if post_resp.status_code in (200, 302, 303) and "sign_in" not in str(post_resp.url):
+            _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
             return True, {
                 "success": True,
                 "dispute_id": clean_did,
                 "order_id": order_id or f"#{raw_oid}",
                 "amount": charge_amt,
                 "status": "Closed",
-                "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
+                "elapsed_seconds": round(elapsed, 3),
+                "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did} ({elapsed:.2f}s)."
             }
 
-        # If first submission returned non-200/302/303, retry once with minimal essential payload
-        print(f"[*] [Fast HTTP] Initial PATCH returned status {post_resp.status_code}. Retrying with core payload...")
+        # If 422: CSRF expired, refresh CSRF and retry once
+        if post_resp.status_code == 422:
+            print("[*] [Fast HTTP] 422 received. Refreshing CSRF token and retrying...")
+            fresh_csrf = get_cached_csrf_token(s, force_refresh=True)
+            if fresh_csrf:
+                form_data["authenticity_token"] = fresh_csrf
+                headers["X-CSRF-Token"] = fresh_csrf
+                retry_resp = s.post(post_url, data=form_data, headers=headers, timeout=10, allow_redirects=True)
+                if retry_resp.status_code in (200, 302, 303) and "sign_in" not in str(retry_resp.url):
+                    _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
+                    return True, {
+                        "success": True,
+                        "dispute_id": clean_did,
+                        "order_id": order_id or f"#{raw_oid}",
+                        "amount": charge_amt,
+                        "status": "Closed",
+                        "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
+                    }
+
+        # If 500: Retry once with minimal essential payload
+        print(f"[*] [Fast HTTP] Retrying with minimal payload...")
         min_form = {
             "_method": "patch",
             "authenticity_token": csrf_token,
@@ -1766,8 +1832,8 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
             "commit": "Update Order dispute"
         }
         retry_resp = s.post(post_url, data=min_form, headers=headers, timeout=10, allow_redirects=True)
-        print(f"[✓] [Fast HTTP Retry] Tista status: {retry_resp.status_code}, url: {retry_resp.url}")
         if retry_resp.status_code in (200, 302, 303) and "sign_in" not in str(retry_resp.url):
+            _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
             return True, {
                 "success": True,
                 "dispute_id": clean_did,
@@ -1777,18 +1843,16 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
                 "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
             }
 
-        return False, f"POST returned status {post_resp.status_code}"
+        return False, f"Tista returned status {post_resp.status_code}"
     except Exception as pe:
-        print(f"[!] Fast HTTP close error: {pe}")
+        print(f"[!] Fast HTTP error for dispute #{clean_did}: {pe}")
         return False, str(pe)
 
 def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, fault_severity: str = None, headless: bool = False):
     """
     Charges the specified amount to vendor and closes the dispute on Tista.
-    Prioritizes instant direct HTTP session (completes in ~0.5s with zero browser launch overhead).
-    Falls back to Playwright UI automation only if HTTP cookies fail.
+    Uses ultra-fast direct HTTP session (completes in ~0.4 - 0.8s with zero browser launch overhead).
     """
-    # Attempt 1: Ultra-fast direct HTTP session (no browser launch, ~0.5s)
     ok, res = close_dispute_via_direct_http(
         dispute_id=dispute_id,
         order_id=order_id,
@@ -1797,257 +1861,32 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
         fault_severity=fault_severity
     )
     if ok:
-        print(f"[✓] Dispute closed via ultra-fast direct HTTP: {res.get('message')}")
+        print(f"[✓] Dispute closed via fast HTTP: {res.get('message')}")
         return res
 
-    print(f"[*] Direct HTTP close attempt note: {res}. Falling back to Playwright automation...")
-
-    # Attempt 2: Playwright fallback (Browser launch)
-    clean_dispute_id = str(dispute_id or "").strip()
-    if clean_dispute_id and not clean_dispute_id.isdigit():
-        clean_dispute_id = ""
-
-    raw_oid = re.sub(r"\D", "", str(order_id or ""))
-    charge_amt = round(max(2.0, float(amount or 2.0)), 2)
-
-    if not sync_playwright:
-        return {
-            "status": "error",
-            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
-        }
-
-    with sync_playwright() as p:
-        ctx = launch_playwright_context(p, headless=headless)
-        sync_cookies_from_playwright_context(ctx)
-
-        def fast_search_dispute(oid_str):
-            for q_cand in [oid_str, f"%23{oid_str}"]:
-                try:
-                    search_url = f"{BASE_URL}/manage/vendors/1/order_disputes?q[fulfillment_order_order_name_cont]={q_cand}"
-                    resp = ctx.request.get(search_url, timeout=10000)
-                    if resp.status == 200:
-                        html = resp.text()
-                        trs = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
-                        for tr in trs:
-                            tds = [re.sub(r'<[^>]+>', '', td).strip() for td in re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)]
-                            if tds and len(tds) >= 2:
-                                did_cand = tds[0].strip()
-                                oid_cand = re.sub(r"\D", "", tds[1])
-                                if did_cand.isdigit() and (not oid_str or oid_cand == oid_str):
-                                    status_cand = tds[11].strip() if len(tds) >= 12 else ""
-                                    return did_cand, status_cand
-                except Exception as ef:
-                    print(f"Error querying dispute for {oid_str}: {ef}")
-            return None, None
-
-        # Step 1: Resolve dispute_id if missing or check if already closed
-        if not clean_dispute_id and raw_oid:
-            print(f"[*] Resolving dispute_id for order #{raw_oid}...")
-            found_did, found_status = fast_search_dispute(raw_oid)
-            if found_did and found_did.isdigit():
-                clean_dispute_id = found_did
-                _ORDER_TO_DISPUTE_CACHE[raw_oid] = clean_dispute_id
-            if found_status and "close" in found_status.lower():
-                print(f"[✓] Order #{raw_oid} is already marked as CLOSED on Tista!")
-                ctx.close()
-                return {
-                    "success": True,
-                    "dispute_id": found_did or clean_dispute_id,
-                    "order_id": order_id or f"#{raw_oid}",
-                    "amount": charge_amt,
-                    "status": "Closed",
-                    "message": f"Dispute for Order #{raw_oid} is already closed on Tista."
-                }
-
-        if not clean_dispute_id:
-            ctx.close()
-            return {"error": f"Could not find dispute ID for Order #{raw_oid or order_id} on Tista."}
-
-        # Step 2: Attempt direct HTTP POST via ctx.request
-        try:
-            print(f"[*] [Fast API] Fetching dispute edit page #{clean_dispute_id}...")
-            edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
-            resp = ctx.request.get(edit_url, timeout=10000)
-            if resp.status == 200:
-                html = resp.text()
-                if "charge_to_vendor" not in html and "closed" in html.lower():
-                    print(f"[✓] Dispute #{clean_dispute_id} is already closed on Tista.")
-                    ctx.close()
-                    return {
-                        "success": True,
-                        "dispute_id": clean_dispute_id,
-                        "order_id": order_id or f"#{raw_oid}",
-                        "amount": charge_amt,
-                        "status": "Closed",
-                        "message": f"Dispute #{clean_dispute_id} is already closed on Tista."
-                    }
-
-                csrf_token = ""
-                form_match = re.search(rf'<form[^>]+action="/manage/vendors/1/order_disputes/{clean_dispute_id}"[^>]*>(.*?)</form>', html, re.DOTALL)
-                if form_match:
-                    f_csrf = re.search(r'name="authenticity_token"\s+value="([^"]+)"', form_match.group(1))
-                    if f_csrf:
-                        csrf_token = f_csrf.group(1)
-                if not csrf_token:
-                    m_csrf = re.search(r'<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"', html) or re.search(r'<meta[^>]+content="([^"]+)"[^>]+name="csrf-token"', html)
-                    if m_csrf:
-                        csrf_token = m_csrf.group(1)
-                if not csrf_token:
-                    any_csrf = re.search(r'name="authenticity_token"\s+value="([^"]+)"', html)
-                    if any_csrf:
-                        csrf_token = any_csrf.group(1)
-
-                if csrf_token:
-                    cur_comment = ""
-                    comment_box = re.search(r'<textarea[^>]+name="order_dispute\[comment\]"[^>]*>(.*?)</textarea>', html, re.DOTALL)
-                    if comment_box:
-                        cur_comment = comment_box.group(1).strip()
-                    full_comment = cur_comment
-                    if comment:
-                        full_comment = f"{cur_comment}\n{comment}".strip() if cur_comment else comment
-
-                    post_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}"
-                    form_data = {
-                        "_method": "patch",
-                        "authenticity_token": csrf_token,
-                        "order_dispute[chargeable_to]": "vendor",
-                        "order_dispute[charge_to_vendor]": f"{charge_amt:.2f}",
-                        "order_dispute[status]": "closed",
-                        "commit": "Update Order dispute"
-                    }
-                    if fault_severity:
-                        raw_sev = str(fault_severity).strip().lower().replace(" ", "_")
-                        sev_map = {
-                            "minor": "low",
-                            "low": "low",
-                            "medium": "medium",
-                            "major": "high",
-                            "high": "high",
-                            "critical": "critical",
-                            "not_applicable": "not_applicable"
-                        }
-                        form_data["order_dispute[fault_severity]"] = sev_map.get(raw_sev, "low")
-                    if full_comment:
-                        form_data["order_dispute[comment]"] = full_comment
-
-                    post_headers = {
-                        "X-CSRF-Token": csrf_token,
-                        "Referer": edit_url,
-                        "Origin": BASE_URL,
-                    }
-
-                    print(f"[*] [Fast API] Submitting PATCH to {post_url} (Amount: ${charge_amt:.2f})...")
-                    post_resp = ctx.request.post(post_url, form=form_data, headers=post_headers, timeout=12000)
-                    print(f"[✓] [Fast API] Tista returned status: {post_resp.status}")
-                    if post_resp.status in (200, 302, 303):
-                        ctx.close()
-                        return {
-                            "success": True,
-                            "dispute_id": clean_dispute_id,
-                            "order_id": order_id or f"#{raw_oid}",
-                            "amount": charge_amt,
-                            "status": "Closed",
-                            "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
-                        }
-        except Exception as fast_ex:
-            print(f"[!] Fast API direct close attempt failed: {fast_ex}, falling back to UI automation...")
-
-        # Step 3: Fallback to UI automation
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        print(f"[*] [Fallback UI] Opening dispute edit page for Dispute #{clean_dispute_id}...")
-        edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
-        try:
-            page.goto(edit_url, wait_until="commit", timeout=8000)
-        except Exception:
-            try:
-                page.goto(edit_url, timeout=8000)
-            except Exception as ge:
-                print(f"[!] Warning navigating to edit page: {ge}")
-        try:
-            page.wait_for_selector("#order_dispute_charge_to_vendor, input[value='Update Order dispute']", timeout=3000)
-        except Exception:
-            pass
-
-        charge_input = page.locator("#order_dispute_charge_to_vendor")
-        if charge_input.count() == 0:
-            body_text = page.locator("body").inner_text().lower()
-            if "closed" in body_text:
-                print(f"[✓] Dispute #{clean_dispute_id} is already closed on Tista.")
-                ctx.close()
-                return {
-                    "success": True,
-                    "dispute_id": clean_dispute_id,
-                    "order_id": order_id or f"#{raw_oid}",
-                    "amount": charge_amt,
-                    "status": "Closed",
-                    "message": f"Dispute #{clean_dispute_id} is already closed on Tista."
-                }
-            ctx.close()
-            return {"error": f"Dispute #{clean_dispute_id} edit form not found or cannot be edited on Tista."}
-
-        try:
-            page.select_option("#order_dispute_chargeable_to", "vendor")
-        except Exception as e:
-            print(f"Warning setting chargeable_to: {e}")
-
-        charge_input.fill(f"{charge_amt:.2f}")
-
-        try:
-            page.select_option("#order_dispute_status", "closed")
-        except Exception as e:
-            print(f"Warning setting status: {e}")
-
-        if fault_severity:
-            try:
-                page.select_option("#order_dispute_fault_severity", label=str(fault_severity))
-            except Exception:
-                try:
-                    page.select_option("#order_dispute_fault_severity", value=str(fault_severity))
-                except Exception as e:
-                    print(f"Warning setting fault_severity: {e}")
-
-        if comment:
-            try:
-                cur_comment = page.locator("#order_dispute_comment").input_value()
-                page.locator("#order_dispute_comment").fill((cur_comment + "\n" + comment).strip())
-            except Exception:
-                pass
-
-        print(f"[*] Submitting update via UI: Charge ${charge_amt:.2f} to vendor, Status: Closed...")
-        update_btn = page.locator('input[value="Update Order dispute"]')
-        if update_btn.count() > 0:
-            update_btn.click()
-            try:
-                confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
-                confirm_btn.wait_for(state="visible", timeout=1500)
-                confirm_btn.click()
-            except Exception:
-                pass
-            try:
-                page.wait_for_load_state("domcontentloaded", timeout=6000)
-            except Exception:
-                pass
-
-        ctx.close()
-        return {
-            "success": True,
-            "dispute_id": clean_dispute_id,
-            "order_id": order_id or f"#{raw_oid}",
-            "amount": charge_amt,
-            "status": "Closed",
-            "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
-        }
+    err_msg = res if isinstance(res, str) else str(res.get("error") if isinstance(res, dict) else "Failed to close dispute")
+    print(f"[!] HTTP dispute close note: {err_msg}")
+    return {
+        "status": "error",
+        "error": err_msg,
+        "dispute_id": dispute_id,
+        "order_id": order_id
+    }
 
 def batch_close_disputes_on_tista(items: list, headless: bool = False):
     """
-    Charges to vendor and closes multiple disputes in parallel with zero browser overhead.
+    Charges to vendor and closes multiple disputes sequentially via ultra-fast direct HTTP session.
+    Takes ~0.5s per dispute without parallel session conflicts or heavy browser overhead.
     """
     if not items:
         return {"total": 0, "closed": 0, "results": []}
 
-    results = []
+    s = get_tista_http_session()
+    get_cached_csrf_token(s)
 
-    def close_single_item(it):
+    results = []
+    print(f"[*] Sequentially closing {len(items)} disputes via fast HTTP session...")
+    for it in items:
         did = str(it.get("dispute_id") or "").strip()
         oid = str(it.get("order_id") or "").strip()
         amt = round(max(2.0, float(it.get("amount") or 2.0)), 2)
@@ -2062,24 +1901,14 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
             fault_severity=sev
         )
         if ok:
-            return r
-        try:
-            return close_dispute_on_tista(
-                dispute_id=did,
-                order_id=oid,
-                amount=amt,
-                comment=comm,
-                fault_severity=sev,
-                headless=headless
-            )
-        except Exception as ex:
-            return {"dispute_id": did, "order_id": oid, "error": str(ex), "success": False}
-
-    # Parallel execution with ThreadPoolExecutor
-    workers = min(4, max(1, len(items)))
-    print(f"[*] Batch closing {len(items)} disputes in parallel with {workers} workers...")
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        results = list(pool.map(close_single_item, items))
+            results.append(r)
+        else:
+            results.append({
+                "success": False,
+                "dispute_id": did,
+                "order_id": oid,
+                "error": r if isinstance(r, str) else "Failed to close dispute"
+            })
 
     success_count = sum(1 for r in results if r.get("success"))
     return {
