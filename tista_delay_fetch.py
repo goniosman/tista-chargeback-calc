@@ -46,6 +46,8 @@ try:
 except ImportError:
     sync_playwright = None
 
+# Application constants & version
+SERVER_VERSION = "2026.11.19.v2"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -1659,6 +1661,21 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
             return False, "Not logged in (redirected to sign_in)"
 
         html = resp.text
+        # Check if already closed via status select or page content
+        m_status = re.search(r'<select[^>]+name="order_dispute\[status\]"[^>]*>([\s\S]*?)</select>', html, re.I)
+        if m_status:
+            m_sel = re.search(r'<option[^>]+selected[^>]*value="([^"]*)"', m_status.group(1), re.I) or re.search(r'value="([^"]*)"[^>]+selected', m_status.group(1), re.I)
+            if m_sel and m_sel.group(1).lower() == "closed":
+                print(f"[✓] Dispute #{clean_did} is already CLOSED on Tista.")
+                return True, {
+                    "success": True,
+                    "dispute_id": clean_did,
+                    "order_id": order_id or f"#{raw_oid}",
+                    "amount": charge_amt,
+                    "status": "Closed",
+                    "message": f"Dispute #{clean_did} is already closed on Tista."
+                }
+
         if "charge_to_vendor" not in html and "closed" in html.lower():
             return True, {
                 "success": True,
@@ -1916,7 +1933,13 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         print(f"[*] [Fallback UI] Opening dispute edit page for Dispute #{clean_dispute_id}...")
         edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
-        page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
+        try:
+            page.goto(edit_url, wait_until="commit", timeout=8000)
+        except Exception:
+            try:
+                page.goto(edit_url, timeout=8000)
+            except Exception as ge:
+                print(f"[!] Warning navigating to edit page: {ge}")
         try:
             page.wait_for_selector("#order_dispute_charge_to_vendor, input[value='Update Order dispute']", timeout=3000)
         except Exception:
@@ -2539,6 +2562,13 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/version":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"version": SERVER_VERSION}).encode("utf-8"))
+            return
+
         if parsed.path in ("", "/", "/index.html", "/calc", "/calculator"):
             self.send_response(302)
             self.send_header("Location", "/Chargeback%20Calculator.html")

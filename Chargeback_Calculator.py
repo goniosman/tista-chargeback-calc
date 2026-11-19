@@ -59,20 +59,44 @@ except ImportError:
     tista_delay_fetch = None
 
 
+import json
+
+CURRENT_VERSION = "2026.11.19.v2"
+
+def kill_existing_server_on_port(port=8765):
+    """Terminates any old/outdated server process listening on port."""
+    try:
+        current_pid = os.getpid()
+        output = subprocess.check_output(f'netstat -ano | findstr :{port}', shell=True, text=True)
+        for line in output.strip().splitlines():
+            parts = line.strip().split()
+            if len(parts) >= 5 and parts[1].endswith(f":{port}") and parts[3] == "LISTENING":
+                pid = int(parts[4])
+                if pid != current_pid and pid > 0:
+                    print(f"[*] Terminating old server PID {pid} on port {port}...")
+                    subprocess.run(f"taskkill /F /PID {pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    time.sleep(0.5)
+    except Exception:
+        pass
+
 def is_port_in_use(port=8765):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
 def verify_server_http(port=8765, timeout=1.0):
-    """Verifies that the server is not just bound, but actually serving HTTP 200."""
+    """Verifies that the server is serving HTTP 200 AND running the current version."""
     try:
-        url = f"http://127.0.0.1:{port}/Chargeback%20Calculator.html"
+        url = f"http://127.0.0.1:{port}/api/version"
         req = urllib.request.Request(url, headers={"User-Agent": "HealthCheck"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.status == 200
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("version") == CURRENT_VERSION:
+                    return True
     except Exception:
-        return False
+        pass
+    return False
 
 
 def start_internal_server(port=8765):
@@ -93,14 +117,17 @@ def ensure_server(port=8765):
     if verify_server_http(port):
         return True
 
-    # If port is in use by a dead/unresponsive socket, wait slightly
-    if not is_port_in_use(port):
-        t = threading.Thread(
-            target=start_internal_server,
-            args=(port,),
-            daemon=True
-        )
-        t.start()
+    # If port is in use by an old or unresponsive server, kill it first
+    if is_port_in_use(port):
+        kill_existing_server_on_port(port)
+        time.sleep(0.5)
+
+    t = threading.Thread(
+        target=start_internal_server,
+        args=(port,),
+        daemon=True
+    )
+    t.start()
 
     # Wait up to 8 seconds for server to be responsive to HTTP GET
     for _ in range(32):
