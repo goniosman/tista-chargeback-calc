@@ -1955,6 +1955,7 @@ def clean_html_block(html):
     t = re.sub(r'</?(?:p|div|tr|td|table|section|li|h[1-6])\b[^>]*>', '\n', t, flags=re.I)
     t = re.sub(r'<[^>]+>', ' ', t)
     t = t.replace('&nbsp;', ' ').replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&').replace('&#8203;', '')
+    t = t.replace('\u2028', '\n').replace('\u2029', '\n').replace('\u00a0', ' ').replace('\xa0', ' ')
     return t
 
 def clean_file_names_list(raw_list):
@@ -1974,12 +1975,15 @@ def extract_slide_services(slide_text: str) -> list:
     """
     Extracts services ONLY from the 'Service:' block/field in a Google Slide.
     Strictly ignores instructions, notes, investigations, feedbacks, and error descriptions.
-    Supports single service or multiple services separated by commas, slashes, pluses, ampersands, or newlines.
+    Supports single service or multiple services separated by commas, slashes, pluses, ampersands, or newlines (including Shift+Enter / \u2028).
     """
     found = []
+    # Normalize unicode line breaks
+    normalized_text = slide_text.replace('\u2028', '\n').replace('\u2029', '\n').replace('\u00a0', ' ').replace('\xa0', ' ')
+
     # Match ONLY the Service: block up to the next section header or boundary
-    pattern = r"Services?\s*[:#-]*\s*([\s\S]*?)(?=(?:\b(?:Format|Instruction|Note|Image\s*name|Checked\s*by|Report\s*type|Job\s*ID|Order\s*ID|Quantity|Date|Subs?|Correction|Error\s*Severity|Severity|Investigation|Feedback|Issue\s*report|Original\s*image|Completed\s*image)\b|<div|</section>|$))"
-    svc_blocks = re.findall(pattern, slide_text, re.I)
+    pattern = r"Services?\s*[:#-]*\s*([\s\S]*?)(?=(?:\b(?:Format|Instruction|Note|Image\s*name|Checked\s*by|Report\s*type|Job\s*ID|Order\s*ID|Quantity|Date|Subs?|Correction|Error\s*Severity|Severity|Investigation|Feedback|Issue\s*report|Original\s*image|Completed\s*image)\b|$))"
+    svc_blocks = re.findall(pattern, normalized_text, re.I)
 
     def match_single_service(text):
         t = text.strip()
@@ -2053,7 +2057,7 @@ def extract_slide_services(slide_text: str) -> list:
                 found.append("Dust, spot and scratch removal")
             remaining = remaining[:dust_abbr.start()] + " " + remaining[dust_abbr.end():]
 
-        lines = re.split(r"[\r\n\x0b]+", remaining)
+        lines = re.split(r"[\r\n\x0b\u2028\u2029\ufffd]+", remaining)
         for l in lines:
             tokens = re.split(r"[,/\\+&]|\band\b", l, flags=re.I)
             for tok in tokens:
