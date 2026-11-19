@@ -1565,12 +1565,14 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         def find_dispute_info_by_oid(oid_str):
-            for q_cand in [f"%23{oid_str}", oid_str]:
+            for q_cand in [oid_str, f"%23{oid_str}"]:
                 try:
                     search_url = f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={q_cand}"
-                    page.goto(search_url)
-                    page.wait_for_load_state("domcontentloaded")
-                    time.sleep(1.2)
+                    page.goto(search_url, wait_until="domcontentloaded", timeout=10000)
+                    try:
+                        page.wait_for_selector("tbody tr", timeout=2000)
+                    except Exception:
+                        pass
                     trs = page.locator("tbody tr")
                     if trs.count() > 0 and "no data" not in trs.first.inner_text().lower():
                         tds = trs.first.locator("td")
@@ -1605,9 +1607,11 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
 
         print(f"[*] Opening dispute edit page for Dispute #{clean_dispute_id}...")
         edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
-        page.goto(edit_url)
-        page.wait_for_load_state("domcontentloaded")
-        time.sleep(1.5)
+        page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
+        try:
+            page.wait_for_selector("#order_dispute_charge_to_vendor, input[value='Update Order dispute']", timeout=3000)
+        except Exception:
+            pass
 
         # Check if form exists
         charge_input = page.locator("#order_dispute_charge_to_vendor")
@@ -1642,9 +1646,11 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
                 if found_did and found_did.isdigit() and found_did != clean_dispute_id:
                     clean_dispute_id = found_did
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_dispute_id}/edit"
-                    page.goto(edit_url)
-                    page.wait_for_load_state("domcontentloaded")
-                    time.sleep(1.5)
+                    page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
+                    try:
+                        page.wait_for_selector("#order_dispute_charge_to_vendor", timeout=3000)
+                    except Exception:
+                        pass
                     charge_input = page.locator("#order_dispute_charge_to_vendor")
 
             if charge_input.count() == 0:
@@ -1686,80 +1692,20 @@ def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount:
 
         print(f"[*] Submitting update: Charge ${charge_amt:.2f} to vendor, Status: Closed...")
         # Submit the form
-        page.locator('input[value="Update Order dispute"]').click()
-        time.sleep(2)
-
-        # Handle confirmation modal if any
-        try:
-            confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
-            if confirm_btn.count() > 0 and confirm_btn.is_visible():
+        update_btn = page.locator('input[value="Update Order dispute"]')
+        if update_btn.count() > 0:
+            update_btn.click()
+            try:
+                confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
+                confirm_btn.wait_for(state="visible", timeout=1500)
                 confirm_btn.click()
-                time.sleep(2)
-        except Exception:
-            pass
-
-        page.wait_for_load_state("domcontentloaded")
-        time.sleep(1)
-
-        ctx.close()
-        return {
-            "success": True,
-            "dispute_id": clean_dispute_id,
-            "order_id": order_id or f"#{raw_oid}",
-            "amount": charge_amt,
-            "status": "Closed",
-            "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_dispute_id}."
-        }
-
-        # Select Chargeable to: Vendor
-        try:
-            page.select_option("#order_dispute_chargeable_to", "vendor")
-        except Exception as e:
-            print(f"Warning setting chargeable_to: {e}")
-
-        # Set Charge to Vendor amount
-        charge_input.fill(f"{charge_amt:.2f}")
-
-        # Select Status: Closed
-        try:
-            page.select_option("#order_dispute_status", "closed")
-        except Exception as e:
-            print(f"Warning setting status: {e}")
-
-        # Select Fault severity if provided
-        if fault_severity:
-            try:
-                page.select_option("#order_dispute_fault_severity", label=str(fault_severity))
-            except Exception:
-                try:
-                    page.select_option("#order_dispute_fault_severity", value=str(fault_severity))
-                except Exception as e:
-                    print(f"Warning setting fault_severity: {e}")
-
-        # If comment provided
-        if comment:
-            try:
-                cur_comment = page.locator("#order_dispute_comment").input_value()
-                page.locator("#order_dispute_comment").fill((cur_comment + "\n" + comment).strip())
             except Exception:
                 pass
 
-        print(f"[*] Submitting update: Charge ${charge_amt:.2f} to vendor, Status: Closed...")
-        # Submit the form
-        page.locator('input[value="Update Order dispute"]').click()
-        time.sleep(2)
-
-        # Handle confirmation modal if any
-        try:
-            confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
-            if confirm_btn.count() > 0 and confirm_btn.is_visible():
-                confirm_btn.click()
-                time.sleep(2)
-        except Exception:
-            pass
-
-        page.wait_for_load_state("domcontentloaded")
-        time.sleep(1)
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=6000)
+            except Exception:
+                pass
 
         ctx.close()
         return {
@@ -1800,10 +1746,12 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
 
             if not did and raw_oid:
                 try:
-                    for q_cand in [f"%23{raw_oid}", raw_oid]:
-                        page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={q_cand}")
-                        page.wait_for_load_state("domcontentloaded")
-                        time.sleep(1)
+                    for q_cand in [raw_oid, f"%23{raw_oid}"]:
+                        page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes?q[id_or_fulfillment_order_order_name_eq]={q_cand}", wait_until="domcontentloaded", timeout=10000)
+                        try:
+                            page.wait_for_selector("tbody tr", timeout=2000)
+                        except Exception:
+                            pass
                         row = page.locator("tbody tr").first
                         if row.count() > 0 and "no data" not in row.inner_text().lower():
                             tds = row.locator("td")
@@ -1826,9 +1774,11 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
                 continue
 
             try:
-                page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit")
-                page.wait_for_load_state("domcontentloaded")
-                time.sleep(1)
+                page.goto(f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit", wait_until="domcontentloaded", timeout=12000)
+                try:
+                    page.wait_for_selector("#order_dispute_charge_to_vendor, input[value='Update Order dispute']", timeout=3000)
+                except Exception:
+                    pass
 
                 charge_input = page.locator("#order_dispute_charge_to_vendor")
                 if charge_input.count() == 0:
@@ -1851,16 +1801,19 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
                         except Exception:
                             pass
 
-                page.locator('input[value="Update Order dispute"]').click()
-                time.sleep(1.5)
-
-                try:
-                    confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
-                    if confirm_btn.count() > 0 and confirm_btn.is_visible():
+                update_btn = page.locator('input[value="Update Order dispute"]')
+                if update_btn.count() > 0:
+                    update_btn.click()
+                    try:
+                        confirm_btn = page.locator("#turbo-confirmation-modal__confirm")
+                        confirm_btn.wait_for(state="visible", timeout=1500)
                         confirm_btn.click()
-                        time.sleep(1.5)
-                except Exception:
-                    pass
+                    except Exception:
+                        pass
+                    try:
+                        page.wait_for_load_state("domcontentloaded", timeout=5000)
+                    except Exception:
+                        pass
 
                 results.append({
                     "dispute_id": did,
@@ -2017,11 +1970,49 @@ def clean_file_names_list(raw_list):
                 res.append(cleaned)
     return res
 
+def extract_slide_services(slide_text: str) -> list:
+    """
+    Extracts all services mentioned in a Google Slide.
+    Checks Service: / Services: lines, comma/slash/plus separated service names, and known services.
+    Returns a deduplicated list of matched known services.
+    """
+    found = []
+    # 1. Match all Service: or Services: occurrences
+    svc_matches = re.findall(r"Services?\s*[:#-]+\s*([^\n\r<]+)", slide_text, re.I)
+    for s_line in svc_matches:
+        clean_s = s_line.strip()
+        if not clean_s or any(clean_s.lower().startswith(x) for x in ["format", "instruction", "image", "note"]):
+            continue
+        # Split tokens by comma, slash, plus, ampersand, or ' and '
+        tokens = re.split(r"[,/\\+&]|\band\b", clean_s, flags=re.I)
+        for t in tokens:
+            t_clean = t.strip()
+            if not t_clean or len(t_clean) < 2:
+                continue
+            matched_ks = None
+            for ks in KNOWN_SERVICES:
+                if ks.lower() == t_clean.lower() or ks.lower() in t_clean.lower() or t_clean.lower() in ks.lower():
+                    matched_ks = ks
+                    break
+            if matched_ks and matched_ks not in found:
+                found.append(matched_ks)
+            elif not matched_ks and len(t_clean) > 2 and t_clean not in found:
+                found.append(t_clean)
+
+    # 2. Also search if any other KNOWN_SERVICES appear explicitly in the slide_text
+    for ks in KNOWN_SERVICES:
+        if ks not in found and re.search(r"\b" + re.escape(ks) + r"\b", slide_text, re.I):
+            found.append(ks)
+
+    if not found:
+        found = ["Clipping path"]
+    return found
+
 def parse_google_slides_presentation(slide_url: str):
     """
     Fetches and parses a Google Slides presentation URL to extract:
-    order_id, contractor, service, severity, filenames, is_all_images, total_qty, fault_qty
-    Supports both Quality Audit Reports and Correction Slides.
+    order_id, contractor, service, services, severity, filenames, is_all_images, total_qty, fault_qty
+    Supports both Quality Audit Reports and Correction Slides with multi-service chargeback.
     """
     raw_url = str(slide_url or "").strip()
     m = re.search(r"/presentation/d/([a-zA-Z0-9_-]+)", raw_url)
@@ -2101,22 +2092,9 @@ def parse_google_slides_presentation(slide_url: str):
                 if m_iq:
                     tot_qty = int(m_iq.group(1))
 
-            # Service
-            service = ""
-            m_svc_line = re.search(r"Service\s*[:#-]+\s*([A-Za-z0-9 ,/&+-]+)", slide_text, re.I)
-            if m_svc_line:
-                val = m_svc_line.group(1).strip()
-                if val and not any(val.lower().startswith(x) for x in ["format", "instruction", "image", "note"]):
-                    service = val
-            
-            if not service:
-                for ks in KNOWN_SERVICES:
-                    if re.search(r"\b" + re.escape(ks) + r"\b", slide_text, re.I):
-                        service = ks
-                        break
-            
-            if not service:
-                service = "Clipping path"
+            # Services (can be single or multiple, e.g. "Ghost mannequin, Clipping path")
+            slide_services = extract_slide_services(slide_text)
+            service = slide_services[0] if slide_services else "Clipping path"
 
             # Filenames & All images
             is_all_images = bool(re.search(r"\b(?:all\s*images?|all\s*files?)\b", slide_text, re.I))
@@ -2187,6 +2165,7 @@ def parse_google_slides_presentation(slide_url: str):
                 "order_id": order_id,
                 "contractor": contractor,
                 "service": service,
+                "services": slide_services,
                 "severity": severity,
                 "total_qty": tot_qty,
                 "fault_qty": fault_qty,
@@ -2214,8 +2193,8 @@ def parse_google_slides_presentation(slide_url: str):
                     order_id = job_m.group(1)
                     subs_m = re.search(r"(?:Sub\.?\s*Name|Subs):\s*([^\n\r]+)", c, re.I)
                     contractor = subs_m.group(1).strip() if subs_m else ""
-                    svc_m = re.search(r"Service:\s*([^\n\r]+)", c, re.I)
-                    service = svc_m.group(1).strip() if svc_m else "Clipping path"
+                    slide_services = extract_slide_services(c)
+                    service = slide_services[0] if slide_services else "Clipping path"
                     sev_m = re.search(r"(?:Error|Fault)\s*Severity\s*[:-]+\s*([a-zA-Z]+)", c, re.I)
                     severity_raw = sev_m.group(1).strip() if sev_m else "Low"
                     sev_map = {"low": "Minor", "medium": "Medium", "major": "Major", "high": "Major"}
@@ -2252,6 +2231,7 @@ def parse_google_slides_presentation(slide_url: str):
                         "order_id": order_id,
                         "contractor": contractor,
                         "service": service,
+                        "services": slide_services,
                         "severity": severity,
                         "total_qty": tot_qty,
                         "fault_qty": fault_qty,

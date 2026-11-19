@@ -2982,27 +2982,43 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
         S.cor.pix = '> 5000';
       }
 
-      // Populate order line items
-      S.cor.order = [{
-        s: S.cor.service,
-        c: S.cor.cat,
-        p: S.cor.pix,
-        q: S.cor.qty
-      }];
+      // Populate order line items (handles single or multiple services from slide)
+      const rawSvcs = (targetJob.services && Array.isArray(targetJob.services) && targetJob.services.length) ? targetJob.services : [targetJob.service || 'Clipping path'];
+      const matchedSvcs = rawSvcs.map(s => {
+        const str = String(s).trim();
+        return allKnownSvcs.find(k => k.toLowerCase() === str.toLowerCase())
+            || allKnownSvcs.find(k => str.toLowerCase().includes(k.toLowerCase()))
+            || allKnownSvcs.find(k => k.toLowerCase().includes(str.toLowerCase()))
+            || str;
+      });
+
+      S.cor.order = matchedSvcs.map(sName => {
+        const sCats = catsOf(sName);
+        return {
+          s: sName,
+          c: sCats.includes('Category 1.5') ? 'Category 1.5' : (sCats[0] || 'Category 1'),
+          p: S.cor.pix || '> 5000',
+          q: S.cor.qty
+        };
+      });
 
       S.tab = 'cor';
       save();
       render();
 
-      const p = price(S.cor.service, S.cor.cat, S.cor.pix) || 0;
+      let totalBasePrice = 0;
+      S.cor.order.forEach(item => {
+        const pVal = price(item.s, item.c, item.p) || 0;
+        totalBasePrice += pVal * (item.q || S.cor.qty || 1);
+      });
       const sevKey = canonicalSeverity(S.cor.fault_severity || S.cor.sev || 'Low');
       const m = getSeverityMultiplier(sevKey);
-      const calcTot = p * m * S.cor.qty;
+      const calcTot = totalBasePrice * m;
       const tot = calcTot > 0 ? Math.max(2.0, calcTot) : 2.0;
 
       const st = $(statusId);
       if (st) {
-        st.textContent = `✓ Calculated Order #${cleanOid} from Slide: $${tot.toFixed(2)} (${S.cor.service}, ${sevKey}, Qty: ${S.cor.qty})`;
+        st.textContent = `✓ Calculated Order #${cleanOid} from Slide: $${tot.toFixed(2)} (${matchedSvcs.join(' + ')}, ${sevKey}, Qty: ${S.cor.qty})`;
         st.style.color = '#27ae60';
       }
     } else {
@@ -3107,16 +3123,38 @@ async function importFromGoogleSlides(slideUrl){
 
     const newDisputes = data.jobs.map((job, i) => {
       const oid = String(job.order_id).replace(/\D/g, '');
-      const rawSvc = String(job.service || 'Clipping path').trim();
+      const rawSvcs = (job.services && Array.isArray(job.services) && job.services.length) ? job.services : [job.service || 'Clipping path'];
       const allKnown = services();
-      const matchedSvc = allKnown.find(k => k.toLowerCase() === rawSvc.toLowerCase())
-                      || allKnown.find(k => rawSvc.toLowerCase().includes(k.toLowerCase()))
-                      || allKnown.find(k => k.toLowerCase().includes(rawSvc.toLowerCase()))
-                      || rawSvc;
-      const svc = matchedSvc;
+      
+      const matchedSvcs = rawSvcs.map(s => {
+        const str = String(s).trim();
+        return allKnown.find(k => k.toLowerCase() === str.toLowerCase())
+            || allKnown.find(k => str.toLowerCase().includes(k.toLowerCase()))
+            || allKnown.find(k => k.toLowerCase().includes(str.toLowerCase()))
+            || str;
+      });
+
+      const svc = matchedSvcs[0] || 'Clipping path';
       const availableCats = catsOf(svc).length ? catsOf(svc) : ['Category 1', 'Category 1.5', 'Category 2'];
       const cat = availableCats.includes('Category 1.5') ? 'Category 1.5' : (availableCats[0] || 'Category 1');
       const qty = (job.fault_qty != null && job.fault_qty > 0) ? job.fault_qty : ((job.filenames && job.filenames.length) ? job.filenames.length : (job.total_qty || 1));
+
+      // Build services config for each service
+      const servicesConfig = matchedSvcs.map(sName => {
+        const sCats = catsOf(sName).length ? catsOf(sName) : ['Category 1', 'Category 1.5', 'Category 2'];
+        const sCat = sCats.includes('Category 1.5') ? 'Category 1.5' : (sCats[0] || 'Category 1');
+        return {
+          service: sName,
+          category: sCat
+        };
+      });
+
+      const fileDetails = (job.filenames && job.filenames.length) ? job.filenames.map(fn => ({
+        filename: fn,
+        category: servicesConfig[0].category,
+        service: servicesConfig[0].service,
+        services: servicesConfig
+      })) : [];
 
       let rReason = String(job.reason || job.report_type || 'Correction').trim();
       if(rReason.toLowerCase().includes('quality')) rReason = 'Quality';
@@ -3145,7 +3183,9 @@ async function importFromGoogleSlides(slideUrl){
         pix: '> 5000',
         is_all_images: !!job.is_all_images,
         filenames: job.filenames || [],
-        order_services: [svc],
+        file_details: fileDetails,
+        services: matchedSvcs,
+        order_services: matchedSvcs,
         order_cats: availableCats
       };
     });
@@ -3588,8 +3628,95 @@ function calcDisputeChargeback(d){
   }
 
   const isCustom = d.custom_chargeback !== undefined && d.custom_chargeback !== null && d.custom_chargeback !== '' && !isNaN(d.custom_chargeback);
+  const isDelay = reason.toLowerCase() === 'delay';
 
-  if(reason.toLowerCase() === 'delay'){
+  // Multi-service file collection & calculation for ALL dispute reasons:
+  // Every service on each disputed file is calculated according to its category and price
+  let filesList = [];
+  if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
+    if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
+      const matchNames = new Set(d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
+      const matched = d.file_details.filter(f => matchNames.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
+      filesList = matched.length > 0 ? matched : d.file_details.slice(0, d.fault_quantity || d.filenames.length);
+    } else {
+      filesList = d.file_details;
+    }
+  } else if (d.filenames && Array.isArray(d.filenames) && d.filenames.length) {
+    const rawSvcs = (d.services && Array.isArray(d.services) && d.services.length) ? d.services : [svc];
+    filesList = d.filenames.map(fn => ({
+      filename: typeof fn === 'string' ? fn : (fn.filename || ''),
+      category: d.cat || 'Category 1.5',
+      service: d.service || 'Clipping path',
+      services: rawSvcs.map(s => ({
+        service: typeof s === 'string' ? s : (s.service || svc),
+        category: typeof s === 'object' ? (s.category || cat) : cat
+      }))
+    }));
+  }
+
+  const dealQty = parseInt(d.fault_quantity, 10) || qty;
+  if (filesList.length > dealQty) {
+    filesList = filesList.slice(0, dealQty);
+  }
+  const effectiveQty = filesList.length > 0 ? filesList.length : dealQty;
+
+  let hasMultiService = false;
+  let totalBasePrice = 0;
+  let totalServiceCount = 0;
+  const svcBreakdown = {};
+  const uniqueSvcs = new Set();
+  const uniqueCats = new Set();
+
+  if (filesList.length > 0) {
+    filesList.forEach(f => {
+      const fSvcs = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
+        service: f.service || svc,
+        category: f.category || cat
+      }];
+
+      fSvcs.forEach(sItem => {
+        const sName = normalizeServiceName(sItem.service || svc);
+        const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
+        const pVal = price(sName, cName, pix);
+        const prc = pVal != null ? pVal : 0;
+        totalBasePrice += prc;
+        totalServiceCount++;
+        uniqueSvcs.add(sName);
+        uniqueCats.add(cName);
+        const bKey = `${sName} (${cName})`;
+        if (!svcBreakdown[bKey]) {
+          svcBreakdown[bKey] = { service: sName, category: cName, unitPrice: prc, count: 0, sum: 0 };
+        }
+        svcBreakdown[bKey].count++;
+        svcBreakdown[bKey].sum += prc;
+      });
+    });
+
+    if (uniqueSvcs.size > 1 || totalServiceCount > filesList.length) {
+      hasMultiService = true;
+    }
+  } else if (d.services && Array.isArray(d.services) && d.services.length > 1) {
+    // Multiple services specified without individual file details
+    d.services.forEach(sItem => {
+      const sName = normalizeServiceName(typeof sItem === 'string' ? sItem : (sItem.service || svc));
+      const cName = normalizeCategoryName(typeof sItem === 'object' ? (sItem.category || cat) : cat);
+      const pVal = price(sName, cName, pix);
+      const prc = pVal != null ? pVal : 0;
+      totalBasePrice += prc * effectiveQty;
+      totalServiceCount += effectiveQty;
+      uniqueSvcs.add(sName);
+      uniqueCats.add(cName);
+      const bKey = `${sName} (${cName})`;
+      if (!svcBreakdown[bKey]) {
+        svcBreakdown[bKey] = { service: sName, category: cName, unitPrice: prc, count: 0, sum: 0 };
+      }
+      svcBreakdown[bKey].count += effectiveQty;
+      svcBreakdown[bKey].sum += prc * effectiveQty;
+    });
+    hasMultiService = true;
+  }
+
+  if(isDelay){
     const durStr = d.order_duration || d.dur || '24:00:00';
     const durDays = parseDur(durStr) || 1;
     let sec = num(d.delay_seconds || d.sec || 0);
@@ -3600,75 +3727,11 @@ function calcDisputeChargeback(d){
     const pct = durDays > 0 ? delayDays / durDays : 0;
     const share = getDelayTierShare(sevCanonical, pct);
 
-    // Multi-service delay calculation:
-    // Only delayed files are counted, and every service on those files is counted according to its category
-    let delayedFiles = [];
-    if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
-      if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
-        const delayedNames = new Set(d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
-        const matched = d.file_details.filter(f => delayedNames.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
-        delayedFiles = matched.length > 0 ? matched : d.file_details.slice(0, d.fault_quantity || d.filenames.length);
-      } else {
-        delayedFiles = d.file_details;
-      }
-    } else if (d.filenames && Array.isArray(d.filenames) && d.filenames.length) {
-      delayedFiles = d.filenames.map(fn => ({
-        filename: typeof fn === 'string' ? fn : (fn.filename || ''),
-        category: d.cat || 'Category 1.5',
-        service: d.service || 'Clipping path',
-        services: [{ service: d.service || 'Clipping path', category: d.cat || 'Category 1.5' }]
-      }));
-    }
-
-    // In case of Delay, strictly ensure file count matches fault_quantity if specified
-    if (d.fault_quantity && delayedFiles.length > d.fault_quantity) {
-      delayedFiles = delayedFiles.slice(0, d.fault_quantity);
-    }
-
-    let hasMultiService = false;
-    let totalBasePrice = 0;
-    let totalServiceCount = 0;
-    const svcBreakdown = {};
-    const uniqueSvcs = new Set();
-    const uniqueCats = new Set();
-
-    if (delayedFiles.length > 0) {
-      delayedFiles.forEach(f => {
-        const fSvcs = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
-          service: f.service || svc,
-          category: f.category || cat
-        }];
-
-        fSvcs.forEach(sItem => {
-          const sName = normalizeServiceName(sItem.service || svc);
-          const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
-          const pVal = price(sName, cName, pix);
-          const prc = pVal != null ? pVal : 0;
-          totalBasePrice += prc;
-          totalServiceCount++;
-          uniqueSvcs.add(sName);
-          uniqueCats.add(cName);
-          const bKey = `${sName} (${cName})`;
-          if (!svcBreakdown[bKey]) {
-            svcBreakdown[bKey] = { service: sName, category: cName, unitPrice: prc, count: 0, sum: 0 };
-          }
-          svcBreakdown[bKey].count++;
-          svcBreakdown[bKey].sum += prc;
-        });
-      });
-
-      if (uniqueSvcs.size > 1 || totalServiceCount > delayedFiles.length) {
-        hasMultiService = true;
-      }
-    }
-
     let raw = 0;
     let avgUnitPrice = pr;
-    const effectiveQty = delayedFiles.length > 0 ? delayedFiles.length : qty;
-
     if (hasMultiService && totalBasePrice > 0) {
       raw = totalBasePrice * share;
-      avgUnitPrice = delayedFiles.length > 0 ? (totalBasePrice / delayedFiles.length) : pr;
+      avgUnitPrice = effectiveQty > 0 ? (totalBasePrice / effectiveQty) : pr;
     } else {
       raw = pr * share * effectiveQty;
     }
@@ -3710,20 +3773,37 @@ function calcDisputeChargeback(d){
       uniqueCatsList: [...uniqueCats]
     };
   } else {
-    // Correction and Quality share the EXACT same rule!
+    // Correction, Quality, and Technical fault with multi-service support
     const mult = getSeverityMultiplier(sevCanonical);
-    const raw = pr * mult * qty;
+    let raw = 0;
+    let avgUnitPrice = pr;
+    if (hasMultiService && totalBasePrice > 0) {
+      raw = totalBasePrice * mult;
+      avgUnitPrice = effectiveQty > 0 ? (totalBasePrice / effectiveQty) : pr;
+    } else {
+      raw = pr * mult * effectiveQty;
+    }
     const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
     return {
       reason: reason,
-      svc, cat, pix, pr, qty,
+      svc, cat, pix,
+      pr: hasMultiService ? avgUnitPrice : pr,
+      avgUnitPrice,
+      qty: effectiveQty,
       sevKey: sevCanonical,
       factorLabel: sevCanonical + ' (' + Math.round(mult * 100) + '%)',
       factorDetail: Math.round(mult * 100) + '% Multiplier',
       rawAmount: raw,
       chargeback: finalAmount,
       isCustom: isCustom,
-      minApplied: !isCustom && raw > 0 && raw < 2.0
+      minApplied: !isCustom && raw > 0 && raw < 2.0,
+      hasMultiService,
+      totalBasePrice,
+      totalServiceCount,
+      uniqueServicesCount: uniqueSvcs.size,
+      svcBreakdown,
+      uniqueSvcsList: [...uniqueSvcs],
+      uniqueCatsList: [...uniqueCats]
     };
   }
 }
@@ -4557,6 +4637,21 @@ function openDisputeInCalc(idx){
     if(d.filenames && d.filenames.length){
       S.corPasteText = d.filenames.join('\n');
       S.corShowPasteNames = true;
+    }
+    if(r.hasMultiService && r.svcBreakdown){
+      S.cor.order = Object.values(r.svcBreakdown).map(item => ({
+        s: item.service,
+        c: item.category,
+        p: r.pix || '> 5000',
+        q: item.count
+      }));
+    } else {
+      S.cor.order = [{
+        s: S.cor.service,
+        c: S.cor.cat,
+        p: S.cor.pix,
+        q: S.cor.qty
+      }];
     }
     S.tab = 'cor';
   }
