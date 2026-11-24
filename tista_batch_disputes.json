@@ -1,810 +1,250 @@
 {
   "filters": {
-    "reason": "1",
-    "status": "1",
-    "chargeable": "1",
-    "location": "",
-    "query": "",
-    "start_date": "2026-11-09",
-    "end_date": "2026-11-15"
+    "query": "459580",
+    "deep_scan": true
   },
-  "total_disputes": 7,
+  "total_disputes": 1,
   "disputes": [
     {
-      "dispute_id": "47465",
-      "order_id": "#458793",
+      "dispute_id": "47568",
+      "order_id": "#459580",
       "contractor": "Perfect Pixel (GB2)",
       "fault_by": "Quality Control",
       "dispute_reason": "Delay",
       "chargeable_to": "Vendor",
-      "fault_at": "2026-11-13",
-      "delayed_by": "02:21:07",
-      "delay_seconds": 8467,
+      "fault_at": "2026-11-21",
+      "delayed_by": "15:30:22",
+      "delay_seconds": 55822,
       "order_duration": "24:00:00",
-      "fault_quantity": 2,
-      "fault_severity": "Low",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "2 টি ইমেজ Delay হয়েছে  ,https://www.dropbox.com/t/oRq1x3tHZfdM8r0Q",
-      "comment_link": "https://www.dropbox.com/t/oRq1x3tHZfdM8r0Q",
-      "filenames": [
-        "0241.psd",
-        "0245.psd"
-      ],
-      "file_details": [],
-      "filenames_count": 2
-    },
-    {
-      "dispute_id": "47462",
-      "order_id": "#458639",
-      "contractor": "Vectorio",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-13",
-      "delayed_by": "07:27:11",
-      "delay_seconds": 26831,
-      "order_duration": "24:00:00",
-      "fault_quantity": 1,
+      "fault_quantity": 15,
       "fault_severity": "Not applicable",
       "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "1 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/L47Idwa9mm4gHmsO",
-      "comment_link": "https://www.dropbox.com/t/L47Idwa9mm4gHmsO",
-      "filenames": [
-        "Nutcracker Soldiers for Peace.ai"
-      ],
-      "file_details": [],
-      "filenames_count": 1
-    },
-    {
-      "dispute_id": "47448",
-      "order_id": "#458475",
-      "contractor": "Creative Path (P1)",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-12",
-      "delayed_by": "04:30:07",
-      "delay_seconds": 16207,
-      "order_duration": "24:00:00",
-      "fault_quantity": 21,
-      "fault_severity": "Not applicable",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "21 টি ইমেজ Delay হয়েছে  ,https://www.dropbox.com/t/UjUlTmvIRZMmtshj",
-      "comment_link": "https://www.dropbox.com/t/UjUlTmvIRZMmtshj",
-      "filenames": [
-        "261007-100FW-Nursery-AA-1016_VS_R1C1.psd",
-        "261007-100FW-Nursery-AA-1026_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0889_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0894_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0899_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0915_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0919_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0944_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0950_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0957_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0966_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-0984_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1012_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1020_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1049_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1058_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1061_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1069_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1079_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1083_VS_R1C1.psd",
-        "261007-100FW-Nursery-AB-1083_VS_R1c_ALT_C1.psd"
-      ],
-      "file_details": [],
-      "filenames_count": 21
-    },
-    {
-      "dispute_id": "47401",
-      "order_id": "#458367",
-      "contractor": "Pixel Path (P2)",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-11",
-      "delayed_by": "11:44:41",
-      "delay_seconds": 42281,
-      "order_duration": "24:00:00",
-      "fault_quantity": 87,
-      "fault_severity": "Not applicable",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "87টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/IF2U6gCt9xIdZgf3",
-      "comment_link": "https://www.dropbox.com/t/IF2U6gCt9xIdZgf3",
-      "filenames": [
-        "26-11-04_Espejo Sequin Dress_Silver_￼0179_ECOMM.jpg",
-        "26-11-04_Espejo Sequin Dress_Silver_￼0183_ECOMM.jpg",
-        "26-11-04_Espejo Sequin Dress_Silver_￼0191_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_004_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0036_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0042_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0055_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0073_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0082_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0085_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0086_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0094_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0095_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0096_ECOMM.jpg",
-        "26-11-04_Estella Top_Elda Skirt_Storm Grey_￼0098_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0328_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0345_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0358_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0362_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0366_ECOMM.jpg",
-        "26-11-04_Everly Dress_Black_Cream Lace_￼0373_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0331_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0352_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0355_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0362_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0366_ECOMM.jpg",
-        "26-11-04_Gelata Sequin Dress_Glacier_￼0373_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0062_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0079_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0089_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0091_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0096_ECOMM.jpg",
-        "26-11-04_Giavanna Dress_Glacier_￼0101_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0003_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0024_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0036_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0038_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0043_ECOMM.jpg",
-        "26-11-04_HAVEN DRESS_WHITE_SILVER_￼0050_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0009_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0014_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0041_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0045_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0050_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0054_ECOMM.jpg",
-        "26-11-04_Hampton Knit Dress_Eggshell_￼0060_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_009_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_024_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_038_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_047_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_052_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_057_ECOMM.jpg",
-        "26-11-04_Horatio Carpenter Jean_Birch_059_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0006_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0014_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0021_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0032_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0035_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0038_ECOMM.jpg",
-        "26-11-04_Icelyn Dress_Blanc Hibiscus_￼0043_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0317_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0325_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0335_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0341_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0345_ECOMM.jpg",
-        "26-11-04_Inga Dress_Black_￼0347_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0003_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0024_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0031_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0035_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0038_ECOMM.jpg",
-        "26-11-04_Jamie Silk Top_Blanc Hibiscus_Marie Short_Glacier_￼0045_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0511_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0529_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0532_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0541_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0545_ECOMM.jpg",
-        "26-11-04_Jayne Dress_Black_￼0553_ECOMM.jpg",
-        "26-11-04_Leilani Dress_Glacier_￼0007_ECOMM.jpg",
-        "26-11-04_Leilani Dress_Glacier_￼0018_ECOMM.jpg",
-        "26-11-04_Leilani Dress_Glacier_￼0032_ECOMM.jpg",
-        "26-11-04_Leilani Dress_Glacier_￼0038_ECOMM.jpg",
-        "26-11-04_Leilani Dress_Glacier_￼0042_ECOMM.jpg",
-        "26-11-04_Lirrio Fur Jacket_Silver Fox_￼0108_ECOMM.jpg",
-        "26-11-04_Lirrio Fur Jacket_Silver Fox_￼0111_ECOMM.jpg",
-        "26-11-04_Lirrio Fur Jacket_Silver Fox_￼0120_ECOMM.jpg",
-        "26-11-04_Lirrio Fur Jacket_Silver Fox_￼0136_ECOMM.jpg"
-      ],
-      "file_details": [],
-      "filenames_count": 87
-    },
-    {
-      "dispute_id": "47397",
-      "order_id": "#458366",
-      "contractor": "Pixel Path (P2)",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-10",
-      "delayed_by": "03:10:49",
-      "delay_seconds": 11449,
-      "order_duration": "12:00:00",
-      "fault_quantity": 17,
-      "fault_severity": "Not applicable",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
+      "service": "Background removal",
+      "cat": "Category 1",
       "pix": "> 5000",
       "order_services": [
-        "Clipping path",
-        "Dust, spot and scratch removal",
-        "Wrinkle on clothing"
+        "Background removal"
       ],
       "order_cats": [
-        "Category 2",
         "Category 1"
       ],
-      "comment": "17 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/xTYmBTdpIX9fBRkz",
-      "comment_link": "https://www.dropbox.com/t/xTYmBTdpIX9fBRkz",
+      "comment": "15 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/tbWMi0mTVDpspEpR",
+      "comment_link": "https://www.dropbox.com/t/tbWMi0mTVDpspEpR",
       "filenames": [
-        "Black Fjord Down Jacket_1141.jpg",
-        "Black Fjord Down Jacket_1146.jpg",
-        "Black Fjord Down Jacket_1150.jpg",
-        "Black Fjord Down Jacket_1174.jpg",
-        "Greenstone Plaid Shirt_1335.jpg",
-        "Greenstone Plaid Shirt_1337.jpg",
-        "Greenstone Plaid Shirt_1344.jpg",
-        "Greenstone Plaid Shirt_1345.jpg",
-        "Greenstone Plaid Shirt_1355.jpg",
-        "Greenstone Plaid Shirt_1359.jpg",
-        "Greenstone Plaid Shirt_1361.jpg",
-        "Greenstone Plaid Shirt_1384.jpg",
-        "Greenstone Plaid Shirt_1392.jpg",
-        "Greenstone Plaid Shirt_1399.jpg",
-        "Greenstone Plaid Shirt_1402.jpg",
-        "Greenstone Plaid Shirt_1409.jpg",
-        "Greenstone Plaid Shirt_1414.jpg"
+        "batch-1/9000-1653_2.tif",
+        "batch-1/9000-1654_1.tif",
+        "batch-1/9000-1655_2.tif",
+        "batch-1/9000-1656_1.tif",
+        "batch-1/9000-1656.tif",
+        "batch-1/9000-1656_3.tif",
+        "batch-1/9000-1656_2.tif",
+        "batch-1/9000-1658_3.tif",
+        "batch-1/9000-1658_1.tif",
+        "batch-1/9000-1658_4.tif",
+        "batch-1/9000-1659_2.tif",
+        "batch-1/9000-1662_1.tif",
+        "batch-1/9500-0035_3.tif",
+        "batch-1/9500-0035_2.tif",
+        "batch-1/9000-1640.tif"
       ],
       "file_details": [
         {
-          "filename": "batch-1/Black Fjord Down Jacket_1141.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Black Fjord Down Jacket_1146.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Black Fjord Down Jacket_1150.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Black Fjord Down Jacket_1174.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1335.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1344.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1345.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1355.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1337.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1361.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1359.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1384.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1392.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
-          "services": [
-            {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            }
-          ]
-        },
-        {
-          "filename": "batch-1/Greenstone Plaid Shirt_1399.jpg",
+          "filename": "batch-1/9000-1653_2.tif",
           "category": "Category 1",
-          "service": "Clipping path",
+          "service": "Background removal",
           "services": [
             {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C1",
+              "service": "Background removal",
               "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
               "complexity": "C1",
-              "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
-              "category": "Category 1",
               "numeric_cat": 1.0
             }
           ]
         },
         {
-          "filename": "batch-1/Greenstone Plaid Shirt_1409.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
+          "filename": "batch-1/9000-1654_1.tif",
+          "category": "Category 1",
+          "service": "Background removal",
           "services": [
             {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
+              "service": "Background removal",
               "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
               "complexity": "C1",
-              "category": "Category 1",
               "numeric_cat": 1.0
             }
           ]
         },
         {
-          "filename": "batch-1/Greenstone Plaid Shirt_1414.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
+          "filename": "batch-1/9000-1655_2.tif",
+          "category": "Category 1",
+          "service": "Background removal",
           "services": [
             {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
+              "service": "Background removal",
               "category": "Category 1",
-              "numeric_cat": 1.0
-            },
-            {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
               "complexity": "C1",
-              "category": "Category 1",
               "numeric_cat": 1.0
             }
           ]
         },
         {
-          "filename": "batch-1/Greenstone Plaid Shirt_1402.jpg",
-          "category": "Category 2",
-          "service": "Clipping path",
+          "filename": "batch-1/9000-1656_1.tif",
+          "category": "Category 1",
+          "service": "Background removal",
           "services": [
             {
-              "service": "Clipping path",
-              "raw_name": "Clipping path",
-              "complexity": "C2",
-              "category": "Category 2",
-              "numeric_cat": 2.0
-            },
-            {
-              "service": "Dust, spot and scratch removal",
-              "raw_name": "Dust, spot and scratch removal",
-              "complexity": "C1",
+              "service": "Background removal",
               "category": "Category 1",
+              "complexity": "C1",
               "numeric_cat": 1.0
-            },
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1656.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
             {
-              "service": "Wrinkle on clothing",
-              "raw_name": "Wrinkle on clothing removal",
-              "complexity": "C1",
+              "service": "Background removal",
               "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1656_3.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1656_2.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1658_3.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1658_1.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1658_4.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1659_2.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1662_1.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9500-0035_3.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9500-0035_2.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/9000-1640.tif",
+          "category": "Category 1",
+          "service": "Background removal",
+          "services": [
+            {
+              "service": "Background removal",
+              "category": "Category 1",
+              "complexity": "C1",
               "numeric_cat": 1.0
             }
           ]
         }
       ],
-      "filenames_count": 17
-    },
-    {
-      "dispute_id": "47374",
-      "order_id": "#458305",
-      "contractor": "Perfect Pixel (GB2)",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-10",
-      "delayed_by": "01:43:05",
-      "delay_seconds": 6185,
-      "order_duration": "24:00:00",
-      "fault_quantity": 1,
-      "fault_severity": "Not applicable",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "1 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/WaEVQ1gYXh1UeZ4j",
-      "comment_link": "https://www.dropbox.com/t/WaEVQ1gYXh1UeZ4j",
-      "filenames": [
-        "15214_2.psd"
-      ],
-      "file_details": [],
-      "filenames_count": 1
-    },
-    {
-      "dispute_id": "47362",
-      "order_id": "#458216",
-      "contractor": "Perfect Pixel (GB2)",
-      "fault_by": "Quality Control",
-      "dispute_reason": "Delay",
-      "chargeable_to": "Vendor",
-      "fault_at": "2026-11-09",
-      "delayed_by": "01:32:30",
-      "delay_seconds": 5550,
-      "order_duration": "24:00:00",
-      "fault_quantity": 1,
-      "fault_severity": "Low",
-      "status": "Awaiting res...",
-      "service": "Clipping path",
-      "cat": "Category 1.5",
-      "pix": "> 5000",
-      "order_services": [],
-      "order_cats": [],
-      "comment": "1 টি ইমেজ Delay হয়েছে,https://www.dropbox.com/t/Xlht0ReoAosDZKTK",
-      "comment_link": "https://www.dropbox.com/t/Xlht0ReoAosDZKTK",
-      "filenames": [
-        "20261107_FOPE 26_09_v1.tif"
-      ],
-      "file_details": [],
-      "filenames_count": 1
+      "filenames_count": 15
     }
   ]
 }

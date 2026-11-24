@@ -47,7 +47,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.19.v3"
+SERVER_VERSION = "2026.11.24.v1"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -1066,7 +1066,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     chargeable = str(filters.get("chargeable", "1") or "")
     location = str(filters.get("location", "") or "")
     query = str(filters.get("query") or "").strip()
-    deep_scan = bool(filters.get("deep_scan", False))
+    deep_scan = bool(filters.get("deep_scan", True))
 
     params = []
     if reason: params.append(f"q[dispute_reason_eq]={reason}")
@@ -2460,7 +2460,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             date_range = qs.get("date_range", [""])[0] or qs.get("fault_at", [""])[0] or qs.get("fault_at_between", [""])[0]
             start_date = qs.get("start_date", [""])[0]
             end_date = qs.get("end_date", [""])[0]
-            deep_scan = qs.get("deep_scan", ["0"])[0] in ("1", "true", "True")
+            deep_scan = qs.get("deep_scan", ["1"])[0] in ("1", "true", "True")
             filters = {
                 "reason": reason,
                 "status": status,

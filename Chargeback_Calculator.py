@@ -61,7 +61,7 @@ except ImportError:
 
 import json
 
-CURRENT_VERSION = "2026.11.19.v3"
+CURRENT_VERSION = "2026.11.24.v1"
 
 def kill_existing_server_on_port(port=8765):
     """Terminates any old/outdated server process listening on port."""

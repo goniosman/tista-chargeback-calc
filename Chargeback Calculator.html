@@ -1374,7 +1374,7 @@ const DEF = () => ({
   autoId:'', auto:null,
   corAutoId:'', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:false, corPasteText:'',
   showCorSlide:false, showDelSlide:false, corSlideUrl:'', delSlideUrl:'',
-  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: false }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '' }, 
+  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: true }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '' }, 
   cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:'',
     order:[],
     cb:[]},
@@ -4037,13 +4037,14 @@ function paneBatch(){
 
     <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
       <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="bt-deep" style="width:16px;height:16px" ${f.deepScan?'checked':''}>
-        <span><strong>Deep Scan:</strong> Navigate into each order and extract exact services & complexity</span>
+        <input type="checkbox" id="bt-deep" style="width:16px;height:16px" ${(f.deepScan !== false)?'checked':''}>
+        <span><strong>Deep Scan:</strong> Navigate into each order and extract exact services & complexity (Recommended)</span>
       </label>
     </div>
 
     <div class="tools" style="margin-top:14px">
       <button class="btn pri" id="bt-search">⚡ SEARCH & CALCULATE (LIVE TISTA)</button>
+      <button class="btn" id="bt-scan-all-services" style="background:#1f6feb;border-color:#1f6feb;color:#fff;font-weight:600" title="Scan exact services and categories from Tista for all orders in table">🔍 Scan Services for All</button>
       <button class="btn" id="bt-reset-all" style="background:#21262d;border:1px solid #30363d;color:#f0f6fc;font-weight:600">🔄 Reset / Clear All</button>
       <button class="btn" id="bt-toggle-paste">Paste Multiple IDs</button>
       <button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>
@@ -4278,6 +4279,7 @@ function paneBatch(){
                 </td>
                 <td style="text-align:center;white-space:nowrap">
                   <button class="btn" data-bt-open="${item.idx}" style="padding:4px 9px;font-size:11.5px;border-radius:6px;font-weight:600" title="Open this dispute in calculator">Open</button>
+                  <button class="btn" data-bt-scan="${item.idx}" id="bt-scan-btn-${item.idx}" style="padding:4px 7px;font-size:11px;border-radius:6px;margin-left:4px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;" title="Scan actual services from Tista">🔍 Scan</button>
                   ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
                     `<button class="btn btn-done" id="bt-close-btn-${item.idx}" style="padding:4px 10px;font-size:11.5px;background:#47a9b8;border-color:#47a9b8;color:#fff;font-weight:600;margin-left:5px;border-radius:6px;cursor:default;" disabled title="Dispute is closed">Dispute Done</button>` : 
                     `<button class="btn pri" id="bt-close-btn-${item.idx}" data-bt-close="${item.idx}" style="padding:4px 9px;font-size:11.5px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:5px;border-radius:6px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
@@ -4343,7 +4345,7 @@ async function fetchLiveBatchDisputes(customQuery=null){
   const location = $('bt-location') ? $('bt-location').value : (f.location || '');
   const dateStart = $('bt-date-start') ? $('bt-date-start').value : (f.dateStart || '');
   const dateEnd = $('bt-date-end') ? $('bt-date-end').value : (f.dateEnd || '');
-  const deepScan = $('bt-deep') ? $('bt-deep').checked : (f.deepScan || false);
+  const deepScan = $('bt-deep') ? $('bt-deep').checked : (f.deepScan !== false);
 
   f.query = query;
   f.reason = reason;
@@ -4723,6 +4725,136 @@ async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId, fau
       btnEl.innerHTML = origBtnText || '🔒 Charge to Vendor & Close Dispute on Tista';
     }
   }
+}
+
+async function scanDisputeServices(idx){
+  const b = S.batch || { disputes: [] };
+  const d = b.disputes[idx];
+  if(!d) return;
+  const raw_oid = d.order_id.replace(/\D/g, '');
+  if(!raw_oid) return;
+  const scanBtn = $(`bt-scan-btn-${idx}`);
+  if(scanBtn){
+    scanBtn.disabled = true;
+    scanBtn.innerHTML = '<span class="btn-spinner"></span>';
+  }
+  const statusEl = $('bt-status-text');
+  if(statusEl){
+    statusEl.textContent = `Scanning services for Order #${raw_oid}...`;
+    statusEl.style.color = 'var(--accent)';
+  }
+  showTopProgress();
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch_files?order_id=${raw_oid}`);
+    if(!res.ok) throw new Error('Failed to fetch files');
+    const data = await res.json();
+    if(data.files && data.files.length){
+      d.file_details = data.files;
+      const svcs = [];
+      const cats = [];
+      data.files.forEach(f => {
+        (f.services || []).forEach(s => {
+          if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
+          if(s.category && !cats.includes(s.category)) cats.push(s.category);
+        });
+      });
+      if(svcs.length) d.service = svcs[0];
+      if(cats.length) d.cat = cats[0];
+      d.order_services = svcs;
+      d.order_cats = cats;
+      if(statusEl){
+        statusEl.textContent = `✓ Scanned ${data.files.length} files for Order #${raw_oid}!`;
+        statusEl.style.color = 'green';
+      }
+      save();
+      render();
+    } else {
+      if(statusEl){
+        statusEl.textContent = `⚠️ No files returned for Order #${raw_oid}`;
+        statusEl.style.color = 'var(--danger)';
+      }
+    }
+  } catch(err){
+    console.error('Error scanning services for ' + raw_oid, err);
+    if(statusEl){
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = 'var(--danger)';
+    }
+  } finally {
+    hideTopProgress();
+    if(scanBtn){
+      scanBtn.disabled = false;
+      scanBtn.innerHTML = '🔍 Scan';
+    }
+  }
+}
+
+async function scanAllVisibleServices(){
+  const b = S.batch || { disputes: [] };
+  const disputes = b.disputes || [];
+  const q = (b.filterQ || '').toLowerCase().trim();
+  const visibleList = disputes.map((d, i) => ({ orig: d, idx: i })).filter(item => {
+    if(!q) return true;
+    const text = [item.orig.order_id, item.orig.contractor, item.orig.dispute_reason, item.orig.service, item.orig.status].join(' ').toLowerCase();
+    return text.includes(q);
+  });
+  const needScan = visibleList.filter(it => !it.orig.file_details || !it.orig.file_details.length);
+  if(!needScan.length){
+    alert('All visible orders already have services and file details scanned!');
+    return;
+  }
+  const btnEl = $('bt-scan-all-services');
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="btn-spinner"></span> Scanning services...';
+  }
+  const statusEl = $('bt-status-text');
+  showTopProgress();
+  let scannedCount = 0;
+  for(let i = 0; i < needScan.length; i++){
+    const it = needScan[i];
+    const raw_oid = it.orig.order_id.replace(/\D/g, '');
+    if(!raw_oid) continue;
+    if(statusEl){
+      statusEl.textContent = `Scanning services for Order #${raw_oid} (${i + 1} of ${needScan.length})...`;
+      statusEl.style.color = 'var(--accent)';
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/fetch_files?order_id=${raw_oid}`);
+      if(res.ok){
+        const data = await res.json();
+        if(data.files && data.files.length){
+          it.orig.file_details = data.files;
+          const svcs = [];
+          const cats = [];
+          data.files.forEach(f => {
+            (f.services || []).forEach(s => {
+              if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
+              if(s.category && !cats.includes(s.category)) cats.push(s.category);
+            });
+          });
+          if(svcs.length) it.orig.service = svcs[0];
+          if(cats.length) it.orig.cat = cats[0];
+          it.orig.order_services = svcs;
+          it.orig.order_cats = cats;
+          scannedCount++;
+        }
+      }
+    } catch(e){
+      console.error('Scan error for ' + raw_oid, e);
+    }
+  }
+  hideTopProgress();
+  if(btnEl){
+    btnEl.disabled = false;
+    btnEl.innerHTML = '🔍 Scan Services for All';
+  }
+  if(statusEl){
+    statusEl.textContent = `✓ Scanned services for ${scannedCount} orders!`;
+    statusEl.style.color = 'green';
+  }
+  save();
+  render();
 }
 
 async function closeBatchRow(idx){
@@ -5232,6 +5364,8 @@ pane.addEventListener('click',e=>{
   else if(t.id==='bt-export-csv') exportBatchCSV();
   else if(t.id==='bt-copy-table') copyBatchSummary();
   else if(t.dataset.btOpen !== undefined) openDisputeInCalc(+t.dataset.btOpen);
+  else if(t.dataset.btScan !== undefined) scanDisputeServices(+t.dataset.btScan);
+  else if(t.id==='bt-scan-all-services') scanAllVisibleServices();
   else if(t.dataset.btClose !== undefined) closeBatchRow(+t.dataset.btClose);
   else if(t.id==='bt-close-all') closeBatchAll();
   else if(t.id==='cor-close-btn'){
