@@ -1721,9 +1721,24 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
         if not detected_svc:
             detected_svc = "Clipping path"
         if not detected_cat:
-            detected_cat = "Category 1.5"
+            detected_cat = "Category 1"
 
         delay_sec = hours_to_seconds(r["delayed_by"]) if reason_name.lower() == "delay" else 0
+        dur_sec = parse_duration_to_seconds(detected_dur) or 86400
+        delay_pct = (abs(delay_sec) / dur_sec) if dur_sec > 0 else 0
+
+        raw_sev = r.get("fault_severity") or ""
+        if reason_name.lower() == "delay" or not raw_sev or raw_sev.lower() in ("not applicable", "n/a", "--", "none"):
+            if delay_pct > 0.50:
+                fault_sev = "Critical"
+            elif delay_pct > 0.30:
+                fault_sev = "High"
+            elif delay_pct > 0.15:
+                fault_sev = "Medium"
+            else:
+                fault_sev = "Low"
+        else:
+            fault_sev = raw_sev
 
         out_list.append({
             "dispute_id": r["dispute_id"],
@@ -1737,10 +1752,10 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             "delay_seconds": delay_sec,
             "order_duration": detected_dur,
             "fault_quantity": qty,
-            "fault_severity": r["fault_severity"],
+            "fault_severity": fault_sev,
             "status": r["status"],
             "service": detected_svc or "Clipping path",
-            "cat": detected_cat or "Category 1.5",
+            "cat": detected_cat or "Category 1",
             "pix": detected_pix,
             "order_services": order_svcs,
             "order_cats": order_cats,
@@ -2769,6 +2784,20 @@ def parse_google_slides_presentation(slide_url: str):
                     })
         except Exception as e:
             print(f"[!] TXT fallback error: {e}")
+
+    # Attach local cached files (instant disk lookup in 0.001s, no network/Playwright overhead)
+    for j in parsed_jobs:
+        oid = re.sub(r"\D", "", str(j.get("order_id", "")))
+        if not oid: continue
+        c_corr = DATA_DIR / f"tista_correction_{oid}.json"
+        if not c_corr.exists(): c_corr = APP_DIR / f"tista_correction_{oid}.json"
+        if c_corr.exists():
+            try:
+                cdata = json.loads(c_corr.read_text(encoding="utf-8"))
+                if cdata.get("files"):
+                    j["cached_files"] = cdata["files"]
+            except Exception:
+                pass
 
     return {
         "status": "success",

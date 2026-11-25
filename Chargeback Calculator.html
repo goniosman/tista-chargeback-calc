@@ -3294,25 +3294,65 @@ async function importFromGoogleSlides(slideUrl){
 
       const svc = matchedSvcs[0] || 'Clipping path';
       const availableCats = catsOf(svc).length ? catsOf(svc) : ['Category 1', 'Category 1.5', 'Category 2'];
-      const cat = availableCats.includes('Category 1.5') ? 'Category 1.5' : (availableCats[0] || 'Category 1');
+      const defaultCat = (availableCats && availableCats[0]) ? availableCats[0] : 'Category 1';
+      let cat = defaultCat;
       const qty = (job.fault_qty != null && job.fault_qty > 0) ? job.fault_qty : ((job.filenames && job.filenames.length) ? job.filenames.length : (job.total_qty || 1));
 
-      // Build services config for each service
+      // Build services config for each service (defaulting to Category 1)
       const servicesConfig = matchedSvcs.map(sName => {
         const sCats = catsOf(sName).length ? catsOf(sName) : ['Category 1', 'Category 1.5', 'Category 2'];
-        const sCat = sCats.includes('Category 1.5') ? 'Category 1.5' : (sCats[0] || 'Category 1');
+        const sCat = sCats[0] || 'Category 1';
         return {
           service: sName,
           category: sCat
         };
       });
 
-      const fileDetails = (job.filenames && job.filenames.length) ? job.filenames.map(fn => ({
-        filename: fn,
-        category: servicesConfig[0].category,
-        service: servicesConfig[0].service,
-        services: servicesConfig
-      })) : [];
+      let fileDetails = [];
+      // If cached Tista files exist, match them immediately in ONE fast pass (0ms delay)
+      if (job.cached_files && Array.isArray(job.cached_files) && job.cached_files.length) {
+        const targetSvcs = matchedSvcs.map(s => normalizeServiceName(s)).filter(Boolean);
+        let pool = job.cached_files;
+        if (!job.is_all_images && job.filenames && job.filenames.length > 0) {
+          const matchStems = new Set(job.filenames.map(fn => getStem(fn)).filter(Boolean));
+          const matched = job.cached_files.filter(f => {
+            const fStem = getStem(f.filename);
+            return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+          });
+          if (matched.length > 0) pool = matched;
+        }
+        let foundCat = '';
+        pool.forEach(f => {
+          targetSvcs.forEach(tSvc => {
+            const matchItem = (f.services || []).find(s => {
+              const sn = normalizeServiceName(s.service, s.raw_name);
+              return sn && sn.toLowerCase() === tSvc.toLowerCase();
+            });
+            if (matchItem && matchItem.category) {
+              const cName = normalizeCategoryName(matchItem.category, matchItem.complexity);
+              f.category = cName;
+              if (!foundCat) foundCat = cName;
+            }
+          });
+        });
+        if (foundCat) cat = foundCat;
+        fileDetails = pool.map(f => ({
+          filename: f.filename,
+          category: f.category || cat || 'Category 1',
+          service: svc,
+          services: (f.services && f.services.length) ? f.services : [{
+            service: svc,
+            category: f.category || cat || 'Category 1'
+          }]
+        }));
+      } else if (job.filenames && job.filenames.length) {
+        fileDetails = job.filenames.map(fn => ({
+          filename: fn,
+          category: servicesConfig[0].category,
+          service: servicesConfig[0].service,
+          services: servicesConfig
+        }));
+      }
 
       let rReason = String(job.reason || job.report_type || 'Correction').trim();
       if(rReason.toLowerCase().includes('quality')) rReason = 'Quality';
@@ -3363,20 +3403,15 @@ async function importFromGoogleSlides(slideUrl){
     S.batch.disputes = newDisputes;
     S.batch.slideUrl = url;
     S.batch.showSlides = true;
-    S.batchStatusText = `✓ Successfully imported ${newDisputes.length} orders from Google Slides! Scanning exact categories...`;
+    S.batchStatusText = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
     S.batchStatusColor = '#27ae60';
     save();
     render();
 
     if(statusEl){
-      statusEl.textContent = `✓ Successfully imported ${newDisputes.length} orders from Google Slides! Scanning exact categories...`;
+      statusEl.textContent = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
       statusEl.style.color = '#27ae60';
     }
-
-    // Auto-scan real services & categories directly from Tista for all imported orders (bypassing date filters)
-    setTimeout(() => {
-      scanAllVisibleServices();
-    }, 150);
   } catch(err){
     if(statusEl){
       statusEl.textContent = '⚠️ ' + err.message;
@@ -3886,17 +3921,22 @@ function calcDisputeChargeback(d){
             sName = 'Multi-clipping path';
           }
           if (!sName) return;
-          const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
+          const userOverriddenCat = (d.service_categories && d.service_categories[sName]) ? d.service_categories[sName] : null;
+          const cName = userOverriddenCat || normalizeCategoryName(sItem.category || cat, sItem.complexity);
           const k = sName.toLowerCase();
           if (!seenFileSvcs.has(k)) {
             seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
           } else {
-            // If duplicate has higher category, prefer higher
+            // If duplicate has higher category, prefer higher unless user explicitly set category
             const existing = seenFileSvcs.get(k);
-            const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
-            const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
-            if (newCatNum > oldCatNum) {
-              seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+            if (userOverriddenCat) {
+              seenFileSvcs.set(k, { sName, cName: userOverriddenCat, complexity: sItem.complexity });
+            } else {
+              const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
+              const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+              if (newCatNum > oldCatNum) {
+                seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+              }
             }
           }
         });
@@ -3925,7 +3965,8 @@ function calcDisputeChargeback(d){
     // Multiple services specified without individual file details
     d.services.forEach(sItem => {
       const sName = normalizeServiceName(typeof sItem === 'string' ? sItem : (sItem.service || svc));
-      const cName = normalizeCategoryName(typeof sItem === 'object' ? (sItem.category || cat) : cat);
+      const userOverriddenCat = (d.service_categories && d.service_categories[sName]) ? d.service_categories[sName] : null;
+      const cName = userOverriddenCat || normalizeCategoryName(typeof sItem === 'object' ? (sItem.category || cat) : cat);
       const pVal = price(sName, cName, pix);
       const prc = pVal != null ? pVal : 0;
       totalBasePrice += prc * effectiveQty;
@@ -3952,6 +3993,13 @@ function calcDisputeChargeback(d){
     const delayDays = Math.abs(sec) / 86400;
     const pct = durDays > 0 ? delayDays / durDays : 0;
     const share = getDelayTierShare(sevCanonical, pct);
+
+    // Rule: For Delay, Severity should NEVER be 'Not applicable' - auto-set from delay percentage
+    const delaySev = getDelaySeverityFromPct(pct);
+    if (!d.fault_severity || d.fault_severity.toLowerCase().includes('not') || d.fault_severity.toLowerCase().includes('n/a')) {
+      d.fault_severity = delaySev;
+    }
+    const effectiveSev = canonicalSeverity(d.fault_severity || delaySev);
 
     let raw = 0;
     let avgUnitPrice = pr;
@@ -3981,11 +4029,11 @@ function calcDisputeChargeback(d){
       pr: hasMultiService ? avgUnitPrice : pr,
       avgUnitPrice,
       qty: effectiveQty,
-      sevKey: sevCanonical,
+      sevKey: effectiveSev,
       durH, delH, durFormatted, delFormatted, pctFormatted,
       delayDistance: `Dur: ${durFormatted} ➔ Delay: ${delFormatted} (${pctFormatted})`,
       factorLabel: pctFormatted + ' (Tier: ' + Math.round(share * 100) + '%)',
-      factorDetail: sevCanonical + ' (' + Math.round(share * 100) + '% Tier)',
+      factorDetail: effectiveSev + ' (' + Math.round(share * 100) + '% Tier)',
       rawAmount: raw,
       chargeback: finalAmount,
       isCustom: isCustom,
@@ -4524,19 +4572,21 @@ function paneBatch(){
                     </select>
                   `}
                 </td>
-                <td style="min-width:120px">
+                <td style="min-width:145px">
                   ${r.hasMultiService ? `
-                    <div style="display:flex;flex-direction:column;gap:3px">
-                      <div style="display:flex;gap:4px;flex-wrap:wrap">
-                        ${(r.uniqueCatsList || []).map(cn => `
-                          <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,91,240,0.12);color:var(--primary);border:1px solid rgba(59,91,240,0.3)">
-                            ${esc(cn.replace('Category ', 'C'))}
-                          </span>
-                        `).join('')}
-                      </div>
-                      <div style="font-size:10px;color:var(--muted);font-weight:500;margin-top:2px">
-                        ${esc((r.uniqueCatsList || []).join(', '))}
-                      </div>
+                    <div style="display:flex;flex-direction:column;gap:5px">
+                      ${(r.uniqueSvcsList || []).map(sn => {
+                        const curCatForSvc = (d.service_categories && d.service_categories[sn]) || (r.svcBreakdown && r.svcBreakdown[sn]?.category) || d.cat || 'Category 1';
+                        const sCats = catsOf(sn).length ? catsOf(sn) : ['Category 1', 'Category 1.5', 'Category 2'];
+                        return `
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:11px;background:var(--soft);padding:2px 5px;border-radius:4px;border:1px solid var(--line)" title="Service: ${esc(sn)}">
+                            <span style="font-weight:600;font-size:10px;color:var(--ink-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75px">${esc(sn)}:</span>
+                            <select class="bt-row-multi-cat" data-idx="${item.idx}" data-svc="${esc(sn)}" style="font-size:11px;padding:2px 4px;border-radius:3px;border:1px solid var(--line);background:var(--bg);font-weight:700;color:var(--primary);cursor:pointer" title="Change category for ${esc(sn)}">
+                              ${sCats.map(c => `<option value="${esc(c)}"${c === curCatForSvc ? ' selected' : ''}>${esc(c.replace('Category ', 'C'))}</option>`).join('')}
+                            </select>
+                          </div>
+                        `;
+                      }).join('')}
                     </div>
                   ` : `
                     <select class="bt-row-cat" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:125px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
@@ -4546,7 +4596,7 @@ function paneBatch(){
                 </td>
                 <td>
                   <select class="bt-row-sev" data-idx="${item.idx}" style="font-size:12px;padding:3px 6px;max-width:130px;border-radius:4px;border:1px solid var(--line);background:var(--bg);font-weight:600">
-                    ${FAULT_SEVERITIES.map(s => `<option value="${esc(s)}"${s === canonicalSeverity(d.fault_severity || r.sevKey || 'Low') ? ' selected' : ''}>${esc(s)}</option>`).join('')}
+                    ${(r.reason === 'Delay' ? ['Low', 'Medium', 'High', 'Critical'] : FAULT_SEVERITIES).map(s => `<option value="${esc(s)}"${s === canonicalSeverity(d.fault_severity || r.sevKey || 'Low') ? ' selected' : ''}>${esc(s)}</option>`).join('')}
                   </select>
                   ${r.reason === 'Delay' ? `
                     <div style="margin-top:4px;font-size:11px;font-family:var(--font-mono);color:#d9531e;background:rgba(217,83,30,0.08);padding:3px 6px;border-radius:4px;border:1px solid rgba(217,83,30,0.22);line-height:1.35" title="Order Duration: ${r.durFormatted} | Delay Time: ${r.delFormatted} (${r.pctFormatted})">
@@ -5731,6 +5781,34 @@ pane.addEventListener('change',e=>{
     if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
       S.batch.disputes[idx].cat = e.target.value;
       delete S.batch.disputes[idx].custom_chargeback;
+      save();
+      render();
+    }
+    return;
+  }
+  if(e.target.classList.contains('bt-row-multi-cat')){
+    const idx = +e.target.dataset.idx;
+    const svcName = e.target.dataset.svc;
+    const newCat = e.target.value;
+    if(S.batch && S.batch.disputes && S.batch.disputes[idx]){
+      const d = S.batch.disputes[idx];
+      if(!d.service_categories) d.service_categories = {};
+      d.service_categories[svcName] = newCat;
+      delete d.custom_chargeback;
+      if(d.file_details && Array.isArray(d.file_details)){
+        d.file_details.forEach(f => {
+          if(f.services && Array.isArray(f.services)){
+            f.services.forEach(s => {
+              if(normalizeServiceName(s.service, s.raw_name).toLowerCase() === svcName.toLowerCase()){
+                s.category = newCat;
+              }
+            });
+          }
+          if(normalizeServiceName(f.service).toLowerCase() === svcName.toLowerCase()){
+            f.category = newCat;
+          }
+        });
+      }
       save();
       render();
     }
