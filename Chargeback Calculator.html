@@ -1574,13 +1574,20 @@ function paneCor(){
   <!-- Order Search Card -->
   <div class="order-search-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <label class="field-label" style="margin:0">Order ID</label>
+      <div style="display:inline-flex;align-items:center;gap:8px">
+        <label class="field-label" style="margin:0">Order ID</label>
+        ${S.corAutoId ? `
+          <a href="https://tista.app/orders?location=all&dateRange=any&query=${encodeURIComponent(S.corAutoId.replace(/\D/g, ''))}" target="_blank" rel="noopener noreferrer" title="Open #${esc(S.corAutoId)} on Tista" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;background:rgba(59,91,240,0.1);color:var(--primary);text-decoration:none;font-size:11px;font-family:var(--font-sans);font-weight:600;border:1px solid rgba(59,91,240,0.25);cursor:pointer">
+            🔗 Open in Tista
+          </a>
+        ` : ''}
+      </div>
       <button class="btn btn-sm" id="cor-toggle-slide" style="padding:2px 10px;font-size:11.5px;font-weight:600;color:var(--accent);border-color:rgba(59,91,240,0.3);background:rgba(59,91,240,0.06);border-radius:6px;cursor:pointer">
         ${S.showCorSlide ? '▲ Hide Slide Link' : '📊 Google Slide Link Option'}
       </button>
     </div>
     <div class="order-search-row">
-      <input id="cor-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID (e.g. 457696)" value="${esc(S.corAutoId||'')}">
+      <input id="cor-quick-id" class="input-order" placeholder="Enter Order ID or Paste Link (Google Slides, Dropbox, Tista)..." value="${esc(S.corAutoId||'')}">
       <button class="btn-primary-action" id="cor-quick-fetch" title="Fetch live order from Tista">
         Fetch & Calculate
       </button>
@@ -1688,13 +1695,20 @@ function paneDel(){
   <!-- Order Search Card -->
   <div class="order-search-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <label class="field-label" style="margin:0">Order ID</label>
+      <div style="display:inline-flex;align-items:center;gap:8px">
+        <label class="field-label" style="margin:0">Order ID</label>
+        ${S.autoId ? `
+          <a href="https://tista.app/orders?location=all&dateRange=any&query=${encodeURIComponent(S.autoId.replace(/\D/g, ''))}" target="_blank" rel="noopener noreferrer" title="Open #${esc(S.autoId)} on Tista" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;background:rgba(59,91,240,0.1);color:var(--primary);text-decoration:none;font-size:11px;font-family:var(--font-sans);font-weight:600;border:1px solid rgba(59,91,240,0.25);cursor:pointer">
+            🔗 Open in Tista
+          </a>
+        ` : ''}
+      </div>
       <button class="btn btn-sm" id="del-toggle-slide" style="padding:2px 10px;font-size:11.5px;font-weight:600;color:var(--accent);border-color:rgba(59,91,240,0.3);background:rgba(59,91,240,0.06);border-radius:6px;cursor:pointer">
         ${S.showDelSlide ? '▲ Hide Slide Link' : '📊 Google Slide Link Option'}
       </button>
     </div>
     <div class="order-search-row">
-      <input id="del-quick-id" class="input-order" inputmode="numeric" placeholder="Enter Order ID (e.g. 371289)" value="${esc(S.autoId||'')}">
+      <input id="del-quick-id" class="input-order" placeholder="Enter Order ID or Paste Link (Google Slides, Dropbox, Tista)..." value="${esc(S.autoId||'')}">
       <button class="btn-primary-action" id="del-quick-fetch" title="Fetch live order details from Tista">
         Fetch from Tista
       </button>
@@ -2167,8 +2181,14 @@ function applyAuto(){
 }
 async function fetchLiveTista(idInputId='au-id', statusId='au-status', autoApply=false){
   const el = $(idInputId);
-  const oid = (el ? el.value : '').trim().replace(/\D/g,'');
-  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const rawVal = el ? el.value : '';
+  const parsed = parseSmartLink(rawVal);
+  if (parsed.type === 'slides') {
+    return fetchSingleOrderFromSlide('', parsed.url, idInputId === 'del-quick-id' ? 'del' : 'cor');
+  }
+  const oid = parsed.id || rawVal.trim().replace(/\D/g,'');
+  if(!oid){ alert('Please enter an Order ID or paste a link first.'); return; }
+  if (el) el.value = oid;
   const status = $(statusId);
   const fetchBtn = $(idInputId==='del-quick-id'?'del-quick-fetch':'au-fetch-live');
   const origBtnText = fetchBtn ? fetchBtn.innerHTML : '';
@@ -2556,7 +2576,12 @@ function paneAutoCor(){
     <h2>Automatic Correction Calculation</h2>
     <p class="sub" style="margin:-6px 0 12px">Search Order ID to automatically fetch all files, select files to compute the category level, and calculate the chargeback amount with minimum $2.00 rule.</p>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <input id="aucor-id" inputmode="numeric" value="${esc(S.corAutoId||'')}" placeholder="Order ID (e.g. 457696)" style="max-width:200px">
+      <input id="aucor-id" value="${esc(S.corAutoId||'')}" placeholder="Order ID or Paste Link..." style="max-width:240px">
+      ${S.corAutoId ? `
+        <a href="https://tista.app/orders?location=all&dateRange=any&query=${encodeURIComponent(S.corAutoId.replace(/\D/g, ''))}" target="_blank" rel="noopener noreferrer" title="Open #${esc(S.corAutoId)} on Tista" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;border-radius:6px;background:rgba(59,91,240,0.1);color:var(--primary);text-decoration:none;font-size:12px;font-family:var(--font-sans);font-weight:600;border:1px solid rgba(59,91,240,0.25);cursor:pointer">
+          🔗 Tista
+        </a>
+      ` : ''}
       <button class="btn pri" id="aucor-fetch-live">⚡ Fetch from Tista (Live)</button>
       <button class="btn" id="aucor-import-toggle">Import / Paste JSON</button>
       <span id="aucor-status" class="sub" style="font-weight:500"></span>
@@ -2812,9 +2837,68 @@ function applyAutoCor(){
   render();
 }
 
+function parseSmartLink(input) {
+  if (!input) return { type: 'empty', raw: '', id: '', url: '' };
+  const s = String(input).trim();
+  
+  // 1. Google Slides URL
+  if (/docs\.google\.com\/presentation/i.test(s)) {
+    return { type: 'slides', raw: s, id: '', url: s };
+  }
+  
+  // 2. Dropbox feedback / correction link
+  if (/dropbox\.com/i.test(s) || /feedback/i.test(s)) {
+    const mHash = s.match(/(?:%23|#)(\d{5,7})/);
+    if (mHash) return { type: 'order_id', raw: s, id: mHash[1], url: s };
+    const mSix = s.match(/\b(\d{6})\b/);
+    if (mSix) return { type: 'order_id', raw: s, id: mSix[1], url: s };
+  }
+  
+  // 3. Tista App URL
+  if (/tista\.app/i.test(s)) {
+    const mQ = s.match(/[?&]query=([^&#]+)/);
+    if (mQ) {
+      const oid = mQ[1].replace(/\D/g, '');
+      if (oid) return { type: 'order_id', raw: s, id: oid, url: s };
+    }
+    const mEq = s.match(/order_name_eq\]=([^&#]+)/);
+    if (mEq) {
+      const oid = mEq[1].replace(/\D/g, '');
+      if (oid) return { type: 'order_id', raw: s, id: oid, url: s };
+    }
+    const mDisp = s.match(/\/order_disputes\/(\d+)/);
+    if (mDisp) return { type: 'dispute_id', raw: s, id: mDisp[1], url: s };
+    const mOrd = s.match(/\/orders\/(\d+)/);
+    if (mOrd) return { type: 'order_id', raw: s, id: mOrd[1], url: s };
+  }
+  
+  // 4. Any generic URL with embedded Order ID
+  if (/^https?:\/\//i.test(s)) {
+    const mHash = s.match(/(?:%23|#)(\d{5,7})/);
+    if (mHash) return { type: 'order_id', raw: s, id: mHash[1], url: s };
+    const mSix = s.match(/\b(\d{6})\b/);
+    if (mSix) return { type: 'order_id', raw: s, id: mSix[1], url: s };
+  }
+  
+  // 5. Plain digits / Order ID
+  const digits = s.replace(/\D/g, '');
+  if (digits) {
+    return { type: 'order_id', raw: s, id: digits, url: '' };
+  }
+  
+  return { type: 'unknown', raw: s, id: '', url: '' };
+}
+
 async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
-  oid = String(oid || '').trim().replace(/\D/g, '');
-  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const rawInput = oid || ($('cor-quick-id') ? $('cor-quick-id').value : S.corAutoId);
+  const parsed = parseSmartLink(rawInput);
+  if (parsed.type === 'slides') {
+    return fetchSingleOrderFromSlide('', parsed.url, 'cor');
+  }
+  const cleanId = parsed.id || String(rawInput || '').trim().replace(/\D/g, '');
+  if(!cleanId){ alert('Please enter an Order ID or paste a link first.'); return; }
+  oid = cleanId;
+
   const status = $(statusId);
   const fetchBtn = $('cor-quick-fetch');
   const origBtnText = fetchBtn ? fetchBtn.innerHTML : '';
@@ -2871,15 +2955,16 @@ async function fetchQuickCorrectionTab(oid, statusId='cor-quick-status'){
 }
 
 async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
-  const cleanOid = String(oid || (targetTab === 'cor' ? ($('cor-quick-id') ? $('cor-quick-id').value : S.corAutoId) : ($('del-quick-id') ? $('del-quick-id').value : S.autoId)) || '').trim().replace(/\D/g, '');
-  if (!cleanOid) {
-    alert('Please enter an Order ID first.');
-    const el = $(targetTab === 'cor' ? 'cor-quick-id' : 'del-quick-id');
-    if (el) el.focus();
-    return;
+  const rawInput = oid || (targetTab === 'cor' ? ($('cor-quick-id') ? $('cor-quick-id').value : S.corAutoId) : ($('del-quick-id') ? $('del-quick-id').value : S.autoId));
+  const parsed = parseSmartLink(rawInput);
+  let cleanOid = parsed.id || '';
+  let url = String(slideUrl || (targetTab === 'cor' ? ($('cor-slide-url') ? $('cor-slide-url').value : '') : ($('del-slide-url') ? $('del-slide-url').value : '')) || S.corSlideUrl || S.batch?.slideUrl || '').trim();
+
+  if (parsed.type === 'slides') {
+    url = parsed.url;
+    cleanOid = '';
   }
 
-  const url = String(slideUrl || (targetTab === 'cor' ? ($('cor-slide-url') ? $('cor-slide-url').value : '') : ($('del-slide-url') ? $('del-slide-url').value : '')) || S.corSlideUrl || S.batch?.slideUrl || '').trim();
   if (!url) {
     if (targetTab === 'cor') S.showCorSlide = true;
     else S.showDelSlide = true;
@@ -2904,15 +2989,15 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
     btnEl.innerHTML = '<span class="btn-spinner"></span> Searching Slide...';
   }
   if (statusEl) {
-    statusEl.textContent = `Searching Google Slides for Order #${cleanOid}...`;
+    statusEl.textContent = cleanOid ? `Searching Google Slides for Order #${cleanOid}...` : 'Parsing Google Slides presentation...';
     statusEl.style.color = 'var(--accent)';
   }
 
   showTopProgress();
-  showLoading(`Searching Slide for #${cleanOid}`, `Parsing presentation slides and matching Order #${cleanOid}...`, true);
+  showLoading(cleanOid ? `Searching Slide for #${cleanOid}` : 'Parsing Google Slides', `Parsing presentation slides and matching job...`, true);
 
   try {
-    const res = await fetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}&order_id=${encodeURIComponent(cleanOid)}`);
+    const res = await fetch(`${API_BASE}/api/fetch_slides?url=${encodeURIComponent(url)}&order_id=${encodeURIComponent(cleanOid || '')}`);
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Failed to fetch slides');
 
@@ -2922,12 +3007,14 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
     }
 
     const targetJob = data.target_job 
-                   || jobs.find(j => String(j.order_id).replace(/\D/g, '') === cleanOid)
-                   || jobs.find(j => String(j.order_id).includes(cleanOid));
+                   || (cleanOid ? jobs.find(j => String(j.order_id).replace(/\D/g, '') === cleanOid || String(j.order_id).includes(cleanOid)) : null)
+                   || jobs[0];
 
     if (!targetJob) {
       throw new Error(`Order #${cleanOid} was not found in this Google Slides presentation. (Checked ${data.total_slides || jobs.length} slides)`);
     }
+
+    cleanOid = String(targetJob.order_id || '').replace(/\D/g, '') || cleanOid;
 
     if (/sm\s*correction|instruction\s*mistake\s*by\s*sm/i.test(targetJob.report_type || '') || /sm\s*correction/i.test(targetJob.reason || '')) {
       throw new Error(`Order #${cleanOid} has Report Type: SM Correction (Instruction mistake by SM) - skipped from vendor chargeback.`);
@@ -2936,6 +3023,8 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
     if (targetTab === 'cor') {
       S.corAutoId = cleanOid;
       S.corDisputeId = targetJob.dispute_id || '';
+      const inpEl = $('cor-quick-id');
+      if (inpEl) inpEl.value = cleanOid;
 
       // Match Contractor
       if (targetJob.contractor) {
@@ -2995,7 +3084,7 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
         S.cor.pix = '> 5000';
       }
 
-      // Populate order line items (handles single or multiple services from slide)
+      // Populate order line items (only for services from slide)
       const rawSvcs = (targetJob.services && Array.isArray(targetJob.services) && targetJob.services.length) ? targetJob.services : [targetJob.service || 'Clipping path'];
       const matchedSvcs = rawSvcs.map(s => {
         const str = String(s).trim();
@@ -3014,6 +3103,41 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
           q: S.cor.qty
         };
       });
+
+      // Attempt to refine categories from order files if available
+      try {
+        const filesRes = await fetch(`${API_BASE}/api/fetch_files?order_id=${cleanOid}`);
+        if (filesRes.ok) {
+          const filesData = await filesRes.json();
+          if (filesData && filesData.files && filesData.files.length) {
+            S.corAuto = filesData;
+            const targetNames = new Set((targetJob.filenames || []).map(fn => String(fn).toLowerCase().trim()));
+            const matchedFiles = targetJob.is_all_images || !targetNames.size 
+              ? filesData.files 
+              : filesData.files.filter(f => targetNames.has(f.filename.toLowerCase().trim()) || [...targetNames].some(tn => f.filename.toLowerCase().includes(tn) || tn.includes(f.filename.toLowerCase())));
+            
+            if (matchedFiles.length) {
+              S.cor.order = matchedSvcs.map(sName => {
+                const catVals = [];
+                matchedFiles.forEach(f => {
+                  const sv = (f.services || []).find(x => x.service && x.service.toLowerCase().includes(sName.toLowerCase()));
+                  if (sv && sv.category) catVals.push(sv.category);
+                });
+                const sCats = catsOf(sName);
+                const bestCat = catVals[0] || (sCats.includes('Category 1.5') ? 'Category 1.5' : (sCats[0] || 'Category 1'));
+                return {
+                  s: sName,
+                  c: bestCat,
+                  p: S.cor.pix || '> 5000',
+                  q: S.cor.qty
+                };
+              });
+            }
+          }
+        }
+      } catch (fe) {
+        console.warn('Note on refining categories from files:', fe);
+      }
 
       S.tab = 'cor';
       save();
@@ -3037,6 +3161,9 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
     } else {
       // Delay Delivery tab
       S.autoId = cleanOid;
+      const inpEl = $('del-quick-id');
+      if (inpEl) inpEl.value = cleanOid;
+
       if (targetJob.contractor) S.del.contractor = targetJob.contractor;
       if (targetJob.service) S.del.service = targetJob.service;
       if (targetJob.category) S.del.cat = targetJob.category;
@@ -3075,8 +3202,14 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
 }
 
 async function fetchLiveCorrection(oid, statusId='aucor-status'){
-  oid = String(oid || '').trim().replace(/\D/g, '');
-  if(!oid){ alert('Please enter an Order ID first.'); return; }
+  const rawInput = oid || ($('aucor-id') ? $('aucor-id').value : S.corAutoId);
+  const parsed = parseSmartLink(rawInput);
+  if (parsed.type === 'slides') {
+    return fetchSingleOrderFromSlide('', parsed.url, 'cor');
+  }
+  const cleanId = parsed.id || String(rawInput || '').trim().replace(/\D/g, '');
+  if(!cleanId){ alert('Please enter an Order ID or paste a link first.'); return; }
+  oid = cleanId;
   const status = $(statusId);
   if(status){
     status.textContent = 'Fetching files from Tista... (please wait)';
@@ -5399,12 +5532,61 @@ function onChange(e){
   if(t.dataset.pv){ const i=+t.closest('tr').dataset.i; S.prices[i].v=num(t.value); save(); return; }
   if(t.id==='cf-s'){ S.cfgFilter.s=t.value; fillCfg(); }
 }
-pane.addEventListener('input',e=>{ const t=e.target; if(t.id==='au-id'||t.id==='del-quick-id'||t.id==='aucor-id'||t.id==='cor-quick-id'){ if(t.id==='aucor-id'||t.id==='cor-quick-id'){ S.corAutoId=t.value.replace(/\D/g,''); save(); return; } S.autoId=t.value.replace(/\D/g,''); save(); setCmd(); return; }
+pane.addEventListener('input',e=>{ 
+  const t=e.target; 
+  if(t.id==='au-id'||t.id==='del-quick-id'||t.id==='aucor-id'||t.id==='cor-quick-id'){ 
+    const v = t.value.trim();
+    if (v.includes('http') || v.includes('.com') || v.includes('/') || v.includes('%23') || v.includes('#')) {
+      const p = parseSmartLink(v);
+      if (p.type === 'slides') {
+        if (t.id === 'cor-quick-id' || t.id === 'aucor-id') {
+          S.corSlideUrl = p.url; S.showCorSlide = true; t.value = ''; S.corAutoId = ''; save(); render();
+          fetchSingleOrderFromSlide('', p.url, 'cor');
+        } else {
+          S.delSlideUrl = p.url; S.showDelSlide = true; t.value = ''; S.autoId = ''; save(); render();
+          fetchSingleOrderFromSlide('', p.url, 'del');
+        }
+        return;
+      }
+      if (p.id) {
+        t.value = p.id;
+        if (t.id === 'aucor-id' || t.id === 'cor-quick-id') { S.corAutoId = p.id; save(); }
+        else { S.autoId = p.id; save(); setCmd(); }
+        return;
+      }
+    }
+    if(t.id==='aucor-id'||t.id==='cor-quick-id'){ S.corAutoId=t.value.replace(/\D/g,''); save(); return; } 
+    S.autoId=t.value.replace(/\D/g,''); save(); setCmd(); return; 
+  }
   if(t.id==='aucor-filter-q'){ S.corFilterQ=t.value; save(); render(); return; }
   if(t.id==='aucor-paste-names'){ S.corPasteText=t.value; save(); return; }
   if(t.id==='bt-filter-table'){ S.batch.filterQ=t.value; save(); render(); return; }
-  if(t.id==='bt-query'){ S.batch.filters.query=t.value; save(); return; }
-  if(t.id==='au-id'||t.id==='del-quick-id'){S.autoId=t.value.replace(/\D/g,'');save();setCmd();return;} if(t.id==='au-json') return; if(t.tagName==='INPUT'&&(t.type==='number'||t.type==='text')&&!t.dataset.pv&&t.id!=='cf-q'&&!t.id.startsWith('nw-')) onChange(e); if(t.id==='cf-q'){S.cfgFilter.q=t.value;fillCfg();} if(t.dataset.pv) onChange(e); });
+  if(t.id==='bt-query'){ 
+    const v = t.value.trim();
+    if (v.includes('http') || v.includes('.com') || v.includes('/') || v.includes('%23')) {
+      const p = parseSmartLink(v);
+      if (p.id) t.value = p.id;
+    }
+    S.batch.filters.query=t.value; save(); return; 
+  }
+  if(t.id==='au-json') return; 
+  if(t.tagName==='INPUT'&&(t.type==='number'||t.type==='text')&&!t.dataset.pv&&t.id!=='cf-q'&&!t.id.startsWith('nw-')) onChange(e); 
+  if(t.id==='cf-q'){S.cfgFilter.q=t.value;fillCfg();} 
+  if(t.dataset.pv) onChange(e); 
+});
+
+pane.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const t = e.target;
+    if (t.id === 'cor-quick-id') { e.preventDefault(); fetchQuickCorrectionTab(t.value, 'cor-quick-status'); }
+    else if (t.id === 'cor-slide-url') { e.preventDefault(); fetchSingleOrderFromSlide('', t.value, 'cor'); }
+    else if (t.id === 'del-quick-id') { e.preventDefault(); fetchLiveTista('del-quick-id', 'del-quick-status', true); }
+    else if (t.id === 'del-slide-url') { e.preventDefault(); fetchSingleOrderFromSlide('', t.value, 'del'); }
+    else if (t.id === 'aucor-id') { e.preventDefault(); fetchLiveCorrection(t.value, 'aucor-status'); }
+    else if (t.id === 'au-id') { e.preventDefault(); fetchLiveTista('au-id', 'au-status', false); }
+    else if (t.id === 'bt-query') { e.preventDefault(); fetchDisputesBatchLive(); }
+  }
+});
 pane.addEventListener('change',e=>{
   if(e.target.classList.contains('bt-row-reason')){
     const idx = +e.target.dataset.idx;

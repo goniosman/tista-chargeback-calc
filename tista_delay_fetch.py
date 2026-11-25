@@ -48,7 +48,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.25.v3"
+SERVER_VERSION = "2026.11.25.v4"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -445,20 +445,56 @@ def ensure_logged_in(page):
 
 def fetch_order_from_tista(order_id: str, headless: bool = True):
     """
-    Automates Tista login, dispute extraction, and order file parsing using Playwright.
+    Automates Tista login, dispute extraction, and order file parsing.
+    Supports Order ID, Dispute ID, and direct URLs (Tista, Dropbox, etc.).
+    Uses smart caching and fast HTTP queries to return in ~0.5s when possible.
     """
     raw_id = str(order_id).strip()
     digits = re.sub(r"\D", "", raw_id)
+
+    # Check if a URL was pasted and extract the clean Order/Dispute ID
+    if "http://" in raw_id or "https://" in raw_id:
+        if "dropbox.com" in raw_id or "feedback" in raw_id.lower():
+            m_hash = re.search(r"(?:%23|#)(\d{5,7})", raw_id)
+            if m_hash: digits = m_hash.group(1)
+            else:
+                m_six = re.search(r"\b(\d{6})\b", raw_id)
+                if m_six: digits = m_six.group(1)
+        elif "tista.app" in raw_id:
+            m_q = re.search(r"[?&]query=([^&#]+)", raw_id)
+            if m_q: digits = re.sub(r"\D", "", m_q.group(1))
+            elif "order_name_eq" in raw_id:
+                m_eq = re.search(r"order_name_eq\]=([^&#]+)", raw_id)
+                if m_eq: digits = re.sub(r"\D", "", m_eq.group(1))
+            elif "/order_disputes/" in raw_id:
+                m_disp = re.search(r"/order_disputes/(\d+)", raw_id)
+                if m_disp: digits = m_disp.group(1)
+            elif "/orders/" in raw_id:
+                m_ord = re.search(r"/orders/(\d+)", raw_id)
+                if m_ord: digits = m_ord.group(1)
+
     search_with_hash = f"#{digits}" if digits else raw_id
     oid = digits or raw_id.replace("#", "")
 
     if not oid:
         return {"error": "Invalid Order ID"}
 
+    # 1. Local Cache Check (Instant return in ~0.005s)
+    cached_delay = DATA_DIR / f"tista_{oid}.json"
+    if not cached_delay.exists(): cached_delay = APP_DIR / f"tista_{oid}.json"
+    if cached_delay.exists():
+        try:
+            cdata = json.loads(cached_delay.read_text(encoding="utf-8"))
+            if cdata and cdata.get("order_id"):
+                print(f"[✓] Returning cached dispute & order data for #{oid}")
+                return cdata
+        except Exception:
+            pass
+
     out = {
         "order_id": oid,
         "dispute_id": "",
-        "dispute_reason": "Delay",
+        "dispute_reason": "Correction",
         "contractor": "",
         "dispute_location": "",
         "fault_by": "",
@@ -468,8 +504,8 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
         "fault_quantity": None,
         "fault_severity": "Low",
         "status": "",
-        "order_duration_text": "",
-        "order_duration_seconds": None,
+        "order_duration_text": "24:00:00",
+        "order_duration_seconds": 86400,
         "pixel": "> 5000",
         "service_type": "",
         "category_level": "",
@@ -477,6 +513,77 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
         "services": [],
         "warnings": []
     }
+
+    # 2. Fast HTTP check for dispute record before starting heavy browser
+    http_sess = get_tista_http_session()
+    http_found = False
+    for cand_val in [f"%23{oid}", oid]:
+        cand_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
+        try:
+            resp = http_sess.get(cand_url, timeout=5)
+            if resp.status_code == 200 and "order_disputes" in resp.url and "sign_in" not in resp.url:
+                trs = re.findall(r'<tr[^>]*>(.*?)</tr>', resp.text, re.DOTALL)
+                for tr in trs:
+                    tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
+                    if len(tds) >= 11:
+                        cells = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
+                        if cells[0].isdigit():
+                            out["dispute_id"] = cells[0]
+                            out["dispute_location"] = cells[2]
+                            out["contractor"] = cells[2]
+                            out["fault_by"] = cells[3]
+                            out["dispute_reason"] = cells[4] or "Correction"
+                            out["chargeable_to"] = cells[5]
+                            out["fault_at"] = cells[7]
+                            out["delayed_by_text"] = cells[8]
+                            sec = hours_to_seconds(cells[8])
+                            out["delayed_by_seconds"] = sec
+                            out["delay_seconds"] = -abs(sec) if sec is not None else None
+                            q_match = re.search(r"\d+(?:\.\d+)?", cells[9])
+                            out["fault_quantity"] = float(q_match[0]) if q_match else 1.0
+                            out["fault_severity"] = cells[10] or "Low"
+                            out["status"] = cells[11] if len(cells) > 11 else "Open"
+                            http_found = True
+                            print(f"[✓] Fast HTTP found Dispute #{out['dispute_id']} for #{oid}: Contractor='{out['contractor']}', Reason='{out['dispute_reason']}'")
+                            break
+            if http_found:
+                break
+        except Exception as he:
+            print(f"[*] Fast HTTP dispute search note: {he}")
+
+    if http_found and out.get("dispute_id"):
+        # Fetch comment & link via HTTP
+        try:
+            resp_e = http_sess.get(f"{BASE_URL}/manage/vendors/1/order_disputes/{out['dispute_id']}/edit", timeout=5)
+            if resp_e.status_code == 200:
+                m_comm = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
+                if m_comm:
+                    c_val = html.unescape(m_comm.group(1).strip())
+                    out["comment"] = c_val
+                    urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
+                    if urls:
+                        out["comment_link"] = urls[0]
+        except Exception:
+            pass
+
+        # Check if files already cached in tista_correction_{oid}.json
+        cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+        if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+        if cached_corr.exists():
+            try:
+                c_corr_data = json.loads(cached_corr.read_text(encoding="utf-8"))
+                if c_corr_data.get("order_duration"):
+                    out["order_duration_text"] = c_corr_data["order_duration"]
+                if c_corr_data.get("contractor") and not out["contractor"]:
+                    out["contractor"] = c_corr_data["contractor"]
+                out["services"] = c_corr_data.get("files", [])
+                for p_save in [DATA_DIR, APP_DIR]:
+                    try: (p_save / f"tista_{oid}.json").write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+                    except Exception: pass
+                print(f"[✓] Fast combined dispute & cached files for #{oid} returned in <0.5s!")
+                return out
+            except Exception:
+                pass
 
     if not sync_playwright:
         return {
@@ -797,11 +904,50 @@ def parse_file_services(services_raw):
 def fetch_order_files_from_tista(order_id: str, headless: bool = True):
     """
     Fetches the list of files, services, categories, and location for an order to calculate Correction chargebacks.
+    Supports Order ID, Dispute ID, and direct URLs (Tista, Dropbox, etc.).
+    Returns instantly from local cache if available.
     """
     raw_id = str(order_id).strip()
     digits = re.sub(r"\D", "", raw_id)
+
+    # Check if a URL was passed and extract the clean Order/Dispute ID
+    if "http://" in raw_id or "https://" in raw_id:
+        if "dropbox.com" in raw_id or "feedback" in raw_id.lower():
+            m_hash = re.search(r"(?:%23|#)(\d{5,7})", raw_id)
+            if m_hash: digits = m_hash.group(1)
+            else:
+                m_six = re.search(r"\b(\d{6})\b", raw_id)
+                if m_six: digits = m_six.group(1)
+        elif "tista.app" in raw_id:
+            m_q = re.search(r"[?&]query=([^&#]+)", raw_id)
+            if m_q: digits = re.sub(r"\D", "", m_q.group(1))
+            elif "order_name_eq" in raw_id:
+                m_eq = re.search(r"order_name_eq\]=([^&#]+)", raw_id)
+                if m_eq: digits = re.sub(r"\D", "", m_eq.group(1))
+            elif "/order_disputes/" in raw_id:
+                m_disp = re.search(r"/order_disputes/(\d+)", raw_id)
+                if m_disp: digits = m_disp.group(1)
+            elif "/orders/" in raw_id:
+                m_ord = re.search(r"/orders/(\d+)", raw_id)
+                if m_ord: digits = m_ord.group(1)
+
     search_with_hash = f"#{digits}" if digits else raw_id
     oid = digits or raw_id.replace("#", "")
+
+    if not oid:
+        return {"error": "Invalid Order ID"}
+
+    # 1. Local Cache Check (Instant return in ~0.005s)
+    cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+    if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+    if cached_corr.exists():
+        try:
+            cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
+            if cdata and (cdata.get("files") or cdata.get("total_files", 0) >= 0):
+                print(f"[✓] Returning cached files data for Order #{oid}")
+                return cdata
+        except Exception:
+            pass
 
     result = {
         "order_id": oid,
@@ -2346,10 +2492,45 @@ def parse_google_slides_presentation(slide_url: str):
 
     parsed_jobs = []
     sections = re.findall(r"<section\b[^>]*>([\s\S]*?)</section>", html) if html else []
-    
+
+    # If urllib export/html failed or produced no sections, attempt authenticated Playwright fetch
+    if not sections and sync_playwright:
+        try:
+            print(f"[*] Attempting authenticated Playwright fetch for Google Slides: {export_html_url}")
+            with sync_playwright() as p:
+                ctx = launch_playwright_context(p, headless=True)
+                page = ctx.pages[0] if ctx.pages else ctx.new_page()
+                page.goto(export_html_url, wait_until="domcontentloaded", timeout=15000)
+                page_content = page.content()
+                secs = re.findall(r"<section\b[^>]*>([\s\S]*?)</section>", page_content)
+                if secs:
+                    sections = secs
+                else:
+                    page.goto(raw_url, wait_until="domcontentloaded", timeout=15000)
+                    time.sleep(2.0)
+                    slide_texts = page.evaluate("""() => {
+                        const slides = [];
+                        const pages = document.querySelectorAll('.punch-viewer-svgpage, .punch-viewer-page, .punch-filmstrip-thumbnail');
+                        if (pages.length) {
+                            pages.forEach(p => slides.push(p.innerText || p.textContent || ''));
+                        } else {
+                            slides.push(document.body.innerText || '');
+                        }
+                        return slides;
+                    }""")
+                    if slide_texts:
+                        sections = [f"<section>{txt}</section>" for txt in slide_texts if txt.strip()]
+                ctx.close()
+        except Exception as pe:
+            print(f"[!] Playwright slides fallback note: {pe}")
+
     if sections:
         for s_idx, sec in enumerate(sections):
             slide_text = clean_html_block(sec)
+
+            # Slide ID (if present in tag attributes)
+            s_id_m = re.search(r'id=["\'](?:slide-id-)?([a-zA-Z0-9_-]+)["\']', sec) or re.search(r'data-slide-id=["\']([a-zA-Z0-9_-]+)["\']', sec)
+            slide_id_val = s_id_m.group(1) if s_id_m else f"p{s_idx + 1}"
             
             # Order ID
             m_oid = re.search(r"(?:Job|Order)\s*ID\s*[:#-]*\s*#?(\d+)", slide_text, re.I)
@@ -2473,6 +2654,7 @@ def parse_google_slides_presentation(slide_url: str):
 
             cleaned_filenames = clean_file_names_list(file_list)
             parsed_jobs.append({
+                "slide_id": slide_id_val,
                 "order_id": order_id,
                 "contractor": contractor,
                 "service": service,
@@ -2542,6 +2724,7 @@ def parse_google_slides_presentation(slide_url: str):
                         clean_reason = raw_rep
 
                     parsed_jobs.append({
+                        "slide_id": f"p{len(parsed_jobs) + 1}",
                         "order_id": order_id,
                         "contractor": contractor,
                         "service": service,
@@ -2684,9 +2867,18 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 return
             res = parse_google_slides_presentation(slide_url)
             order_id = qs.get("order_id", [""])[0].strip()
-            if order_id and "jobs" in res:
-                clean_oid = re.sub(r"\D", "", order_id)
-                res["target_job"] = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
+            m_hash = re.search(r"#slide=id\.([a-zA-Z0-9_-]+)", slide_url)
+            hash_slide_id = m_hash.group(1) if m_hash else None
+            clean_oid = re.sub(r"\D", "", order_id) if order_id else ""
+            if "jobs" in res and res["jobs"]:
+                target = None
+                if hash_slide_id:
+                    target = next((j for j in res["jobs"] if j.get("slide_id") == hash_slide_id), None)
+                if not target and clean_oid:
+                    target = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
+                if not target:
+                    target = res["jobs"][0]
+                res["target_job"] = target
             self.send_response(200 if "error" not in res else 400)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -2853,9 +3045,18 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 return
             res = parse_google_slides_presentation(slide_url)
             order_id = str(data.get("order_id", "")).strip()
-            if order_id and "jobs" in res:
-                clean_oid = re.sub(r"\D", "", order_id)
-                res["target_job"] = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
+            m_hash = re.search(r"#slide=id\.([a-zA-Z0-9_-]+)", slide_url)
+            hash_slide_id = m_hash.group(1) if m_hash else None
+            clean_oid = re.sub(r"\D", "", order_id) if order_id else ""
+            if "jobs" in res and res["jobs"]:
+                target = None
+                if hash_slide_id:
+                    target = next((j for j in res["jobs"] if j.get("slide_id") == hash_slide_id), None)
+                if not target and clean_oid:
+                    target = next((j for j in res["jobs"] if re.sub(r"\D", "", str(j.get("order_id", ""))) == clean_oid or clean_oid in str(j.get("order_id", ""))), None)
+                if not target:
+                    target = res["jobs"][0]
+                res["target_job"] = target
             self.send_response(200 if "error" not in res else 400)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
