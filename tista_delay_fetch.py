@@ -2785,6 +2785,39 @@ def parse_google_slides_presentation(slide_url: str):
         except Exception as e:
             print(f"[!] TXT fallback error: {e}")
 
+    # Check if any orders lack cached files, and batch-extract them in ONE fast Playwright pass
+    uncached_slide_oids = []
+    for j in parsed_jobs:
+        raw_rep = str(j.get("report_type") or "")
+        clean_reas = str(j.get("reason") or "")
+        if re.search(r"sm\s*correction|instruction\s*mistake\s*by\s*sm", raw_rep, re.I) or re.search(r"sm\s*correction", clean_reas, re.I):
+            continue
+        oid = re.sub(r"\D", "", str(j.get("order_id", "")))
+        if not oid: continue
+        c_corr = DATA_DIR / f"tista_correction_{oid}.json"
+        if not c_corr.exists(): c_corr = APP_DIR / f"tista_correction_{oid}.json"
+        if not c_corr.exists():
+            if oid not in uncached_slide_oids:
+                uncached_slide_oids.append(oid)
+
+    if uncached_slide_oids and sync_playwright:
+        print(f"[*] Batch extracting {len(uncached_slide_oids)} uncached orders for Google Slides: {uncached_slide_oids}")
+        try:
+            with sync_playwright() as p_slides:
+                ctx_slides = launch_playwright_context(p_slides, headless=True)
+                page_slides = ctx_slides.pages[0] if ctx_slides.pages else ctx_slides.new_page()
+                for u_oid in uncached_slide_oids:
+                    try:
+                        extract_order_files_with_page(page_slides, u_oid)
+                    except Exception as eo:
+                        print(f"[!] Error extracting files for #{u_oid}: {eo}")
+                try:
+                    ctx_slides.close()
+                except Exception:
+                    pass
+        except Exception as pe:
+            print(f"[!] Batch Playwright fetch note: {pe}")
+
     # Attach local cached files (instant disk lookup in 0.001s, no network/Playwright overhead)
     for j in parsed_jobs:
         oid = re.sub(r"\D", "", str(j.get("order_id", "")))
