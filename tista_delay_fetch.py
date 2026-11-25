@@ -22,7 +22,10 @@ from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandle
 from urllib.parse import urlparse, parse_qs, quote
 from concurrent.futures import ThreadPoolExecutor
 import html
-import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 # Safe stream wrappers so print never fails in windowed/GUI mode
 if sys.stdout is None:
@@ -517,54 +520,55 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
     # 2. Fast HTTP check for dispute record before starting heavy browser
     http_sess = get_tista_http_session()
     http_found = False
-    for cand_val in [f"%23{oid}", oid]:
-        cand_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
-        try:
-            resp = http_sess.get(cand_url, timeout=5)
-            if resp.status_code == 200 and "order_disputes" in resp.url and "sign_in" not in resp.url:
-                trs = re.findall(r'<tr[^>]*>(.*?)</tr>', resp.text, re.DOTALL)
-                for tr in trs:
-                    tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
-                    if len(tds) >= 11:
-                        cells = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
-                        if cells[0].isdigit():
-                            out["dispute_id"] = cells[0]
-                            out["dispute_location"] = cells[2]
-                            out["contractor"] = cells[2]
-                            out["fault_by"] = cells[3]
-                            out["dispute_reason"] = cells[4] or "Correction"
-                            out["chargeable_to"] = cells[5]
-                            out["fault_at"] = cells[7]
-                            out["delayed_by_text"] = cells[8]
-                            sec = hours_to_seconds(cells[8])
-                            out["delayed_by_seconds"] = sec
-                            out["delay_seconds"] = -abs(sec) if sec is not None else None
-                            q_match = re.search(r"\d+(?:\.\d+)?", cells[9])
-                            out["fault_quantity"] = float(q_match[0]) if q_match else 1.0
-                            out["fault_severity"] = cells[10] or "Low"
-                            out["status"] = cells[11] if len(cells) > 11 else "Open"
-                            http_found = True
-                            print(f"[✓] Fast HTTP found Dispute #{out['dispute_id']} for #{oid}: Contractor='{out['contractor']}', Reason='{out['dispute_reason']}'")
-                            break
-            if http_found:
-                break
-        except Exception as he:
-            print(f"[*] Fast HTTP dispute search note: {he}")
+    if http_sess:
+        for cand_val in [f"%23{oid}", oid]:
+            cand_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
+            try:
+                resp = http_sess.get(cand_url, timeout=5)
+                if resp.status_code == 200 and "order_disputes" in resp.url and "sign_in" not in resp.url:
+                    trs = re.findall(r'<tr[^>]*>(.*?)</tr>', resp.text, re.DOTALL)
+                    for tr in trs:
+                        tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
+                        if len(tds) >= 11:
+                            cells = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
+                            if cells[0].isdigit():
+                                out["dispute_id"] = cells[0]
+                                out["dispute_location"] = cells[2]
+                                out["contractor"] = cells[2]
+                                out["fault_by"] = cells[3]
+                                out["dispute_reason"] = cells[4] or "Correction"
+                                out["chargeable_to"] = cells[5]
+                                out["fault_at"] = cells[7]
+                                out["delayed_by_text"] = cells[8]
+                                sec = hours_to_seconds(cells[8])
+                                out["delayed_by_seconds"] = sec
+                                out["delay_seconds"] = -abs(sec) if sec is not None else None
+                                q_match = re.search(r"\d+(?:\.\d+)?", cells[9])
+                                out["fault_quantity"] = float(q_match[0]) if q_match else 1.0
+                                out["fault_severity"] = cells[10] or "Low"
+                                out["status"] = cells[11] if len(cells) > 11 else "Open"
+                                http_found = True
+                                print(f"[✓] Fast HTTP found Dispute #{out['dispute_id']} for #{oid}: Contractor='{out['contractor']}', Reason='{out['dispute_reason']}'")
+                                break
+                if http_found:
+                    break
+            except Exception as he:
+                print(f"[*] Fast HTTP dispute search note: {he}")
 
-    if http_found and out.get("dispute_id"):
-        # Fetch comment & link via HTTP
-        try:
-            resp_e = http_sess.get(f"{BASE_URL}/manage/vendors/1/order_disputes/{out['dispute_id']}/edit", timeout=5)
-            if resp_e.status_code == 200:
-                m_comm = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
-                if m_comm:
-                    c_val = html.unescape(m_comm.group(1).strip())
-                    out["comment"] = c_val
-                    urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
-                    if urls:
-                        out["comment_link"] = urls[0]
-        except Exception:
-            pass
+        if http_found and out.get("dispute_id"):
+            # Fetch comment & link via HTTP
+            try:
+                resp_e = http_sess.get(f"{BASE_URL}/manage/vendors/1/order_disputes/{out['dispute_id']}/edit", timeout=5)
+                if resp_e.status_code == 200:
+                    m_comm = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
+                    if m_comm:
+                        c_val = html.unescape(m_comm.group(1).strip())
+                        out["comment"] = c_val
+                        urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
+                        if urls:
+                            out["comment_link"] = urls[0]
+            except Exception:
+                pass
 
         # Check if files already cached in tista_correction_{oid}.json
         cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
@@ -1912,6 +1916,8 @@ def get_tista_http_session(force_refresh: bool = False):
     Reuses TCP/TLS connections to execute requests in ~200-300ms.
     """
     global _TISTA_HTTP_SESSION
+    if requests is None:
+        return None
     if _TISTA_HTTP_SESSION is not None and not force_refresh:
         return _TISTA_HTTP_SESSION
 
@@ -2012,6 +2018,8 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
     charge_amt = round(max(2.0, float(amount or 2.0)), 2)
 
     s = get_tista_http_session()
+    if not s:
+        return False, "HTTP session not available"
 
     # 1. Resolve dispute_id from cache if missing
     if not clean_did and raw_oid and raw_oid in _ORDER_TO_DISPUTE_CACHE:
@@ -2230,6 +2238,8 @@ def batch_close_disputes_on_tista(items: list, headless: bool = False):
         return {"total": 0, "closed": 0, "results": []}
 
     s = get_tista_http_session()
+    if not s:
+        return False, "HTTP session not available"
     get_cached_csrf_token(s)
 
     results = []
