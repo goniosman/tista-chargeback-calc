@@ -1,15 +1,176 @@
 {
   "filters": {
-    "reason": "1",
     "status": "1",
-    "chargeable": "1",
-    "location": "",
-    "query": "",
-    "date_range": "",
-    "start_date": "2026-11-16",
-    "end_date": "2026-11-22",
+    "reason": "1",
     "deep_scan": true
   },
-  "total_disputes": 0,
-  "disputes": []
+  "total_disputes": 4,
+  "disputes": [
+    {
+      "dispute_id": "46564",
+      "order_id": "#449229",
+      "contractor": "Pixel Path (P2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-08-31",
+      "delayed_by": "03:36:22",
+      "delay_seconds": 12982,
+      "order_duration": "6:00:00",
+      "fault_quantity": 4,
+      "fault_severity": "Medium",
+      "status": "Awaiting res...",
+      "service": "Multi-clipping path",
+      "cat": "Category 2.5",
+      "pix": "> 5000",
+      "order_services": [
+        "Multi-clipping path"
+      ],
+      "order_cats": [
+        "Category 2.5"
+      ],
+      "comment": "4 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/31cMPEPggkWIMz3J",
+      "comment_link": "https://www.dropbox.com/t/31cMPEPggkWIMz3J",
+      "filenames": [
+        "batch-1/260818_DS_DURGA_06_384.jpg",
+        "batch-1/260818_DS_DURGA_05_306.jpg",
+        "batch-1/260818_DS_DURGA_07_393.jpg",
+        "batch-1/260818_DS_DURGA_07_400.jpg"
+      ],
+      "file_details": [
+        {
+          "filename": "batch-1/260818_DS_DURGA_06_384.jpg",
+          "category": "Category 2.5",
+          "service": "Multi-clipping path",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/260818_DS_DURGA_05_306.jpg",
+          "category": "Category 2.5",
+          "service": "Multi-clipping path",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/260818_DS_DURGA_07_393.jpg",
+          "category": "Category 2.5",
+          "service": "Multi-clipping path",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/260818_DS_DURGA_07_400.jpg",
+          "category": "Category 2.5",
+          "service": "Multi-clipping path",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            }
+          ]
+        }
+      ],
+      "filenames_count": 4
+    },
+    {
+      "dispute_id": "17837",
+      "order_id": "#197768",
+      "contractor": "Graphics Home",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2022-06-21",
+      "delayed_by": "01:03:55",
+      "delay_seconds": 3835,
+      "order_duration": "24:00:00",
+      "fault_quantity": 9,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000",
+      "order_services": [],
+      "order_cats": [],
+      "comment": "৯ ইমেজ  ডিলে হয়েছে। কারেকশন অর্ডার।",
+      "comment_link": "",
+      "filenames": [],
+      "file_details": [],
+      "filenames_count": 0
+    },
+    {
+      "dispute_id": "17577",
+      "order_id": "#195413",
+      "contractor": "Vectorio",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2022-06-04",
+      "delayed_by": "00:04:41",
+      "delay_seconds": 281,
+      "order_duration": "24:00:00",
+      "fault_quantity": 4,
+      "fault_severity": "Low",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000",
+      "order_services": [],
+      "order_cats": [],
+      "comment": "৪ ইমেজ  ডিলে হয়েছে।",
+      "comment_link": "",
+      "filenames": [],
+      "file_details": [],
+      "filenames_count": 0
+    },
+    {
+      "dispute_id": "17153",
+      "order_id": "#189632",
+      "contractor": "Pixel Expert (DP)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2022-05-01",
+      "delayed_by": "02:22:03",
+      "delay_seconds": 8523,
+      "order_duration": "24:00:00",
+      "fault_quantity": 11,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1.5",
+      "pix": "> 5000",
+      "order_services": [],
+      "order_cats": [],
+      "comment": "11 ইমেজ  ডিলে হয়েছে।",
+      "comment_link": "",
+      "filenames": [],
+      "file_details": [],
+      "filenames_count": 0
+    }
+  ]
 }

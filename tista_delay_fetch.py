@@ -21,6 +21,7 @@ from pathlib import Path
 from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
 from concurrent.futures import ThreadPoolExecutor
+import html
 import requests
 
 # Safe stream wrappers so print never fails in windowed/GUI mode
@@ -47,7 +48,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.25.v2"
+SERVER_VERSION = "2026.11.25.v3"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -562,35 +563,49 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
 
             print(f"[✓] Found Dispute info: ID={out['dispute_id']}, Order=#{real_oid}, Contractor='{out['contractor']}', Reason='{reason_found}', Delayed='{delayed_text}' ({out['delay_seconds']}s), Fault Qty={out['fault_quantity']}, Severity={out['fault_severity']}")
 
-            # Check Dispute Edit Page for comment & delay link
+            # Check Dispute Edit Page for comment & delay link (fast HTTP first)
             if out.get("dispute_id"):
                 try:
                     did = out["dispute_id"]
                     print(f"[*] Checking dispute #{did} edit page for comment & link...")
-                    edit_page = ctx.new_page()
                     edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit"
-                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=20000)
-                    time.sleep(1.5)
-                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
-                    if c_el.count() > 0:
-                        c_val = c_el.input_value().strip()
-                        if c_val:
-                            out["comment"] = c_val
-                            print(f"[✓] Extracted dispute comment: {c_val}")
-                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
-                            if urls:
-                                link = urls[0]
-                                out["comment_link"] = link
-                                print(f"[*] Found link in dispute comment: {link}")
-                                files = extract_filenames_from_page(edit_page, link)
-                                if files:
-                                    out["filenames"] = files
-                                    out["filenames_count"] = len(files)
-                                    print(f"[✓] Extracted {len(files)} files from dispute comment link!")
-                                    if str(out.get("dispute_reason", "")).lower() == "delay":
-                                        out["fault_quantity"] = float(len(files))
-                                        print(f"[✓] Updated fault_quantity to {len(files)} from delay link!")
-                    edit_page.close()
+                    c_val = ""
+                    try:
+                        s_http = get_tista_http_session()
+                        resp_e = s_http.get(edit_url, timeout=5)
+                        if resp_e.status_code == 200:
+                            m_comm = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
+                            if m_comm:
+                                c_val = html.unescape(m_comm.group(1).strip())
+                    except Exception as he:
+                        print(f"[*] Fast HTTP edit check note: {he}")
+
+                    if not c_val and ctx:
+                        edit_page = ctx.new_page()
+                        try:
+                            edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
+                            c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
+                            if c_el.count() > 0:
+                                c_val = c_el.input_value().strip()
+                        finally:
+                            edit_page.close()
+
+                    if c_val:
+                        out["comment"] = c_val
+                        print(f"[✓] Extracted dispute comment: {c_val}")
+                        urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
+                        if urls:
+                            link = urls[0]
+                            out["comment_link"] = link
+                            print(f"[*] Found link in dispute comment: {link}")
+                            files = extract_filenames_from_page(page, link)
+                            if files:
+                                out["filenames"] = files
+                                out["filenames_count"] = len(files)
+                                print(f"[✓] Extracted {len(files)} files from dispute comment link!")
+                                if str(out.get("dispute_reason", "")).lower() == "delay":
+                                    out["fault_quantity"] = float(len(files))
+                                    print(f"[✓] Updated fault_quantity to {len(files)} from delay link!")
                 except Exception as ce:
                     print(f"[!] Warning reading dispute edit page: {ce}")
                     out["warnings"].append(f"Dispute comment fetch note: {ce}")
@@ -1026,8 +1041,11 @@ def extract_order_files_with_page(page, order_id: str):
 
     print(f"[*] Extracting files for Order #{oid} using active page...")
     try:
-        page.goto(f"{BASE_URL}/orders?location=all&dateRange=any&query={oid}", wait_until="domcontentloaded", timeout=18000)
-        time.sleep(1.2)
+        page.goto(f"{BASE_URL}/orders?location=all&dateRange=any&query={oid}", wait_until="domcontentloaded", timeout=12000)
+        try:
+            page.locator(f'tr:has-text("{oid}")').first.wait_for(state="attached", timeout=3000)
+        except Exception:
+            pass
         order_row = page.locator(f'tr:has-text("{oid}")').first
         internal_id = ""
         contractor = ""
@@ -1046,14 +1064,32 @@ def extract_order_files_with_page(page, order_id: str):
                     break
 
         if not internal_id:
+            corr_empty = {
+                "order_id": oid,
+                "contractor": contractor,
+                "order_duration": turnaround,
+                "pixel": "> 5000",
+                "total_files": 0,
+                "files": []
+            }
+            for path_cand in [DATA_DIR, APP_DIR]:
+                try:
+                    (path_cand / f"tista_correction_{oid}.json").write_text(json.dumps(corr_empty, indent=2, ensure_ascii=False), encoding="utf-8")
+                except Exception:
+                    pass
             return []
 
-        page.goto(f"{BASE_URL}/orders/{internal_id}/files", wait_until="domcontentloaded", timeout=18000)
-        time.sleep(1.2)
+        page.goto(f"{BASE_URL}/orders/{internal_id}/files", wait_until="domcontentloaded", timeout=12000)
         tbl_btn = page.locator('button[data-order-files-layout-param="table"]').first
-        if tbl_btn.count() > 0:
+        try:
+            tbl_btn.wait_for(state="visible", timeout=2500)
             tbl_btn.click()
-            time.sleep(0.8)
+        except Exception:
+            pass
+        try:
+            page.locator('table.files-container-table tbody tr').first.wait_for(state="attached", timeout=3000)
+        except Exception:
+            pass
 
         files_raw = page.evaluate("""() => {
             const rows = document.querySelectorAll('table.files-container-table tbody tr');
@@ -1180,22 +1216,74 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
 
     qs = "&".join(params)
     url = f"{DISPUTES_URL}?{qs}" if qs else DISPUTES_URL
-    print(f"\n[*] Navigating to disputes search: {url}")
+    print(f"\n[*] Searching disputes: {url}")
 
-    profile_dir = USER_DATA_DIR
-    if not sync_playwright:
-        return {
-            "status": "error",
-            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
-        }
+    t_start = time.time()
+    http_sess = get_tista_http_session()
+    rows = []
+    http_ok = False
 
-    with sync_playwright() as p:
-        ctx = launch_playwright_context(p, headless=headless)
+    def parse_rows_from_html(html_text):
+        trs = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL)
+        found_rows = []
+        for tr in trs:
+            tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
+            if len(tds) >= 11:
+                cells = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
+                found_rows.append({
+                    "dispute_id": cells[0],
+                    "order_id": cells[1],
+                    "dispute_location": cells[2],
+                    "fault_by": cells[3],
+                    "dispute_reason": cells[4],
+                    "chargeable_to": cells[5],
+                    "charge": cells[6],
+                    "fault_at": cells[7],
+                    "delayed_by": cells[8],
+                    "fault_quantity": cells[9],
+                    "fault_severity": cells[10],
+                    "status": cells[11] if len(cells) > 11 else "Open"
+                })
+        return found_rows
+
+    try:
+        resp = http_sess.get(url, timeout=10)
+        if resp.status_code == 200 and "sign_in" not in resp.url and "order_disputes" in resp.url:
+            rows = parse_rows_from_html(resp.text)
+            http_ok = True
+            print(f"[✓] Extracted {len(rows)} dispute records in {time.time()-t_start:.2f}s via fast HTTP session!")
+            if single_clean_id and not rows:
+                for cand_val in [single_clean_id if single_is_hash else f"%23{single_clean_id}", f"%23{single_clean_id}", single_clean_id]:
+                    alt_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
+                    try:
+                        r_alt = http_sess.get(alt_url, timeout=5)
+                        if r_alt.status_code == 200:
+                            alt_rows = parse_rows_from_html(r_alt.text)
+                            if alt_rows:
+                                rows = alt_rows
+                                break
+                    except Exception:
+                        pass
+    except Exception as he:
+        print(f"[*] Fast HTTP search note: {he}")
+
+    p_instance = None
+    ctx = None
+    page = None
+
+    if not http_ok:
+        if not sync_playwright:
+            return {
+                "status": "error",
+                "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
+            }
+        p_instance = sync_playwright().start()
+        ctx = launch_playwright_context(p_instance, headless=headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         ensure_logged_in(page)
         page.goto(url)
         page.wait_for_load_state("domcontentloaded")
-        time.sleep(2)
+        time.sleep(1.5)
 
         if single_clean_id:
             trs = page.locator("table tbody tr")
@@ -1204,19 +1292,17 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 alt_params = [p for p in params if not p.startswith("q[id_or_fulfillment_order_order_name_eq]=")]
                 alt_params.append(f"q[id_or_fulfillment_order_order_name_eq]={alt_val}")
                 alt_url = f"{DISPUTES_URL}?{'&'.join(alt_params)}"
-                print(f"[*] Trying alternate query URL: {alt_url}")
                 page.goto(alt_url)
                 page.wait_for_load_state("domcontentloaded")
-                time.sleep(1.5)
+                time.sleep(1.0)
 
             trs = page.locator("table tbody tr")
             if trs.count() == 0 or (trs.count() == 1 and "no data" in trs.first.inner_text().lower()):
                 for cand_val in [f"%23{single_clean_id}", single_clean_id]:
                     broad_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
-                    print(f"[*] Trying broad dispute search for '{cand_val}': {broad_url}")
                     page.goto(broad_url)
                     page.wait_for_load_state("domcontentloaded")
-                    time.sleep(1.5)
+                    time.sleep(1.0)
                     trs_broad = page.locator("table tbody tr")
                     if trs_broad.count() > 0 and "no data" not in trs_broad.first.inner_text().lower():
                         break
@@ -1245,256 +1331,282 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             }).filter(Boolean);
         }""")
 
-        if multiple_ids:
-            target_set = set(multiple_ids)
-            rows = [r for r in rows if (re.sub(r"\D", "", r.get("order_id", "")) in target_set) or (re.sub(r"\D", "", r.get("dispute_id", "")) in target_set)]
+    if multiple_ids:
+        target_set = set(multiple_ids)
+        rows = [r for r in rows if (re.sub(r"\D", "", r.get("order_id", "")) in target_set) or (re.sub(r"\D", "", r.get("dispute_id", "")) in target_set)]
 
-        print(f"[*] Extracted {len(rows)} dispute records.")
-        out_list = []
+    print(f"[*] Processing {len(rows)} dispute records...")
 
+    # Fast parallel pre-fetch dispute comments and links via HTTP (takes ~0.5s for 10-20 disputes)
+    disp_ids_to_fetch = [r["dispute_id"] for r in rows if r.get("dispute_id") and (single_clean_id or deep_scan)]
+    comment_map = {}
+    link_map = {}
+    if disp_ids_to_fetch:
+        def fetch_disp_info(did):
+            try:
+                e_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit"
+                resp_e = http_sess.get(e_url, timeout=5)
+                if resp_e.status_code == 200:
+                    m = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
+                    if m:
+                        c_text = html.unescape(m.group(1).strip())
+                        urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_text)]
+                        return did, c_text, (urls[0] if urls else "")
+            except Exception:
+                pass
+            return did, "", ""
+
+        with ThreadPoolExecutor(max_workers=min(8, len(disp_ids_to_fetch))) as pool:
+            for did, c_text, c_link in pool.map(fetch_disp_info, disp_ids_to_fetch):
+                if c_text: comment_map[did] = c_text
+                if c_link: link_map[did] = c_link
+
+    # Check which orders require Playwright deep scan of files
+    uncached_oids = []
+    if deep_scan or single_clean_id:
         for r in rows:
-            raw_oid = re.sub(r"\D", "", r["order_id"])
-            d_id = str(r.get("dispute_id") or "").strip()
-            if raw_oid and d_id and d_id.isdigit():
-                _ORDER_TO_DISPUTE_CACHE[raw_oid] = d_id
-                if r.get("status"):
-                    _DISPUTE_STATUS_CACHE[d_id] = r.get("status")
+            raw_oid = re.sub(r"\D", "", r.get("order_id", ""))
+            r_name = (r.get("dispute_reason") or "").lower()
+            if "revision" in r_name: continue
+            if raw_oid:
+                c_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
+                if not c_corr.exists(): c_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+                c_delay = DATA_DIR / f"tista_{raw_oid}.json"
+                if not c_delay.exists(): c_delay = APP_DIR / f"tista_{raw_oid}.json"
+                if not c_corr.exists() and not c_delay.exists():
+                    uncached_oids.append(raw_oid)
 
-            qty = int(re.sub(r"\D", "", r["fault_quantity"]) or 1)
-            reason_name = r["dispute_reason"] or "Correction"
+    # Check which external links need filename extraction (skip if already cached)
+    links_to_extract = []
+    for r_check in rows:
+        did_c = str(r_check.get("dispute_id") or "").strip()
+        link_c = link_map.get(did_c)
+        if not link_c: continue
+        raw_oid_c = re.sub(r"\D", "", r_check.get("order_id", ""))
+        c_delay_c = DATA_DIR / f"tista_{raw_oid_c}.json"
+        if not c_delay_c.exists(): c_delay_c = APP_DIR / f"tista_{raw_oid_c}.json"
+        if c_delay_c.exists():
+            try:
+                d_c = json.loads(c_delay_c.read_text(encoding="utf-8"))
+                if d_c.get("filenames"):
+                    continue
+            except Exception:
+                pass
+        links_to_extract.append((did_c, link_c))
 
-            # Skip Revision disputes completely per user rules (no chargeback for revision)
-            if "revision" in reason_name.lower():
-                print(f"[*] Skipping Revision dispute #{r.get('dispute_id')} (No chargeback for revision)")
-                continue
+    # Launch Playwright only if there are uncached orders or uncached external links to parse
+    if (uncached_oids or links_to_extract) and not page and sync_playwright:
+        try:
+            p_instance = sync_playwright().start()
+            ctx = launch_playwright_context(p_instance, headless=headless)
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            ensure_logged_in(page)
+        except Exception as pe:
+            print(f"[!] Playwright start note: {pe}")
 
-            cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
-            if not cached_corr.exists():
-                cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+    if page and uncached_oids:
+        print(f"[*] Deep scanning {len(uncached_oids)} uncached orders: {uncached_oids}")
+        for u_oid in uncached_oids:
+            try:
+                extract_order_files_with_page(page, u_oid)
+            except Exception as e_uo:
+                print(f"[!] Deep scan note for #{u_oid}: {e_uo}")
 
-            # Only perform deep navigation if explicitly requested via single search or deep_scan
-            if not cached_corr.exists() and raw_oid and (single_clean_id or deep_scan):
+    out_list = []
+
+    for r in rows:
+        raw_oid = re.sub(r"\D", "", r["order_id"])
+        d_id = str(r.get("dispute_id") or "").strip()
+        if raw_oid and d_id and d_id.isdigit():
+            _ORDER_TO_DISPUTE_CACHE[raw_oid] = d_id
+            if r.get("status"):
+                _DISPUTE_STATUS_CACHE[d_id] = r.get("status")
+
+        qty = int(re.sub(r"\D", "", r["fault_quantity"]) or 1)
+        reason_name = r["dispute_reason"] or "Correction"
+
+        # Skip Revision disputes completely per user rules (no chargeback for revision)
+        if "revision" in reason_name.lower():
+            print(f"[*] Skipping Revision dispute #{r.get('dispute_id')} (No chargeback for revision)")
+            continue
+
+        cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
+        if not cached_corr.exists():
+            cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
+
+        cached_delay = DATA_DIR / f"tista_{raw_oid}.json"
+        if not cached_delay.exists():
+            cached_delay = APP_DIR / f"tista_{raw_oid}.json"
+
+        disp_comment = ""
+        disp_link = ""
+        disp_files = []
+
+        # First, check if cached delay already has comment, link, and filenames
+        if cached_delay.exists():
+            try:
+                ddata = json.loads(cached_delay.read_text(encoding="utf-8"))
+                disp_comment = ddata.get("comment", "")
+                disp_link = ddata.get("comment_link", "")
+                disp_files = ddata.get("filenames", [])
+            except Exception:
+                pass
+
+        # Use pre-fetched comment and link from fast HTTP
+        if not disp_comment and d_id in comment_map:
+            disp_comment = comment_map[d_id]
+        if not disp_link and d_id in link_map:
+            disp_link = link_map[d_id]
+
+        # If link exists and files not yet extracted, use active page and cache permanently
+        if disp_link and not disp_files and page:
+            disp_files = extract_filenames_from_page(page, disp_link)
+            if disp_files and raw_oid:
                 try:
-                    extract_order_files_with_page(page, raw_oid)
-                    if (DATA_DIR / f"tista_correction_{raw_oid}.json").exists():
-                        cached_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
-                    elif (APP_DIR / f"tista_correction_{raw_oid}.json").exists():
-                        cached_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
-                except Exception as ef:
-                    print(f"[*] Auto-fetching order files for #{raw_oid} note: {ef}")
-
-            cached_delay = DATA_DIR / f"tista_{raw_oid}.json"
-            if not cached_delay.exists():
-                cached_delay = APP_DIR / f"tista_{raw_oid}.json"
-
-            disp_comment = ""
-            disp_link = ""
-            disp_files = []
-
-            # First, check if cached delay already has comment, link, and filenames
-            if cached_delay.exists():
-                try:
-                    ddata = json.loads(cached_delay.read_text(encoding="utf-8"))
-                    disp_comment = ddata.get("comment", "")
-                    disp_link = ddata.get("comment_link", "")
-                    disp_files = ddata.get("filenames", [])
+                    (DATA_DIR / f"tista_{raw_oid}.json").write_text(json.dumps({
+                        "order_id": raw_oid,
+                        "dispute_id": d_id,
+                        "comment": disp_comment,
+                        "comment_link": disp_link,
+                        "filenames": disp_files,
+                        "filenames_count": len(disp_files)
+                    }, indent=2, ensure_ascii=False), encoding="utf-8")
                 except Exception:
                     pass
 
-            # If not in cache, check dispute edit page ONLY for single search or deep scan
-            if r.get("dispute_id") and not disp_files and (single_clean_id or deep_scan):
-                try:
-                    edit_page = ctx.new_page()
-                    edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{r['dispute_id']}/edit"
-                    edit_page.goto(edit_url, wait_until="domcontentloaded", timeout=12000)
-                    time.sleep(0.5)
-                    c_el = edit_page.locator("#order_dispute_comment, textarea[name*='comment']").first
-                    if c_el.count() > 0:
-                        c_val = c_el.input_value().strip()
-                        if c_val:
-                            disp_comment = c_val
-                            urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_val)]
-                            if urls:
-                                disp_link = urls[0]
-                                disp_files = extract_filenames_from_page(edit_page, disp_link)
-                    edit_page.close()
-                except Exception as bce:
-                    print(f"Batch dispute #{r.get('dispute_id')} edit check note: {bce}")
+        detected_svc = ""
+        detected_cat = ""
+        detected_dur = "24:00:00"
+        detected_pix = "> 5000"
 
-            detected_svc = ""
-            detected_cat = ""
-            detected_dur = "24:00:00"
-            detected_pix = "> 5000"
+        order_svcs = []
+        order_cats = []
+        order_file_details = []
 
-            order_svcs = []
-            order_cats = []
-            order_file_details = []
+        if cached_corr.exists():
+            try:
+                cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
+                if cdata.get("order_duration"):
+                    detected_dur = cdata.get("order_duration")
+                raw_files = cdata.get("files", [])
 
-            if cached_corr.exists():
-                try:
-                    cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
-                    if cdata.get("order_duration"):
-                        detected_dur = cdata.get("order_duration")
-                    raw_files = cdata.get("files", [])
-
-                    # For Delay disputes, filter strictly to the delayed files and slice to dispute qty
-                    target_files = raw_files
-                    if reason_name.lower() == "delay":
-                        if disp_files:
-                            disp_set = set(Path(f).name.lower().strip() for f in disp_files)
-                            matched = [f for f in raw_files if Path(f.get("filename", "")).name.lower().strip() in disp_set]
-                            if matched:
-                                target_files = matched
-                        if qty and len(target_files) > qty:
-                            target_files = target_files[:qty]
-                    elif qty and len(target_files) > qty:
+                # For Delay disputes, filter strictly to the delayed files and slice to dispute qty
+                target_files = raw_files
+                if reason_name.lower() == "delay":
+                    if disp_files:
+                        disp_set = set(Path(f).name.lower().strip() for f in disp_files)
+                        matched = [f for f in raw_files if Path(f.get("filename", "")).name.lower().strip() in disp_set]
+                        if matched:
+                            target_files = matched
+                    if qty and len(target_files) > qty:
                         target_files = target_files[:qty]
+                elif qty and len(target_files) > qty:
+                    target_files = target_files[:qty]
 
-                    for f0 in target_files:
-                        fn = f0.get("filename", "")
-                        svcs0 = f0.get("services", [])
-                        clean_file_services = []
-                        seen_cfs = {}
-                        for s_item in svcs0:
-                            raw_s = s_item.get("raw_name") or s_item.get("name") or s_item.get("service") or ""
-                            s_name = resolve_service_name(raw_s)
-                            c_name = s_item.get("category")
-                            if not c_name and s_item.get("complexity"):
-                                c_name = f"Category {re.sub(r'^[Cc]', '', s_item.get('complexity')).strip()}"
-                            num_cat = s_item.get("numeric_cat") or 1.0
-                            k = s_name.lower()
-                            if k in seen_cfs:
-                                if num_cat > seen_cfs[k]["numeric_cat"]:
-                                    seen_cfs[k]["category"] = c_name or "Category 1.5"
-                                    seen_cfs[k]["numeric_cat"] = num_cat
-                                    seen_cfs[k]["complexity"] = s_item.get("complexity") or ""
-                                continue
-                            item = {
-                                "service": s_name or "Clipping path",
-                                "raw_name": raw_s,
-                                "category": c_name or "Category 1.5",
-                                "complexity": s_item.get("complexity") or "",
-                                "numeric_cat": num_cat
-                            }
-                            seen_cfs[k] = item
-                            clean_file_services.append(item)
-                            if s_name and s_name not in order_svcs:
-                                order_svcs.append(s_name)
-                            if c_name and c_name not in order_cats:
-                                order_cats.append(c_name)
-
-                        primary_cat = clean_file_services[0]["category"] if clean_file_services else "Category 1.5"
-                        primary_svc = clean_file_services[0]["service"] if clean_file_services else "Clipping path"
-
-                        order_file_details.append({
-                            "filename": fn,
-                            "category": primary_cat,
-                            "service": primary_svc,
-                            "services": clean_file_services
-                        })
-
-                    if order_svcs and not detected_svc:
-                        detected_svc = order_svcs[0]
-                    if order_cats and not detected_cat:
-                        detected_cat = order_cats[0]
-                except Exception:
-                    pass
-            elif cached_delay.exists():
-                try:
-                    ddata = json.loads(cached_delay.read_text(encoding="utf-8"))
-                    detected_svc = ddata.get("service_type")
-                    detected_cat = ddata.get("category_level")
-                    detected_dur = ddata.get("order_duration_text") or "24:00:00"
-                    for s0 in ddata.get("services", []):
-                        s_name = s0.get("service")
-                        c_name = s0.get("category")
+                for f0 in target_files:
+                    fn = f0.get("filename", "")
+                    svcs0 = f0.get("services", [])
+                    clean_file_services = []
+                    seen_cfs = {}
+                    for s_item in svcs0:
+                        raw_s = s_item.get("raw_name") or s_item.get("name") or s_item.get("service") or ""
+                        s_name = resolve_service_name(raw_s)
+                        c_name = s_item.get("category")
+                        if not c_name and s_item.get("complexity"):
+                            c_name = f"Category {re.sub(r'^[Cc]', '', s_item.get('complexity')).strip()}"
+                        num_cat = s_item.get("numeric_cat") or 1.0
+                        k = s_name.lower()
+                        if k in seen_cfs:
+                            if num_cat > seen_cfs[k]["numeric_cat"]:
+                                seen_cfs[k]["category"] = c_name or "Category 1.5"
+                                seen_cfs[k]["numeric_cat"] = num_cat
+                                seen_cfs[k]["complexity"] = s_item.get("complexity") or ""
+                            continue
+                        item = {
+                            "service": s_name or "Clipping path",
+                            "raw_name": raw_s,
+                            "category": c_name or "Category 1.5",
+                            "complexity": s_item.get("complexity") or "",
+                            "numeric_cat": num_cat
+                        }
+                        seen_cfs[k] = item
+                        clean_file_services.append(item)
                         if s_name and s_name not in order_svcs:
                             order_svcs.append(s_name)
                         if c_name and c_name not in order_cats:
                             order_cats.append(c_name)
-                except Exception:
-                    pass
 
-            if deep_scan and not detected_svc and raw_oid:
-                try:
-                    page.goto(f"{BASE_URL}/orders?location=all&dateRange=any&query={raw_oid}")
-                    page.wait_for_load_state("domcontentloaded")
-                    time.sleep(1.5)
-                    internal_id = page.evaluate("""() => {
-                        const row = document.querySelector('tr[id^="order-"]');
-                        return row ? row.id.replace('order-', '') : null;
-                    }""")
-                    if internal_id:
-                        page.goto(f"{BASE_URL}/orders/{internal_id}/files")
-                        page.wait_for_load_state("domcontentloaded")
-                        time.sleep(1.5)
-                        tbl_btn = page.locator('button[data-order-files-layout-param="table"]').first
-                        if tbl_btn.count() > 0:
-                            tbl_btn.click()
-                            time.sleep(1)
-                        sinfo = page.evaluate("""() => {
-                            const sEls = [...document.querySelectorAll('.services-block .service')];
-                            const list = [];
-                            sEls.forEach(sEl => {
-                                const title = sEl.querySelector('.service-title') ? sEl.querySelector('.service-title').innerText.trim() : '';
-                                const subEl = sEl.querySelector('.service-category-title');
-                                const subTitle = subEl ? subEl.innerText.trim() : '';
-                                const compEl = sEl.querySelector('.complexity');
-                                const comp = compEl ? compEl.innerText.trim() : '';
-                                list.push({ name: subTitle || title, comp });
-                            });
-                            return list;
-                        }""")
-                        if sinfo:
-                            for si in sinfo:
-                                nm = si.get("name")
-                                if nm and nm not in order_svcs:
-                                    order_svcs.append(nm)
-                                c_m = re.search(r"(\d+(?:\.\d+)?)", si.get("comp", ""))
-                                c_str = f"Category {c_m[1]}" if c_m else ""
-                                if c_str and c_str not in order_cats:
-                                    order_cats.append(c_str)
-                            if order_svcs:
-                                detected_svc = order_svcs[0]
-                            if order_cats:
-                                detected_cat = order_cats[0]
-                except Exception as ex:
-                    print(f"Error deep scanning #{raw_oid}: {ex}")
+                    primary_cat = clean_file_services[0]["category"] if clean_file_services else "Category 1.5"
+                    primary_svc = clean_file_services[0]["service"] if clean_file_services else "Clipping path"
 
-            if not detected_svc:
-                detected_svc = "Clipping path"
-            if not detected_cat:
-                detected_cat = "Category 1.5"
+                    order_file_details.append({
+                        "filename": fn,
+                        "category": primary_cat,
+                        "service": primary_svc,
+                        "services": clean_file_services
+                    })
 
-            delay_sec = hours_to_seconds(r["delayed_by"]) if reason_name.lower() == "delay" else 0
+                if order_svcs and not detected_svc:
+                    detected_svc = order_svcs[0]
+                if order_cats and not detected_cat:
+                    detected_cat = order_cats[0]
+            except Exception:
+                pass
+        elif cached_delay.exists():
+            try:
+                ddata = json.loads(cached_delay.read_text(encoding="utf-8"))
+                detected_svc = ddata.get("service_type")
+                detected_cat = ddata.get("category_level")
+                detected_dur = ddata.get("order_duration_text") or "24:00:00"
+                for s0 in ddata.get("services", []):
+                    s_name = s0.get("service")
+                    c_name = s0.get("category")
+                    if s_name and s_name not in order_svcs:
+                        order_svcs.append(s_name)
+                    if c_name and c_name not in order_cats:
+                        order_cats.append(c_name)
+            except Exception:
+                pass
 
-            out_list.append({
-                "dispute_id": r["dispute_id"],
-                "order_id": r["order_id"],
-                "contractor": r["dispute_location"],
-                "fault_by": r["fault_by"],
-                "dispute_reason": reason_name,
-                "chargeable_to": r["chargeable_to"],
-                "fault_at": r["fault_at"],
-                "delayed_by": r["delayed_by"],
-                "delay_seconds": delay_sec,
-                "order_duration": detected_dur,
-                "fault_quantity": qty,
-                "fault_severity": r["fault_severity"],
-                "status": r["status"],
-                "service": detected_svc or "Clipping path",
-                "cat": detected_cat or "Category 1.5",
-                "pix": detected_pix,
-                "order_services": order_svcs,
-                "order_cats": order_cats,
-                "comment": disp_comment,
-                "comment_link": disp_link,
-                "filenames": [f["filename"] for f in order_file_details][:qty] if order_file_details else disp_files[:qty],
-                "file_details": order_file_details[:qty],
-                "filenames_count": len(order_file_details[:qty]) if order_file_details else min(qty, len(disp_files))
-            })
+        if not detected_svc:
+            detected_svc = "Clipping path"
+        if not detected_cat:
+            detected_cat = "Category 1.5"
 
-        ctx.close()
+        delay_sec = hours_to_seconds(r["delayed_by"]) if reason_name.lower() == "delay" else 0
+
+        out_list.append({
+            "dispute_id": r["dispute_id"],
+            "order_id": r["order_id"],
+            "contractor": r["dispute_location"],
+            "fault_by": r["fault_by"],
+            "dispute_reason": reason_name,
+            "chargeable_to": r["chargeable_to"],
+            "fault_at": r["fault_at"],
+            "delayed_by": r["delayed_by"],
+            "delay_seconds": delay_sec,
+            "order_duration": detected_dur,
+            "fault_quantity": qty,
+            "fault_severity": r["fault_severity"],
+            "status": r["status"],
+            "service": detected_svc or "Clipping path",
+            "cat": detected_cat or "Category 1.5",
+            "pix": detected_pix,
+            "order_services": order_svcs,
+            "order_cats": order_cats,
+            "comment": disp_comment,
+            "comment_link": disp_link,
+            "filenames": [f["filename"] for f in order_file_details][:qty] if order_file_details else disp_files[:qty],
+            "file_details": order_file_details[:qty],
+            "filenames_count": len(order_file_details[:qty]) if order_file_details else min(qty, len(disp_files))
+        })
+
+    if ctx:
+        try: ctx.close()
+        except Exception: pass
+    if p_instance:
+        try: p_instance.stop()
+        except Exception: pass
 
     res = {
         "filters": filters,
