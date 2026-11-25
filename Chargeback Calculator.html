@@ -1474,15 +1474,21 @@ const money = v => '$'+(Number.isFinite(v)?v:0).toLocaleString('en-US',{minimumF
 const num = v => { const n=parseFloat(v); return Number.isFinite(n)?n:0; };
 const services = () => [...new Set(S.prices.map(r=>r.s))];
 const catsOf = s => [...new Set(S.prices.filter(r=>r.s===s).map(r=>r.c))];
-function normalizeServiceName(s) {
+function normalizeServiceName(s, raw) {
+  const rawStr = String(raw || '').trim();
+  const lowRaw = rawStr.toLowerCase();
+  if (lowRaw.includes('multi-clipping') || lowRaw.includes('multiclipping') || lowRaw.includes('multi clipping') || lowRaw === 'multi-clipping path') {
+    return 'Multi-clipping path';
+  }
+  if (!s && rawStr) s = rawStr;
   if (!s) return 'Clipping path';
   const str = String(s).trim();
+  const low = str.toLowerCase();
+  if (low.includes('multi-clipping') || low.includes('multiclipping') || low.includes('multi clipping')) return 'Multi-clipping path';
   const exact = S.prices.find(r => r.s.toLowerCase() === str.toLowerCase());
   if (exact) return exact.s;
-  const low = str.toLowerCase();
   if (low.includes('wrinkle')) return 'Wrinkle on clothing';
   if (low.includes('dust') || low.includes('scratch')) return 'Dust, spot and scratch removal';
-  if (low.includes('multi-clipping') || low.includes('multiclipping') || low.includes('multi clipping')) return 'Multi-clipping path';
   if (low.includes('clip') || low.includes('path')) return 'Clipping path';
   if (low.includes('mask')) return 'Image masking';
   if (low.includes('drop shadow')) return 'Drop shadow';
@@ -3669,14 +3675,35 @@ function calcDisputeChargeback(d){
 
   if (filesList.length > 0) {
     filesList.forEach(f => {
-      const fSvcs = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
+      const fSvcsRaw = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
         service: f.service || svc,
         category: f.category || cat
       }];
 
-      fSvcs.forEach(sItem => {
-        const sName = normalizeServiceName(sItem.service || svc);
+      // Deduplicate services per file (e.g. multiple workers/revisions on same service)
+      const seenFileSvcs = new Map();
+      fSvcsRaw.forEach(sItem => {
+        const rawN = sItem.raw_name || (sItem.service && sItem.service.toLowerCase().includes('multi') ? sItem.service : null);
+        let sName = normalizeServiceName(sItem.service || svc, rawN);
+        if (sItem.raw_name && /multi/i.test(sItem.raw_name)) {
+          sName = 'Multi-clipping path';
+        }
         const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
+        const k = sName.toLowerCase();
+        if (!seenFileSvcs.has(k)) {
+          seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+        } else {
+          // If duplicate has higher category, prefer higher
+          const existing = seenFileSvcs.get(k);
+          const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
+          const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+          if (newCatNum > oldCatNum) {
+            seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+          }
+        }
+      });
+
+      seenFileSvcs.forEach(({ sName, cName }) => {
         const pVal = price(sName, cName, pix);
         const prc = pVal != null ? pVal : 0;
         totalBasePrice += prc;
@@ -3841,6 +3868,35 @@ function renderBatchFileItems(d, idx) {
   if (details.length > dealQty) {
     details = details.slice(0, dealQty);
   }
+
+  // Deduplicate and normalize services for each file
+  details.forEach(f => {
+    const svcs = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
+      service: f.service || d.service || 'Clipping path',
+      category: f.category || defaultCat
+    }];
+    const seen = new Map();
+    svcs.forEach(s => {
+      const rawN = s.raw_name || (s.service && s.service.toLowerCase().includes('multi') ? s.service : null);
+      let sName = normalizeServiceName(s.service || f.service || 'Clipping path', rawN);
+      if (s.raw_name && /multi/i.test(s.raw_name)) {
+        sName = 'Multi-clipping path';
+      }
+      const cName = normalizeCategoryName(s.category || f.category || defaultCat, s.complexity);
+      const k = sName.toLowerCase();
+      if (!seen.has(k)) {
+        seen.set(k, { service: sName, category: cName });
+      } else {
+        const existing = seen.get(k);
+        const oldCatNum = parseFloat(String(existing.category).replace(/[^0-9.]/g, '')) || 1;
+        const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+        if (newCatNum > oldCatNum) {
+          seen.set(k, { service: sName, category: cName });
+        }
+      }
+    });
+    f.services = Array.from(seen.values());
+  });
 
   const labelText = `▶ ${dealQty} ${dealQty === 1 ? 'file' : 'files'} (click to view)`;
 
@@ -4457,19 +4513,48 @@ async function fetchRowFilenamesIfEmpty(idx) {
           fileItems = sourceFiles.map(f => {
             const fn = f.filename || (typeof f === 'string' ? f : '');
             const rawSvcs = f.services || [];
-            const cleanSvcs = rawSvcs.length ? rawSvcs.map(s => {
-              let cat = s.category || '';
-              if(!cat && s.complexity) cat = 'Category ' + String(s.complexity).replace(/^[Cc]/, '').trim();
-              return {
-                service: s.service || 'Clipping path',
-                category: cat || d.cat || 'Category 1.5',
-                complexity: s.complexity || ''
-              };
-            }) : [{
-              service: f.service || d.service || 'Clipping path',
-              category: f.category || d.cat || 'Category 1.5',
-              complexity: ''
-            }];
+            let cleanSvcs = [];
+            const seenS = new Map();
+            if (rawSvcs.length) {
+              rawSvcs.forEach(s => {
+                let cat = s.category || '';
+                if(!cat && s.complexity) cat = 'Category ' + String(s.complexity).replace(/^[Cc]/, '').trim();
+                const rawN = s.raw_name || (s.service && s.service.toLowerCase().includes('multi') ? s.service : null);
+                let sName = normalizeServiceName(s.service || 'Clipping path', rawN);
+                if (s.raw_name && /multi/i.test(s.raw_name)) {
+                  sName = 'Multi-clipping path';
+                }
+                const cName = normalizeCategoryName(cat || d.cat || 'Category 1.5', s.complexity);
+                const k = sName.toLowerCase();
+                if (!seenS.has(k)) {
+                  seenS.set(k, {
+                    service: sName,
+                    raw_name: s.raw_name || sName,
+                    category: cName,
+                    complexity: s.complexity || ''
+                  });
+                } else {
+                  const existing = seenS.get(k);
+                  const oldCatNum = parseFloat(String(existing.category).replace(/[^0-9.]/g, '')) || 1;
+                  const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+                  if (newCatNum > oldCatNum) {
+                    seenS.set(k, {
+                      service: sName,
+                      raw_name: s.raw_name || sName,
+                      category: cName,
+                      complexity: s.complexity || ''
+                    });
+                  }
+                }
+              });
+              cleanSvcs = Array.from(seenS.values());
+            } else {
+              cleanSvcs = [{
+                service: f.service || d.service || 'Clipping path',
+                category: f.category || d.cat || 'Category 1.5',
+                complexity: ''
+              }];
+            }
 
             return {
               filename: fn,
@@ -4754,6 +4839,9 @@ async function scanDisputeServices(idx){
       const cats = [];
       data.files.forEach(f => {
         (f.services || []).forEach(s => {
+          let sName = normalizeServiceName(s.service || 'Clipping path', s.raw_name);
+          if (s.raw_name && /multi/i.test(s.raw_name)) sName = 'Multi-clipping path';
+          s.service = sName;
           if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
           if(s.category && !cats.includes(s.category)) cats.push(s.category);
         });
@@ -4829,6 +4917,9 @@ async function scanAllVisibleServices(){
           const cats = [];
           data.files.forEach(f => {
             (f.services || []).forEach(s => {
+              let sName = normalizeServiceName(s.service || 'Clipping path', s.raw_name);
+              if (s.raw_name && /multi/i.test(s.raw_name)) sName = 'Multi-clipping path';
+              s.service = sName;
               if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
               if(s.category && !cats.includes(s.category)) cats.push(s.category);
             });

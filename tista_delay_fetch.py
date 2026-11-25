@@ -47,7 +47,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.24.v1"
+SERVER_VERSION = "2026.11.25.v1"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -194,7 +194,7 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
     return ctx
 
 KNOWN_SERVICES = [
-    "Clipping path", "Multi-clipping path", "Image masking", "Drop shadow",
+    "Multi-clipping path", "Clipping path", "Image masking", "Drop shadow",
     "Existing shadow", "Natural shadow", "Floating shadow", "Reflection shadow",
     "Ghost mannequin", "Dust, spot and scratch removal", "Wrinkle on clothing",
     "Beauty airbrushing", "Camera reflection removal", "Color variants",
@@ -209,6 +209,107 @@ KNOWN_CATEGORIES = [
     "Category 4", "Category 4.25", "Category 4.5", "Category 4.75", "Category 5",
     "Category 5.5", "Category 6"
 ]
+
+def resolve_service_name(s_name: str) -> str:
+    """
+    Robust service name resolver that correctly matches Tista service names,
+    preventing substrings like 'Clipping path' from accidentally hijacking 'Multi-clipping path'.
+    """
+    if not s_name:
+        return "Clipping path"
+    s = str(s_name).strip()
+    s_low = s.lower()
+
+    # 1. Exact match check
+    for ks in KNOWN_SERVICES:
+        if ks.lower() == s_low:
+            return ks
+
+    # 2. Priority check: Multi-clipping MUST be checked before generic clipping!
+    if "multi-clipping" in s_low or "multiclipping" in s_low or "multi clipping" in s_low:
+        return "Multi-clipping path"
+    if "clipping" in s_low or "clip" in s_low:
+        return "Clipping path"
+
+    # 3. Known heuristics
+    if "wrinkle" in s_low:
+        return "Wrinkle on clothing"
+    if "dust" in s_low or "scratch" in s_low:
+        return "Dust, spot and scratch removal"
+    if "ghost" in s_low or "mannequin" in s_low or "neck joint" in s_low:
+        return "Ghost mannequin"
+    if "mask" in s_low:
+        return "Image masking"
+    if "natural shadow" in s_low:
+        return "Natural shadow"
+    if "drop shadow" in s_low:
+        return "Drop shadow"
+    if "reflection shadow" in s_low:
+        return "Reflection shadow"
+    if "existing shadow" in s_low:
+        return "Existing shadow"
+    if "floating shadow" in s_low:
+        return "Floating shadow"
+    if "camera reflection" in s_low:
+        return "Camera reflection removal"
+    if "beauty" in s_low or "airbrush" in s_low:
+        return "Beauty airbrushing"
+    if "color variant" in s_low:
+        return "Color variants"
+    if "symmetrical" in s_low:
+        return "Symmetrical edit"
+    if "background removal" in s_low:
+        return "Background removal"
+    if "straighten" in s_low or "crop" in s_low:
+        return "Straighten, crop and set margin"
+    if "resize" in s_low:
+        return "Resize"
+    if "renaming" in s_low:
+        return "Renaming"
+    if "file format" in s_low:
+        return "File format change"
+
+    # 4. Longest-first match among KNOWN_SERVICES
+    for ks in sorted(KNOWN_SERVICES, key=len, reverse=True):
+        if ks.lower() in s_low:
+            return ks
+
+    return s
+
+def deduplicate_file_services(svcs):
+    """
+    Given a list of raw service dicts from Tista for a single file,
+    resolves service names, normalizes categories, and deduplicates identical services
+    (which happen on Tista due to multiple worker QC logs, revisions, or feedback notes).
+    """
+    clean_svcs = []
+    seen = {}
+    for s in svcs:
+        s_name = s.get("raw_name") or s.get("name") or s.get("service") or s.get("group") or ""
+        matched_svc = resolve_service_name(s_name)
+        comp = s.get("complexity") or ""
+        cat_m = re.search(r"(\d+(?:\.\d+)?)", comp)
+        num_cat = float(cat_m[1]) if cat_m else 1.0
+        cat_label = f"Category {cat_m[1]}" if cat_m else "Category 1"
+
+        k = matched_svc.lower()
+        if k in seen:
+            if num_cat > seen[k]["numeric_cat"]:
+                seen[k]["complexity"] = comp or f"C{num_cat}"
+                seen[k]["category"] = cat_label
+                seen[k]["numeric_cat"] = num_cat
+            continue
+
+        item = {
+            "service": matched_svc,
+            "raw_name": s_name,
+            "complexity": comp or f"C{num_cat}",
+            "category": cat_label,
+            "numeric_cat": num_cat
+        }
+        seen[k] = item
+        clean_svcs.append(item)
+    return clean_svcs
 
 LOCATION_ID_MAP = {
     "": "",
@@ -570,10 +671,9 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
                 current_svc = ""
                 for lb in labels:
                     txt = lb.strip()
-                    for ks in KNOWN_SERVICES:
-                        if ks.lower() in txt.lower():
-                            current_svc = ks
-                            break
+                    res_s = resolve_service_name(txt)
+                    if res_s != txt:
+                        current_svc = res_s
                     cat_match = re.search(r"category\s*(\d+(?:\.\d+)?)", txt, re.I)
                     if cat_match:
                         cat_val = float(cat_match[1])
@@ -637,11 +737,9 @@ def parse_file_services(services_raw):
             cat_label = f"Category {cat_match[1] or cat_match[2]}"
             matched_svc = ""
             for s_line in reversed(current_services):
-                for ks in KNOWN_SERVICES:
-                    if ks.lower() in s_line.lower():
-                        matched_svc = ks
-                        break
-                if matched_svc:
+                res_s = resolve_service_name(s_line)
+                if res_s != s_line or res_s in KNOWN_SERVICES:
+                    matched_svc = res_s
                     break
             if not matched_svc and current_services:
                 matched_svc = current_services[-1]
@@ -656,7 +754,19 @@ def parse_file_services(services_raw):
         else:
             if not re.search(r"qc done|approved|pending|\bby\b", line, re.I) and not re.match(r"^[a-z0-9_]+$", line.strip()):
                 current_services.append(line)
-    return parsed
+    
+    deduped = []
+    seen = {}
+    for p in parsed:
+        k = p["service"].lower()
+        if k in seen:
+            if p["numeric_cat"] > seen[k]["numeric_cat"]:
+                seen[k]["category"] = p["category"]
+                seen[k]["numeric_cat"] = p["numeric_cat"]
+            continue
+        seen[k] = p
+        deduped.append(p)
+    return deduped
 
 def fetch_order_files_from_tista(order_id: str, headless: bool = True):
     """
@@ -822,30 +932,7 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
 
         files_list = []
         for f in files_raw:
-            svcs = f.get("services") or []
-            clean_svcs = []
-            for s in svcs:
-                s_name = s.get("name") or s.get("group") or ""
-                matched_svc = ""
-                for ks in KNOWN_SERVICES:
-                    if ks.lower() == s_name.lower() or ks.lower() in s_name.lower():
-                        matched_svc = ks
-                        break
-                if not matched_svc:
-                    matched_svc = s_name or "Clipping path"
-                
-                comp = s.get("complexity") or ""
-                cat_m = re.search(r"(\d+(?:\.\d+)?)", comp)
-                num_cat = float(cat_m[1]) if cat_m else 1.0
-                cat_label = f"Category {cat_m[1]}" if cat_m else "Category 1"
-                clean_svcs.append({
-                    "service": matched_svc,
-                    "raw_name": s_name,
-                    "complexity": comp or f"C{num_cat}",
-                    "category": cat_label,
-                    "numeric_cat": num_cat
-                })
-            
+            clean_svcs = deduplicate_file_services(f.get("services") or [])
             if not clean_svcs:
                 clean_svcs = parse_file_services(f.get("services_raw", ""))
 
@@ -1004,28 +1091,7 @@ def extract_order_files_with_page(page, order_id: str):
 
         files_list = []
         for f in files_raw:
-            svcs = f.get("services") or []
-            clean_svcs = []
-            for s in svcs:
-                s_name = s.get("name") or s.get("group") or ""
-                matched_svc = ""
-                for ks in KNOWN_SERVICES:
-                    if ks.lower() == s_name.lower() or ks.lower() in s_name.lower():
-                        matched_svc = ks
-                        break
-                if not matched_svc:
-                    matched_svc = s_name or "Clipping path"
-                comp = s.get("complexity") or ""
-                cat_m = re.search(r"(\d+(?:\.\d+)?)", comp)
-                num_cat = float(cat_m[1]) if cat_m else 1.0
-                cat_label = f"Category {cat_m[1]}" if cat_m else "Category 1"
-                clean_svcs.append({
-                    "service": matched_svc,
-                    "raw_name": s_name,
-                    "complexity": comp,
-                    "category": cat_label,
-                    "numeric_cat": num_cat
-                })
+            clean_svcs = deduplicate_file_services(f.get("services") or [])
             svcs_display = ", ".join([f"{s['service']} ({s['category']})" for s in clean_svcs]) if clean_svcs else "Clipping path (Category 1)"
             files_list.append({
                 "id": f.get("id"),
@@ -1277,17 +1343,30 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                         fn = f0.get("filename", "")
                         svcs0 = f0.get("services", [])
                         clean_file_services = []
+                        seen_cfs = {}
                         for s_item in svcs0:
-                            s_name = s_item.get("service")
+                            raw_s = s_item.get("raw_name") or s_item.get("name") or s_item.get("service") or ""
+                            s_name = resolve_service_name(raw_s)
                             c_name = s_item.get("category")
                             if not c_name and s_item.get("complexity"):
                                 c_name = f"Category {re.sub(r'^[Cc]', '', s_item.get('complexity')).strip()}"
-                            clean_file_services.append({
+                            num_cat = s_item.get("numeric_cat") or 1.0
+                            k = s_name.lower()
+                            if k in seen_cfs:
+                                if num_cat > seen_cfs[k]["numeric_cat"]:
+                                    seen_cfs[k]["category"] = c_name or "Category 1.5"
+                                    seen_cfs[k]["numeric_cat"] = num_cat
+                                    seen_cfs[k]["complexity"] = s_item.get("complexity") or ""
+                                continue
+                            item = {
                                 "service": s_name or "Clipping path",
+                                "raw_name": raw_s,
                                 "category": c_name or "Category 1.5",
                                 "complexity": s_item.get("complexity") or "",
-                                "numeric_cat": s_item.get("numeric_cat") or 1.0
-                            })
+                                "numeric_cat": num_cat
+                            }
+                            seen_cfs[k] = item
+                            clean_file_services.append(item)
                             if s_name and s_name not in order_svcs:
                                 order_svcs.append(s_name)
                             if c_name and c_name not in order_cats:
@@ -2071,54 +2150,7 @@ def extract_slide_services(slide_text: str) -> list:
         t = text.strip()
         if not t:
             return None
-        for ks in KNOWN_SERVICES:
-            if ks.lower() == t.lower():
-                return ks
-        tl = t.lower()
-        if "wrinkle" in tl:
-            return "Wrinkle on clothing"
-        if "dust" in tl or "scratch" in tl:
-            return "Dust, spot and scratch removal"
-        if "multi-clipping" in tl or "multiclipping" in tl or "multi clipping" in tl:
-            return "Multi-clipping path"
-        if "ghost" in tl or "mannequin" in tl or "neck joint" in tl:
-            return "Ghost mannequin"
-        if "mask" in tl:
-            return "Image masking"
-        if "natural shadow" in tl:
-            return "Natural shadow"
-        if "drop shadow" in tl:
-            return "Drop shadow"
-        if "reflection shadow" in tl:
-            return "Reflection shadow"
-        if "existing shadow" in tl:
-            return "Existing shadow"
-        if "floating shadow" in tl:
-            return "Floating shadow"
-        if "clip" in tl or "path" in tl:
-            return "Clipping path"
-        if "beauty" in tl or "airbrush" in tl:
-            return "Beauty airbrushing"
-        if "camera reflection" in tl:
-            return "Camera reflection removal"
-        if "color variant" in tl:
-            return "Color variants"
-        if "symmetrical" in tl:
-            return "Symmetrical edit"
-        if "background removal" in tl:
-            return "Background removal"
-        if "straighten" in tl or "crop" in tl:
-            return "Straighten, crop and set margin"
-        if "resize" in tl:
-            return "Resize"
-        if "renaming" in tl:
-            return "Renaming"
-        if "file format" in tl:
-            return "File format change"
-        for ks in KNOWN_SERVICES:
-            if tl in ks.lower() or ks.lower() in tl:
-                return ks
-        return t
+        return resolve_service_name(t)
 
     for block in svc_blocks:
         b_clean = block.strip()

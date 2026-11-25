@@ -1,9 +1,16 @@
 {
   "filters": {
-    "query": "459580",
+    "reason": "1",
+    "status": "1",
+    "chargeable": "1",
+    "location": "",
+    "query": "",
+    "date_range": "",
+    "start_date": "2026-11-16",
+    "end_date": "2026-11-22",
     "deep_scan": true
   },
-  "total_disputes": 1,
+  "total_disputes": 8,
   "disputes": [
     {
       "dispute_id": "47568",
@@ -245,6 +252,3669 @@
         }
       ],
       "filenames_count": 15
+    },
+    {
+      "dispute_id": "47567",
+      "order_id": "#459605",
+      "contractor": "Perfect Pixel (GB2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-21",
+      "delayed_by": "00:08:21",
+      "delay_seconds": 501,
+      "order_duration": "24:00:00",
+      "fault_quantity": 16,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Image masking",
+      "cat": "Category 1",
+      "pix": "> 5000",
+      "order_services": [
+        "Image masking"
+      ],
+      "order_cats": [
+        "Category 1"
+      ],
+      "comment": "15 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/Ik7g3F71dFB5GdSa",
+      "comment_link": "https://www.dropbox.com/t/Ik7g3F71dFB5GdSa",
+      "filenames": [
+        "Brad-Durrant.psd",
+        "Carla-Ferguson.psd",
+        "Carissa-Ryan.psd",
+        "Cassius-Longney-Morgan.psd",
+        "Courtney-Clarke.psd",
+        "Faith-Ireland.psd",
+        "Jade-Thoroughgood.psd",
+        "Jessica-Bleijie.psd",
+        "Joshua-Ball.psd",
+        "Matilda-McKean.psd",
+        "Mitchell-Cohen.psd",
+        "Mustafa-Azmi.psd",
+        "Paul-Chirgwin.psd",
+        "Pyper-Billingsley.psd",
+        "Roberta-Ribas-Mocelin.psd",
+        "Roselle-Canlas.psd"
+      ],
+      "file_details": [
+        {
+          "filename": "Brad-Durrant.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Carla-Ferguson.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Carissa-Ryan.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Cassius-Longney-Morgan.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Courtney-Clarke.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Faith-Ireland.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Jade-Thoroughgood.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Jessica-Bleijie.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Joshua-Ball.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Matilda-McKean.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Mitchell-Cohen.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Mustafa-Azmi.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Paul-Chirgwin.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Pyper-Billingsley.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Roberta-Ribas-Mocelin.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "Roselle-Canlas.psd",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 16
+    },
+    {
+      "dispute_id": "47566",
+      "order_id": "#459513",
+      "contractor": "Perfect Pixel (GB2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-21",
+      "delayed_by": "08:34:37",
+      "delay_seconds": 30877,
+      "order_duration": "24:00:00",
+      "fault_quantity": 6,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 2",
+      "pix": "> 5000",
+      "order_services": [
+        "Clipping path",
+        "Natural shadow",
+        "Dust, spot and scratch removal"
+      ],
+      "order_cats": [
+        "Category 2",
+        "Category 1",
+        "Category 1.5"
+      ],
+      "comment": "6 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/V70SoWzaUhH14nl4",
+      "comment_link": "https://www.dropbox.com/t/V70SoWzaUhH14nl4",
+      "filenames": [
+        "HUSKY_H1003D26SWS_INCASE_01.jpg",
+        "HUSKY_H1003D26SWS_INCASE_02.jpg",
+        "HUSKY_H1004D26SWS_INCASE_01.jpg",
+        "HUSKY_H1004D26SWS_INCASE_02.jpg",
+        "HUSKY_H1004D26SWS_INCASE_CUT_01.jpg",
+        "HUSKY_H1004D26SWS_INCASE_CUT_02.jpg"
+      ],
+      "file_details": [
+        {
+          "filename": "HUSKY_H1003D26SWS_INCASE_01.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1.5",
+              "complexity": "C1.5",
+              "numeric_cat": 1.5
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1.5",
+              "complexity": "C1.5",
+              "numeric_cat": 1.5
+            }
+          ]
+        },
+        {
+          "filename": "HUSKY_H1003D26SWS_INCASE_02.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "HUSKY_H1004D26SWS_INCASE_01.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1.5",
+              "complexity": "C1.5",
+              "numeric_cat": 1.5
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1.5",
+              "complexity": "C1.5",
+              "numeric_cat": 1.5
+            }
+          ]
+        },
+        {
+          "filename": "HUSKY_H1004D26SWS_INCASE_02.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "HUSKY_H1004D26SWS_INCASE_CUT_01.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "HUSKY_H1004D26SWS_INCASE_CUT_02.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 6
+    },
+    {
+      "dispute_id": "47564",
+      "order_id": "#459502",
+      "contractor": "Pixel Path (P2)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-21",
+      "delayed_by": "05:15:46",
+      "delay_seconds": 18946,
+      "order_duration": "24:00:00",
+      "fault_quantity": 45,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 2",
+      "pix": "> 5000",
+      "order_services": [
+        "Clipping path",
+        "Natural shadow",
+        "Dust, spot and scratch removal"
+      ],
+      "order_cats": [
+        "Category 2",
+        "Category 1",
+        "Category 2.5"
+      ],
+      "comment": "45 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/V6IooYRkIeGTwtHW",
+      "comment_link": "https://www.dropbox.com/t/V6IooYRkIeGTwtHW",
+      "filenames": [
+        "65411 Tabitha Cognac.psd",
+        "71113 Captain Blush rose gold.psd",
+        "71112 Captain Denim.psd",
+        "82006 Kita Gray Periwinkle.psd",
+        "75003 Bridget Nude black.psd",
+        "66516 Sahara Weave Platinum.psd",
+        "67063 Celeste Luggage Tan.psd",
+        "75002 Bridget Caramel..psd",
+        "66518 Sahara snake Black.psd",
+        "60830 Jane Platinum.psd",
+        "995 Coral Beige Rose embroidery.psd",
+        "82004 Kita Platinum Shimmer.psd",
+        "67053 Cybill Navy blue.psd",
+        "66519 Sahara Jersey Black.psd",
+        "75006 Bella Nude.psd",
+        "66514 Sahara Silver Bronze gold.psd",
+        "87221 Eagle Gray silver.psd",
+        "82005 Kiat Navy light blue.psd",
+        "12031 Sacramento Black.psd",
+        "66522 Sahara Floral Rose gold.psd",
+        "82003 Kita Black Neon.psd",
+        "50013 Expedition Low trail Navy gray.psd",
+        "66515 Sahara Cork.psd",
+        "66517 Sahara snake Taupe.psd",
+        "66521 Sahara Floral Black crinkle.psd",
+        "65410 Tabitha Black.psd",
+        "22052 Cruise Black.psd",
+        "75005 Bella Navy.psd",
+        "60831 Jane Tan.psd",
+        "75001 Bridget black.psd",
+        "66520 Sahara Jersey Sea Blue.psd",
+        "69073 Daisy Blush.psd",
+        "60840 Juniper Tan.psd",
+        "66523 Sahara Floral Tan.psd",
+        "80512 Jade Indigo blue.psd",
+        "20036 Yari Gray black.psd",
+        "75004 Bella Black.psd",
+        "50103 Nira Trail dark petal.psd",
+        "12030 Sacramento Brown.psd",
+        "994 Coral Gray Light blue.psd",
+        "60805 Juno Black snake.psd",
+        "50112 Explorer Low Trail Neon Rainbow.psd",
+        "87222 Eagle White Navy Hot pink.psd",
+        "50012 Expedition Low trail Yellow Navy.psd",
+        "75007 Bella Ruby red..psd"
+      ],
+      "file_details": [
+        {
+          "filename": "65411 Tabitha Cognac.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "71113 Captain Blush rose gold.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "71112 Captain Denim.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "82006 Kita Gray Periwinkle.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75003 Bridget Nude black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66516 Sahara Weave Platinum.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "67063 Celeste Luggage Tan.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75002 Bridget Caramel..psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66518 Sahara snake Black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "60830 Jane Platinum.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "995 Coral Beige Rose embroidery.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "82004 Kita Platinum Shimmer.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "67053 Cybill Navy blue.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66519 Sahara Jersey Black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75006 Bella Nude.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66514 Sahara Silver Bronze gold.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "87221 Eagle Gray silver.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "82005 Kiat Navy light blue.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "12031 Sacramento Black.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66522 Sahara Floral Rose gold.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "82003 Kita Black Neon.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "50013 Expedition Low trail Navy gray.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66515 Sahara Cork.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66517 Sahara snake Taupe.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66521 Sahara Floral Black crinkle.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "65410 Tabitha Black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "22052 Cruise Black.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75005 Bella Navy.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "60831 Jane Tan.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75001 Bridget black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66520 Sahara Jersey Sea Blue.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "69073 Daisy Blush.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "60840 Juniper Tan.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "66523 Sahara Floral Tan.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "80512 Jade Indigo blue.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "20036 Yari Gray black.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75004 Bella Black.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "50103 Nira Trail dark petal.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "12030 Sacramento Brown.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "994 Coral Gray Light blue.psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "60805 Juno Black snake.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "50112 Explorer Low Trail Neon Rainbow.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "87222 Eagle White Navy Hot pink.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "50012 Expedition Low trail Yellow Navy.psd",
+          "category": "Category 2.5",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2.5",
+              "complexity": "C2.5",
+              "numeric_cat": 2.5
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "75007 Bella Ruby red..psd",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 45
+    },
+    {
+      "dispute_id": "47497",
+      "order_id": "#458571",
+      "contractor": "Creative Path (P1)",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-18",
+      "delayed_by": "11:16:32",
+      "delay_seconds": 40592,
+      "order_duration": "96:00:00",
+      "fault_quantity": 50,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Multi-clipping path",
+      "cat": "Category 1",
+      "pix": "> 5000",
+      "order_services": [
+        "Multi-clipping path",
+        "Camera reflection removal",
+        "Dust, spot and scratch removal"
+      ],
+      "order_cats": [
+        "Category 1",
+        "Category 1.5"
+      ],
+      "comment": "Correction 50 টি ইমেজ Delay হয়েছে ,Link FTP",
+      "comment_link": "",
+      "filenames": [
+        "Batch 5 - Vendome to Zephirin/Veronica_Viper_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Veronica_Aurum_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Ombrelle_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Veronica_Ciel_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Tango_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Vigilante_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Copper_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Vintage_Havana_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Veronica_Dark_Antique_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Yves_Ombrelle_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Noir12_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Blue_Moon_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Pelage_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Veronica_Viper_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Pelage_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Noir12_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Misia_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Oxford_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Vintage_Havana_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Vintage_Havana_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Whiskeyclone_Blue_Moon_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Oxford_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Ombrelle_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Yves_Tavern_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Yves_Morgane_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Whiskeyclone_Vigilante_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Ombrelle_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Sparrow_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Verdure_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Whiskeyclone_Tavern_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Morgane_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Noir12_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Yves_Tavern_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Whiskeyclone_Copper_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Vintage_Havana_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Moonlight_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Whiskeyclone_Ombrelle_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Cola_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Pelage_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Tavern_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Tavern_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Veronica_Ciel_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Pelage_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Ombrelle_RX_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Noir12_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Yves_Morgane_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin_Oxford_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Zephirin47_Moonlight_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Vendome_Cola_Detail-1.tif",
+        "Batch 5 - Vendome to Zephirin/Walker_Morgane_Detail-1.tif"
+      ],
+      "file_details": [
+        {
+          "id": 1,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Viper_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 2,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Aurum_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 3,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Ombrelle_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 4,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Ciel_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 5,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Tango_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 6,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Vigilante_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 7,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Copper_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 8,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Vintage_Havana_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 9,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Dark_Antique_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 10,
+          "filename": "Batch 5 - Vendome to Zephirin/Yves_Ombrelle_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 11,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Noir12_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 12,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Blue_Moon_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 13,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Pelage_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 14,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Viper_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 15,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Pelage_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 16,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Noir12_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 17,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Misia_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 18,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Oxford_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 19,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Vintage_Havana_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 20,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Vintage_Havana_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 21,
+          "filename": "Batch 5 - Vendome to Zephirin/Whiskeyclone_Blue_Moon_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 22,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Oxford_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 23,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Ombrelle_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 24,
+          "filename": "Batch 5 - Vendome to Zephirin/Yves_Tavern_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 25,
+          "filename": "Batch 5 - Vendome to Zephirin/Yves_Morgane_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 26,
+          "filename": "Batch 5 - Vendome to Zephirin/Whiskeyclone_Vigilante_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 27,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Ombrelle_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 28,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Sparrow_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 29,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Verdure_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 30,
+          "filename": "Batch 5 - Vendome to Zephirin/Whiskeyclone_Tavern_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 31,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Morgane_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 32,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Noir12_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 33,
+          "filename": "Batch 5 - Vendome to Zephirin/Yves_Tavern_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 34,
+          "filename": "Batch 5 - Vendome to Zephirin/Whiskeyclone_Copper_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 35,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Vintage_Havana_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 36,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Moonlight_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 37,
+          "filename": "Batch 5 - Vendome to Zephirin/Whiskeyclone_Ombrelle_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 38,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Cola_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 39,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Pelage_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 40,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Tavern_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 41,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Tavern_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 42,
+          "filename": "Batch 5 - Vendome to Zephirin/Veronica_Ciel_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 43,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Pelage_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 44,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Ombrelle_RX_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 45,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Noir12_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 46,
+          "filename": "Batch 5 - Vendome to Zephirin/Yves_Morgane_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 47,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin_Oxford_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 48,
+          "filename": "Batch 5 - Vendome to Zephirin/Zephirin47_Moonlight_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 49,
+          "filename": "Batch 5 - Vendome to Zephirin/Vendome_Cola_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        },
+        {
+          "id": 50,
+          "filename": "Batch 5 - Vendome to Zephirin/Walker_Morgane_Detail-1.tif",
+          "location": "Creative Path (P1)",
+          "dimension": ">5000px",
+          "services": [
+            {
+              "service": "Multi-clipping path",
+              "raw_name": "Multi-clipping path",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "raw_name": "Camera reflection removal",
+              "complexity": "C1",
+              "category": "Category 1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "raw_name": "Dust, spot and scratch removal",
+              "complexity": "C1.5",
+              "category": "Category 1.5",
+              "numeric_cat": 1.5
+            }
+          ],
+          "services_display": "Multi-clipping path (Category 1), Camera reflection removal (Category 1), Dust, spot and scratch removal (Category 1.5)"
+        }
+      ],
+      "filenames_count": 50
+    },
+    {
+      "dispute_id": "47494",
+      "order_id": "#459225",
+      "contractor": "Cutout Edge",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-18",
+      "delayed_by": "03:30:36",
+      "delay_seconds": 12636,
+      "order_duration": "12:00:00",
+      "fault_quantity": 7,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 2",
+      "pix": "> 5000",
+      "order_services": [
+        "Clipping path",
+        "Ghost mannequin",
+        "Dust, spot and scratch removal",
+        "Symmetrical edit",
+        "Image masking"
+      ],
+      "order_cats": [
+        "Category 2",
+        "Category 1"
+      ],
+      "comment": "7 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/AWqUgF02RZzL6feY",
+      "comment_link": "https://www.dropbox.com/t/AWqUgF02RZzL6feY",
+      "filenames": [
+        "ADD23_00001_GHOST.jpg",
+        "3505_LI013_MANICHINO.jpg",
+        "3505_LI013.jpg",
+        "ADD23_00001.jpg",
+        "ADD55_00039_GHOST.jpg",
+        "ADD33_00001_GHOST.jpg",
+        "ADD33_00001.jpg"
+      ],
+      "file_details": [
+        {
+          "filename": "ADD23_00001_GHOST.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Ghost mannequin",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "3505_LI013_MANICHINO.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Ghost mannequin",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "3505_LI013.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "ADD23_00001.jpg",
+          "category": "Category 2",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 2",
+              "complexity": "C2",
+              "numeric_cat": 2.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "ADD55_00039_GHOST.jpg",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Ghost mannequin",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "ADD33_00001_GHOST.jpg",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Ghost mannequin",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "ADD33_00001.jpg",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Dust, spot and scratch removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Symmetrical edit",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 7
+    },
+    {
+      "dispute_id": "47493",
+      "order_id": "#459288",
+      "contractor": "Cutout Edge",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-18",
+      "delayed_by": "00:33:33",
+      "delay_seconds": 2013,
+      "order_duration": "6:00:00",
+      "fault_quantity": 1,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Clipping path",
+      "cat": "Category 1",
+      "pix": "> 5000",
+      "order_services": [
+        "Clipping path",
+        "Natural shadow",
+        "Camera reflection removal"
+      ],
+      "order_cats": [
+        "Category 1"
+      ],
+      "comment": "1 টি ইমেজ Delay হয়েছে ,https://www.dropbox.com/t/vyrDp1OhDW55aFpi",
+      "comment_link": "https://www.dropbox.com/t/vyrDp1OhDW55aFpi",
+      "filenames": [
+        "IMG_3479 (1).jpeg"
+      ],
+      "file_details": [
+        {
+          "filename": "IMG_3479 (1).jpeg",
+          "category": "Category 1",
+          "service": "Clipping path",
+          "services": [
+            {
+              "service": "Clipping path",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Natural shadow",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            },
+            {
+              "service": "Camera reflection removal",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 1
+    },
+    {
+      "dispute_id": "47485",
+      "order_id": "#458874",
+      "contractor": "Grasigner Kitchen",
+      "fault_by": "Quality Control",
+      "dispute_reason": "Delay",
+      "chargeable_to": "Vendor",
+      "fault_at": "2026-11-17",
+      "delayed_by": "16:36:25",
+      "delay_seconds": 59785,
+      "order_duration": "48:00:00",
+      "fault_quantity": 6,
+      "fault_severity": "Not applicable",
+      "status": "Awaiting res...",
+      "service": "Image masking",
+      "cat": "Category 1",
+      "pix": "> 5000",
+      "order_services": [
+        "Image masking"
+      ],
+      "order_cats": [
+        "Category 1"
+      ],
+      "comment": "Correction 6 টি ইমেজ Delay হয়েছে  ,https://www.dropbox.com/t/H4XTIXc9wIeaDG2j",
+      "comment_link": "https://www.dropbox.com/t/H4XTIXc9wIeaDG2j",
+      "filenames": [
+        "batch-1/05_01579_R1 copy.tif",
+        "batch-1/03_01077_R1 copy.tif",
+        "batch-1/09_02674_R1 copy.tif",
+        "batch-1/11_03185_R1 copy.tif",
+        "batch-1/07_02091_R1 copy.tif",
+        "batch-1/15_04722_R1 copy.tif"
+      ],
+      "file_details": [
+        {
+          "filename": "batch-1/05_01579_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/03_01077_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/09_02674_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/11_03185_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/07_02091_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        },
+        {
+          "filename": "batch-1/15_04722_R1 copy.tif",
+          "category": "Category 1",
+          "service": "Image masking",
+          "services": [
+            {
+              "service": "Image masking",
+              "category": "Category 1",
+              "complexity": "C1",
+              "numeric_cat": 1.0
+            }
+          ]
+        }
+      ],
+      "filenames_count": 6
     }
   ]
 }
