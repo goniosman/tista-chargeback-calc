@@ -2401,12 +2401,23 @@ def clean_html_block(html):
 def clean_file_names_list(raw_list):
     res = []
     seen = set()
+    bad_prefixes = (
+        "checked by", "report type", "job id", "order id", "instruction",
+        "service:", "services:", "note:", "investigation", "format:", "correction",
+        "error severity", "fault severity", "original image", "completed image",
+        "fault area", "feedback", "date:", "subs:"
+    )
     for item in raw_list:
         parts = re.split(r'[\r\n\x0b\u2028\u2029\ufffd]+', str(item))
         for p in parts:
             cleaned = re.sub(r'^[^\w#]+', '', p).strip()
             cleaned = cleaned.strip()
             if len(cleaned) >= 2 and cleaned not in seen and not cleaned.lower().startswith("ul.") and not cleaned.lower().startswith("http"):
+                low = cleaned.lower()
+                if low in ("--", "---", "----", "none", "n/a", "all image", "all images", "all files"):
+                    continue
+                if any(low.startswith(bp) for bp in bad_prefixes):
+                    continue
                 seen.add(cleaned)
                 res.append(cleaned)
     return res
@@ -2612,23 +2623,32 @@ def parse_google_slides_presentation(slide_url: str):
                         started = False
                         for l in lines:
                             if "image name" in l.lower():
-                                after = re.sub(r'^.*?image\s*name\s*[:#-]*\s*', '', l, flags=re.I).strip()
-                                after = after.lstrip("•-* \t").strip()
+                                raw_after = re.sub(r'^.*?image\s*name\s*[:#-]*\s*', '', l, flags=re.I).strip()
+                                after = raw_after.lstrip("•-* \t").strip()
+                                if raw_after in ("--", "---", "----", "none", "n/a") or after.lower() in ("all image", "all images", "all files"):
+                                    is_all_images = True
+                                    file_list = []
+                                    break
                                 if after and not after.lower().startswith("ul.") and len(after) > 2:
-                                    if after.lower() in ("all image", "all images"):
-                                        is_all_images = True
-                                    else:
-                                        file_list.append(after)
-                                started = True
-                                continue
+                                    file_list.append(after)
+                                    started = True
+                                    continue
+                                elif not after:
+                                    started = True
+                                    continue
                             if started:
                                 cl = l.lstrip("•-* \t").strip()
                                 if cl.lower().startswith("ul.") or "{" in cl or "list-style" in cl:
                                     continue
-                                if cl.lower() in ("original image", "completed image", "fault area", "none"):
+                                if any(cl.lower().startswith(p) for p in [
+                                    "original image", "completed image", "fault area", "none", "checked by",
+                                    "report type", "job id", "order id", "instruction", "service", "note",
+                                    "investigation", "format", "correction", "error severity", "date:", "subs:"
+                                ]):
                                     break
-                                if cl.lower() in ("all image", "all images"):
+                                if cl.lower() in ("all image", "all images", "--", "---"):
                                     is_all_images = True
+                                    file_list = []
                                     break
                                 if len(cl) >= 2:
                                     file_list.append(cl)

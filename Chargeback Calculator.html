@@ -1522,6 +1522,12 @@ function normalizeCategoryName(c, comp) {
   return str;
 }
 
+function getStem(str) {
+  if (!str) return '';
+  const s = String(str).split(/[/\\]/).pop().trim();
+  return s.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+}
+
 // Excel: VLOOKUP(Service&Category&Pixel, Config!D:H, 5, 0). Not found -> "" (treated as 0)
 function price(s,c,p){
   const normS = normalizeServiceName(s);
@@ -3357,15 +3363,20 @@ async function importFromGoogleSlides(slideUrl){
     S.batch.disputes = newDisputes;
     S.batch.slideUrl = url;
     S.batch.showSlides = true;
-    S.batchStatusText = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
+    S.batchStatusText = `✓ Successfully imported ${newDisputes.length} orders from Google Slides! Scanning exact categories...`;
     S.batchStatusColor = '#27ae60';
     save();
     render();
 
     if(statusEl){
-      statusEl.textContent = `✓ Successfully imported ${newDisputes.length} orders from Google Slides!`;
+      statusEl.textContent = `✓ Successfully imported ${newDisputes.length} orders from Google Slides! Scanning exact categories...`;
       statusEl.style.color = '#27ae60';
     }
+
+    // Auto-scan real services & categories directly from Tista for all imported orders (bypassing date filters)
+    setTimeout(() => {
+      scanAllVisibleServices();
+    }, 150);
   } catch(err){
     if(statusEl){
       statusEl.textContent = '⚠️ ' + err.message;
@@ -5069,7 +5080,7 @@ async function scanDisputeServices(idx){
   }
   const statusEl = $('bt-status-text');
   if(statusEl){
-    statusEl.textContent = `Scanning services for Order #${raw_oid}...`;
+    statusEl.textContent = `Scanning services for Order #${raw_oid} from link/Tista directly (date filters bypassed)...`;
     statusEl.style.color = 'var(--accent)';
   }
   showTopProgress();
@@ -5078,7 +5089,14 @@ async function scanDisputeServices(idx){
     if(!res.ok) throw new Error('Failed to fetch files');
     const data = await res.json();
     if(data.files && data.files.length){
-      d.file_details = data.files;
+      const targetSvcs = (d.disputed_services && d.disputed_services.length)
+        ? d.disputed_services.map(s => normalizeServiceName(s)).filter(Boolean)
+        : (d.slide_services && d.slide_services.length
+            ? d.slide_services.map(s => normalizeServiceName(s)).filter(Boolean)
+            : (d.services && d.services.length
+                ? d.services.map(s => normalizeServiceName(s)).filter(Boolean)
+                : [normalizeServiceName(d.service || 'Clipping path')]));
+
       const svcs = [];
       const cats = [];
       data.files.forEach(f => {
@@ -5086,33 +5104,71 @@ async function scanDisputeServices(idx){
           let sName = normalizeServiceName(s.service || 'Clipping path', s.raw_name);
           if (s.raw_name && /multi/i.test(s.raw_name)) sName = 'Multi-clipping path';
           s.service = sName;
+          s.category = normalizeCategoryName(s.category, s.complexity);
           if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
           if(s.category && !cats.includes(s.category)) cats.push(s.category);
         });
       });
-      if (d.disputed_services && d.disputed_services.length) {
-        const targetSvc = d.disputed_services[0].toLowerCase();
-        let matchedCat = '';
-        const matchStems = new Set((d.filenames || []).map(fn => getStem(fn)).filter(Boolean));
-        const matchedFiles = data.files.filter(f => matchStems.has(getStem(f.filename)) || [...matchStems].some(m => getStem(f.filename).includes(m)));
-        const pool = matchedFiles.length > 0 ? matchedFiles : data.files;
-        pool.forEach(f => {
-          (f.services || []).forEach(s => {
-            if (s.service && s.service.toLowerCase() === targetSvc && s.category) {
-              matchedCat = s.category;
-            }
-          });
+
+      let pool = data.files;
+      if (!d.is_all_images && d.filenames && d.filenames.length > 0) {
+        const matchStems = new Set(d.filenames.map(fn => getStem(fn)).filter(Boolean));
+        const matched = data.files.filter(f => {
+          const fStem = getStem(f.filename);
+          return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
         });
-        d.service = d.disputed_services[0];
-        if (matchedCat) d.cat = matchedCat;
-      } else {
-        if(svcs.length) d.service = svcs[0];
-        if(cats.length) d.cat = cats[0];
+        if (matched.length > 0) {
+          pool = matched;
+        }
+      }
+
+      let resolvedCat = '';
+      pool.forEach(f => {
+        targetSvcs.forEach(tSvc => {
+          const matchItem = (f.services || []).find(s => {
+            const sn = normalizeServiceName(s.service, s.raw_name);
+            return sn && sn.toLowerCase() === tSvc.toLowerCase();
+          });
+          if (matchItem && matchItem.category) {
+            const cName = normalizeCategoryName(matchItem.category, matchItem.complexity);
+            f.category = cName;
+            if (!resolvedCat) resolvedCat = cName;
+          }
+        });
+      });
+
+      if (!resolvedCat && pool.length > 0 && pool[0].services && pool[0].services.length) {
+        resolvedCat = pool[0].services[0].category;
+      }
+
+      d.file_details = pool.map(f => ({
+        filename: f.filename,
+        category: f.category || resolvedCat || d.cat || 'Category 1',
+        service: targetSvcs[0] || d.service || 'Clipping path',
+        services: (f.services && f.services.length) ? f.services : [{
+          service: targetSvcs[0] || d.service || 'Clipping path',
+          category: f.category || resolvedCat || d.cat || 'Category 1'
+        }]
+      }));
+
+      if (targetSvcs.length > 0) {
+        d.service = targetSvcs[0];
+        d.services = targetSvcs;
+        d.disputed_services = targetSvcs;
+      }
+      if (resolvedCat) {
+        d.cat = resolvedCat;
+      }
+      if (!d.is_all_images && pool.length > 0) {
+        d.fault_quantity = pool.length;
+      } else if (d.is_all_images) {
+        d.fault_quantity = data.files.length;
       }
       d.order_services = svcs;
       d.order_cats = cats;
+
       if(statusEl){
-        statusEl.textContent = `✓ Scanned ${data.files.length} files for Order #${raw_oid}!`;
+        statusEl.textContent = `✓ Scanned ${pool.length} files for Order #${raw_oid}! (${d.service}: ${d.cat})`;
         statusEl.style.color = 'green';
       }
       save();
@@ -5147,9 +5203,8 @@ async function scanAllVisibleServices(){
     const text = [item.orig.order_id, item.orig.contractor, item.orig.dispute_reason, item.orig.service, item.orig.status].join(' ').toLowerCase();
     return text.includes(q);
   });
-  const needScan = visibleList.filter(it => !it.orig.file_details || !it.orig.file_details.length);
-  if(!needScan.length){
-    alert('All visible orders already have services and file details scanned!');
+  if(!visibleList.length){
+    alert('No visible orders to scan!');
     return;
   }
   const btnEl = $('bt-scan-all-services');
@@ -5160,12 +5215,13 @@ async function scanAllVisibleServices(){
   const statusEl = $('bt-status-text');
   showTopProgress();
   let scannedCount = 0;
-  for(let i = 0; i < needScan.length; i++){
-    const it = needScan[i];
-    const raw_oid = it.orig.order_id.replace(/\D/g, '');
+  for(let i = 0; i < visibleList.length; i++){
+    const it = visibleList[i];
+    const d = it.orig;
+    const raw_oid = d.order_id.replace(/\D/g, '');
     if(!raw_oid) continue;
     if(statusEl){
-      statusEl.textContent = `Scanning services for Order #${raw_oid} (${i + 1} of ${needScan.length})...`;
+      statusEl.textContent = `Scanning Order #${raw_oid} directly from link (${i + 1} of ${visibleList.length})...`;
       statusEl.style.color = 'var(--accent)';
     }
     try {
@@ -5173,7 +5229,14 @@ async function scanAllVisibleServices(){
       if(res.ok){
         const data = await res.json();
         if(data.files && data.files.length){
-          it.orig.file_details = data.files;
+          const targetSvcs = (d.disputed_services && d.disputed_services.length)
+            ? d.disputed_services.map(s => normalizeServiceName(s)).filter(Boolean)
+            : (d.slide_services && d.slide_services.length
+                ? d.slide_services.map(s => normalizeServiceName(s)).filter(Boolean)
+                : (d.services && d.services.length
+                    ? d.services.map(s => normalizeServiceName(s)).filter(Boolean)
+                    : [normalizeServiceName(d.service || 'Clipping path')]));
+
           const svcs = [];
           const cats = [];
           data.files.forEach(f => {
@@ -5181,31 +5244,68 @@ async function scanAllVisibleServices(){
               let sName = normalizeServiceName(s.service || 'Clipping path', s.raw_name);
               if (s.raw_name && /multi/i.test(s.raw_name)) sName = 'Multi-clipping path';
               s.service = sName;
+              s.category = normalizeCategoryName(s.category, s.complexity);
               if(s.service && !svcs.includes(s.service)) svcs.push(s.service);
               if(s.category && !cats.includes(s.category)) cats.push(s.category);
             });
           });
-          if (it.orig.disputed_services && it.orig.disputed_services.length) {
-            const targetSvc = it.orig.disputed_services[0].toLowerCase();
-            let matchedCat = '';
-            const matchStems = new Set((it.orig.filenames || []).map(fn => getStem(fn)).filter(Boolean));
-            const matchedFiles = data.files.filter(f => matchStems.has(getStem(f.filename)) || [...matchStems].some(m => getStem(f.filename).includes(m)));
-            const pool = matchedFiles.length > 0 ? matchedFiles : data.files;
-            pool.forEach(f => {
-              (f.services || []).forEach(s => {
-                if (s.service && s.service.toLowerCase() === targetSvc && s.category) {
-                  matchedCat = s.category;
-                }
-              });
+
+          let pool = data.files;
+          if (!d.is_all_images && d.filenames && d.filenames.length > 0) {
+            const matchStems = new Set(d.filenames.map(fn => getStem(fn)).filter(Boolean));
+            const matched = data.files.filter(f => {
+              const fStem = getStem(f.filename);
+              return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
             });
-            it.orig.service = it.orig.disputed_services[0];
-            if (matchedCat) it.orig.cat = matchedCat;
-          } else {
-            if(svcs.length) it.orig.service = svcs[0];
-            if(cats.length) it.orig.cat = cats[0];
+            if (matched.length > 0) {
+              pool = matched;
+            }
           }
-          it.orig.order_services = svcs;
-          it.orig.order_cats = cats;
+
+          let resolvedCat = '';
+          pool.forEach(f => {
+            targetSvcs.forEach(tSvc => {
+              const matchItem = (f.services || []).find(s => {
+                const sn = normalizeServiceName(s.service, s.raw_name);
+                return sn && sn.toLowerCase() === tSvc.toLowerCase();
+              });
+              if (matchItem && matchItem.category) {
+                const cName = normalizeCategoryName(matchItem.category, matchItem.complexity);
+                f.category = cName;
+                if (!resolvedCat) resolvedCat = cName;
+              }
+            });
+          });
+
+          if (!resolvedCat && pool.length > 0 && pool[0].services && pool[0].services.length) {
+            resolvedCat = pool[0].services[0].category;
+          }
+
+          d.file_details = pool.map(f => ({
+            filename: f.filename,
+            category: f.category || resolvedCat || d.cat || 'Category 1',
+            service: targetSvcs[0] || d.service || 'Clipping path',
+            services: (f.services && f.services.length) ? f.services : [{
+              service: targetSvcs[0] || d.service || 'Clipping path',
+              category: f.category || resolvedCat || d.cat || 'Category 1'
+            }]
+          }));
+
+          if (targetSvcs.length > 0) {
+            d.service = targetSvcs[0];
+            d.services = targetSvcs;
+            d.disputed_services = targetSvcs;
+          }
+          if (resolvedCat) {
+            d.cat = resolvedCat;
+          }
+          if (!d.is_all_images && pool.length > 0) {
+            d.fault_quantity = pool.length;
+          } else if (d.is_all_images) {
+            d.fault_quantity = data.files.length;
+          }
+          d.order_services = svcs;
+          d.order_cats = cats;
           scannedCount++;
         }
       }
@@ -5219,7 +5319,7 @@ async function scanAllVisibleServices(){
     btnEl.innerHTML = '🔍 Scan Services for All';
   }
   if(statusEl){
-    statusEl.textContent = `✓ Scanned services for ${scannedCount} orders!`;
+    statusEl.textContent = `✓ Scanned services for ${scannedCount} orders directly from link!`;
     statusEl.style.color = 'green';
   }
   save();
