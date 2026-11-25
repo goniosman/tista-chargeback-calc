@@ -47,7 +47,7 @@ except ImportError:
     sync_playwright = None
 
 # Application constants & version
-SERVER_VERSION = "2026.11.25.v1"
+SERVER_VERSION = "2026.11.25.v2"
 BASE_URL = "https://tista.app"
 DISPUTES_URL = f"{BASE_URL}/manage/vendors/1/order_disputes"
 NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
@@ -210,15 +210,24 @@ KNOWN_CATEGORIES = [
     "Category 5.5", "Category 6"
 ]
 
-def resolve_service_name(s_name: str) -> str:
+def resolve_service_name(s_name: str, fallback_to_input: bool = False) -> str:
     """
     Robust service name resolver that correctly matches Tista service names,
     preventing substrings like 'Clipping path' from accidentally hijacking 'Multi-clipping path'.
+    Strictly filters out non-service strings like Bengali instructions, production notes, and URLs.
     """
     if not s_name:
-        return "Clipping path"
+        return ""
     s = str(s_name).strip()
+
+    # Strictly reject non-service text: Bengali text, emojis, long sentences, or note keywords
+    if re.search(r"[\u0980-\u09FF\U00010000-\U0010ffff\u2600-\u27BF]", s):
+        return ""
+    if len(s) > 45:
+        return ""
     s_low = s.lower()
+    if any(bad in s_low for bad in ["approval", "completed file", "on hold", "instruction", "production note", "category-এর", "কাজ", "করতে হবে", "পাঠাতে হবে"]):
+        return ""
 
     # 1. Exact match check
     for ks in KNOWN_SERVICES:
@@ -274,7 +283,7 @@ def resolve_service_name(s_name: str) -> str:
         if ks.lower() in s_low:
             return ks
 
-    return s
+    return s if fallback_to_input else ""
 
 def deduplicate_file_services(svcs):
     """
@@ -287,6 +296,8 @@ def deduplicate_file_services(svcs):
     for s in svcs:
         s_name = s.get("raw_name") or s.get("name") or s.get("service") or s.get("group") or ""
         matched_svc = resolve_service_name(s_name)
+        if not matched_svc:
+            continue
         comp = s.get("complexity") or ""
         cat_m = re.search(r"(\d+(?:\.\d+)?)", comp)
         num_cat = float(cat_m[1]) if cat_m else 1.0
@@ -2182,7 +2193,7 @@ def extract_slide_services(slide_text: str) -> list:
                 if tok.lower() in ("service", "services", "format", "instruction", "note", "none"):
                     continue
                 matched = match_single_service(tok)
-                if matched and matched not in found:
+                if matched and matched in KNOWN_SERVICES and matched not in found:
                     found.append(matched)
 
     if not found:
@@ -2242,6 +2253,12 @@ def parse_google_slides_presentation(slide_url: str):
             # Report Type / Dispute Reason
             m_rep = re.search(r"Report\s*Type\s*[:#-]*\s*([^\n\r<]+)", slide_text, re.I)
             raw_rep = m_rep.group(1).strip() if m_rep else ""
+
+            # Rule: Skip SM Correction slides completely per user instructions (not chargeable to vendor)
+            if re.search(r"\b(?:SM\s*Correction|Instruction\s*mistake\s*by\s*SM)\b", slide_text, re.I) or "sm correction" in raw_rep.lower():
+                print(f"[-] Skipping Slide {s_idx + 1} for Order #{order_id}: Report type is SM Correction.")
+                continue
+
             clean_reason = "Correction"
             if re.search(r"quality", raw_rep, re.I):
                 clean_reason = "Quality"
@@ -2395,6 +2412,9 @@ def parse_google_slides_presentation(slide_url: str):
                                 fl.append(cl)
                     rep_m = re.search(r"Report\s*type\s*[:#-]*\s*([^\n\r]+)", c, re.I)
                     raw_rep = rep_m.group(1).strip() if rep_m else ""
+                    if re.search(r"\b(?:SM\s*Correction|Instruction\s*mistake\s*by\s*SM)\b", c, re.I) or "sm correction" in raw_rep.lower():
+                        print(f"[-] Skipping TXT Slide for Order #{order_id}: Report type is SM Correction.")
+                        continue
                     clean_reason = "Correction"
                     if re.search(r"quality", raw_rep, re.I):
                         clean_reason = "Quality"

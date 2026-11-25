@@ -1476,16 +1476,19 @@ const services = () => [...new Set(S.prices.map(r=>r.s))];
 const catsOf = s => [...new Set(S.prices.filter(r=>r.s===s).map(r=>r.c))];
 function normalizeServiceName(s, raw) {
   const rawStr = String(raw || '').trim();
-  const lowRaw = rawStr.toLowerCase();
-  if (lowRaw.includes('multi-clipping') || lowRaw.includes('multiclipping') || lowRaw.includes('multi clipping') || lowRaw === 'multi-clipping path') {
+  const target = rawStr || String(s || '').trim();
+  if (!target) return '';
+
+  // Filter out non-service strings: Bengali text, emojis, long sentences, note keywords
+  if (/[\u0980-\u09FF\uD800-\uDFFF\u2600-\u27BF]/.test(target)) return '';
+  if (target.length > 45) return '';
+  const low = target.toLowerCase();
+  if (/approval|completed file|on hold|instruction|production note|category-এর|কাজ|করতে হবে|পাঠাতে হবে/.test(low)) return '';
+
+  if (low.includes('multi-clipping') || low.includes('multiclipping') || low.includes('multi clipping') || low === 'multi-clipping path') {
     return 'Multi-clipping path';
   }
-  if (!s && rawStr) s = rawStr;
-  if (!s) return 'Clipping path';
-  const str = String(s).trim();
-  const low = str.toLowerCase();
-  if (low.includes('multi-clipping') || low.includes('multiclipping') || low.includes('multi clipping')) return 'Multi-clipping path';
-  const exact = S.prices.find(r => r.s.toLowerCase() === str.toLowerCase());
+  const exact = S.prices.find(r => r.s.toLowerCase() === low);
   if (exact) return exact.s;
   if (low.includes('wrinkle')) return 'Wrinkle on clothing';
   if (low.includes('dust') || low.includes('scratch')) return 'Dust, spot and scratch removal';
@@ -1506,7 +1509,7 @@ function normalizeServiceName(s, raw) {
   if (low.includes('illustration')) return 'Illustration';
   if (low.includes('background removal')) return 'Background removal';
   if (low.includes('symmetrical')) return 'Symmetrical edit';
-  return str;
+  return '';
 }
 
 function normalizeCategoryName(c, comp) {
@@ -2926,6 +2929,10 @@ async function fetchSingleOrderFromSlide(oid, slideUrl, targetTab = 'cor'){
       throw new Error(`Order #${cleanOid} was not found in this Google Slides presentation. (Checked ${data.total_slides || jobs.length} slides)`);
     }
 
+    if (/sm\s*correction|instruction\s*mistake\s*by\s*sm/i.test(targetJob.report_type || '') || /sm\s*correction/i.test(targetJob.reason || '')) {
+      throw new Error(`Order #${cleanOid} has Report Type: SM Correction (Instruction mistake by SM) - skipped from vendor chargeback.`);
+    }
+
     if (targetTab === 'cor') {
       S.corAutoId = cleanOid;
       S.corDisputeId = targetJob.dispute_id || '';
@@ -3128,17 +3135,23 @@ async function importFromGoogleSlides(slideUrl){
     }
 
     const newDisputes = data.jobs.map((job, i) => {
+      // Rule: Skip SM Correction slides completely per user instructions (not chargeable to vendor)
+      if (/sm\s*correction|instruction\s*mistake\s*by\s*sm/i.test(job.report_type || '') || /sm\s*correction/i.test(job.reason || '')) {
+        return null;
+      }
+
       const oid = String(job.order_id).replace(/\D/g, '');
       const rawSvcs = (job.services && Array.isArray(job.services) && job.services.length) ? job.services : [job.service || 'Clipping path'];
       const allKnown = services();
-      
-      const matchedSvcs = rawSvcs.map(s => {
-        const str = String(s).trim();
-        return allKnown.find(k => k.toLowerCase() === str.toLowerCase())
-            || allKnown.find(k => str.toLowerCase().includes(k.toLowerCase()))
-            || allKnown.find(k => k.toLowerCase().includes(str.toLowerCase()))
-            || str;
+
+      const matchedSvcs = [];
+      rawSvcs.forEach(s => {
+        const norm = normalizeServiceName(s);
+        if (norm && allKnown.includes(norm) && !matchedSvcs.includes(norm)) {
+          matchedSvcs.push(norm);
+        }
       });
+      if (!matchedSvcs.length) matchedSvcs.push('Clipping path');
 
       const svc = matchedSvcs[0] || 'Clipping path';
       const availableCats = catsOf(svc).length ? catsOf(svc) : ['Category 1', 'Category 1.5', 'Category 2'];
@@ -3191,10 +3204,13 @@ async function importFromGoogleSlides(slideUrl){
         filenames: job.filenames || [],
         file_details: fileDetails,
         services: matchedSvcs,
+        disputed_services: matchedSvcs,
+        slide_services: matchedSvcs,
+        is_slide_dispute: true,
         order_services: matchedSvcs,
         order_cats: availableCats
       };
-    });
+    }).filter(Boolean);
 
     if(!S.batch) S.batch = { filters: {} };
     if(!S.batch.filters) S.batch.filters = {};
@@ -3636,13 +3652,17 @@ function calcDisputeChargeback(d){
   const isCustom = d.custom_chargeback !== undefined && d.custom_chargeback !== null && d.custom_chargeback !== '' && !isNaN(d.custom_chargeback);
   const isDelay = reason.toLowerCase() === 'delay';
 
+  const getStem = str => String(str || '').split(/[/\\]/).pop().trim().replace(/\.[^/.]+$/, '').toLowerCase();
+
   // Multi-service file collection & calculation for ALL dispute reasons:
-  // Every service on each disputed file is calculated according to its category and price
   let filesList = [];
   if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
     if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
-      const matchNames = new Set(d.filenames.map(fn => String(typeof fn === 'string' ? fn : (fn.filename || '')).split(/[/\\]/).pop().trim().toLowerCase()));
-      const matched = d.file_details.filter(f => matchNames.has(String(f.filename || '').split(/[/\\]/).pop().trim().toLowerCase()));
+      const matchStems = new Set(d.filenames.map(fn => getStem(typeof fn === 'string' ? fn : (fn.filename || ''))).filter(Boolean));
+      const matched = d.file_details.filter(f => {
+        const fStem = getStem(f.filename || '');
+        return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+      });
       filesList = matched.length > 0 ? matched : d.file_details.slice(0, d.fault_quantity || d.filenames.length);
     } else {
       filesList = d.file_details;
@@ -3666,6 +3686,20 @@ function calcDisputeChargeback(d){
   }
   const effectiveQty = filesList.length > 0 ? filesList.length : dealQty;
 
+  // RULE: "শুধুমাত্র স্লাইডে যে সার্ভিসটা দেওয়া থাকবে, ওই সার্ভিসের উপরই চার্জব্যাক হবে। তাছাড়া অন্য কোনো সার্ভিসের উপর চার্জব্যাক হবে না এবং কি সঠিক ক্যাটাগরিটা ফাইল নেম অনুযায়ী বের করে চার্জব্যাক করতে হবে।"
+  const isSlideOrCorrection = !!(d.is_slide_dispute || (reason.toLowerCase() !== 'delay'));
+  let targetServices = null;
+  if (d.disputed_services && Array.isArray(d.disputed_services) && d.disputed_services.length) {
+    targetServices = d.disputed_services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (d.slide_services && Array.isArray(d.slide_services) && d.slide_services.length) {
+    targetServices = d.slide_services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (isSlideOrCorrection && d.services && Array.isArray(d.services) && d.services.length) {
+    targetServices = d.services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (isSlideOrCorrection && d.service) {
+    const sNorm = normalizeServiceName(d.service);
+    if (sNorm) targetServices = [sNorm];
+  }
+
   let hasMultiService = false;
   let totalBasePrice = 0;
   let totalServiceCount = 0;
@@ -3682,26 +3716,47 @@ function calcDisputeChargeback(d){
 
       // Deduplicate services per file (e.g. multiple workers/revisions on same service)
       const seenFileSvcs = new Map();
-      fSvcsRaw.forEach(sItem => {
-        const rawN = sItem.raw_name || (sItem.service && sItem.service.toLowerCase().includes('multi') ? sItem.service : null);
-        let sName = normalizeServiceName(sItem.service || svc, rawN);
-        if (sItem.raw_name && /multi/i.test(sItem.raw_name)) {
-          sName = 'Multi-clipping path';
-        }
-        const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
-        const k = sName.toLowerCase();
-        if (!seenFileSvcs.has(k)) {
-          seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
-        } else {
-          // If duplicate has higher category, prefer higher
-          const existing = seenFileSvcs.get(k);
-          const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
-          const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
-          if (newCatNum > oldCatNum) {
-            seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+
+      if (targetServices && targetServices.length > 0) {
+        // ONLY include the services explicitly specified in the slide / report!
+        targetServices.forEach(tSvc => {
+          const matchItem = (fSvcsRaw || []).find(si => {
+            const rawN = si.raw_name || (si.service && si.service.toLowerCase().includes('multi') ? si.service : null);
+            const sn = normalizeServiceName(si.service || '', rawN);
+            return sn && sn.toLowerCase() === tSvc.toLowerCase();
+          });
+          const cName = matchItem
+            ? normalizeCategoryName(matchItem.category || f.category || cat, matchItem.complexity)
+            : normalizeCategoryName(f.category || cat, f.complexity);
+          const k = tSvc.toLowerCase();
+          if (!seenFileSvcs.has(k)) {
+            seenFileSvcs.set(k, { sName: tSvc, cName, complexity: matchItem?.complexity });
           }
-        }
-      });
+        });
+      } else {
+        // Delay disputes: include all deduplicated services on the delayed file
+        fSvcsRaw.forEach(sItem => {
+          const rawN = sItem.raw_name || (sItem.service && sItem.service.toLowerCase().includes('multi') ? sItem.service : null);
+          let sName = normalizeServiceName(sItem.service || svc, rawN);
+          if (sItem.raw_name && /multi/i.test(sItem.raw_name)) {
+            sName = 'Multi-clipping path';
+          }
+          if (!sName) return;
+          const cName = normalizeCategoryName(sItem.category || cat, sItem.complexity);
+          const k = sName.toLowerCase();
+          if (!seenFileSvcs.has(k)) {
+            seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+          } else {
+            // If duplicate has higher category, prefer higher
+            const existing = seenFileSvcs.get(k);
+            const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
+            const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+            if (newCatNum > oldCatNum) {
+              seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+            }
+          }
+        });
+      }
 
       seenFileSvcs.forEach(({ sName, cName }) => {
         const pVal = price(sName, cName, pix);
@@ -3841,17 +3896,36 @@ function renderBatchFileItems(d, idx) {
     return `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${dealQty})</div>`;
   }
   const defaultCat = d.cat || 'Category 1.5';
+  const getStem = str => String(str || '').split(/[/\\]/).pop().trim().replace(/\.[^/.]+$/, '').toLowerCase();
   let details = [];
+
   if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
-    details = d.file_details.map(f => ({
-      filename: (typeof f === 'string' ? f : (f.filename || '')),
-      category: (f.category || defaultCat),
-      service: (f.service || d.service || 'Clipping path'),
-      services: (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
-        service: f.service || d.service || 'Clipping path',
-        category: f.category || defaultCat
-      }]
-    }));
+    if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
+      const matchStems = new Set(d.filenames.map(fn => getStem(typeof fn === 'string' ? fn : (fn.filename || ''))).filter(Boolean));
+      const matched = d.file_details.filter(f => {
+        const fStem = getStem(f.filename || '');
+        return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+      });
+      details = (matched.length > 0 ? matched : d.file_details).map(f => ({
+        filename: (typeof f === 'string' ? f : (f.filename || '')),
+        category: (f.category || defaultCat),
+        service: (f.service || d.service || 'Clipping path'),
+        services: (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
+          service: f.service || d.service || 'Clipping path',
+          category: f.category || defaultCat
+        }]
+      }));
+    } else {
+      details = d.file_details.map(f => ({
+        filename: (typeof f === 'string' ? f : (f.filename || '')),
+        category: (f.category || defaultCat),
+        service: (f.service || d.service || 'Clipping path'),
+        services: (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
+          service: f.service || d.service || 'Clipping path',
+          category: f.category || defaultCat
+        }]
+      }));
+    }
   } else if (d.filenames && Array.isArray(d.filenames) && d.filenames.length) {
     details = d.filenames.map(f => ({
       filename: (typeof f === 'string' ? f : (f.filename || '')),
@@ -3869,6 +3943,19 @@ function renderBatchFileItems(d, idx) {
     details = details.slice(0, dealQty);
   }
 
+  const isSlideOrCorrection = !!(d.is_slide_dispute || (d.dispute_reason && d.dispute_reason.toLowerCase() !== 'delay'));
+  let targetServices = null;
+  if (d.disputed_services && Array.isArray(d.disputed_services) && d.disputed_services.length) {
+    targetServices = d.disputed_services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (d.slide_services && Array.isArray(d.slide_services) && d.slide_services.length) {
+    targetServices = d.slide_services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (isSlideOrCorrection && d.services && Array.isArray(d.services) && d.services.length) {
+    targetServices = d.services.map(s => normalizeServiceName(s)).filter(Boolean);
+  } else if (isSlideOrCorrection && d.service) {
+    const sNorm = normalizeServiceName(d.service);
+    if (sNorm) targetServices = [sNorm];
+  }
+
   // Deduplicate and normalize services for each file
   details.forEach(f => {
     const svcs = (f.services && Array.isArray(f.services) && f.services.length) ? f.services : [{
@@ -3876,25 +3963,44 @@ function renderBatchFileItems(d, idx) {
       category: f.category || defaultCat
     }];
     const seen = new Map();
-    svcs.forEach(s => {
-      const rawN = s.raw_name || (s.service && s.service.toLowerCase().includes('multi') ? s.service : null);
-      let sName = normalizeServiceName(s.service || f.service || 'Clipping path', rawN);
-      if (s.raw_name && /multi/i.test(s.raw_name)) {
-        sName = 'Multi-clipping path';
-      }
-      const cName = normalizeCategoryName(s.category || f.category || defaultCat, s.complexity);
-      const k = sName.toLowerCase();
-      if (!seen.has(k)) {
-        seen.set(k, { service: sName, category: cName });
-      } else {
-        const existing = seen.get(k);
-        const oldCatNum = parseFloat(String(existing.category).replace(/[^0-9.]/g, '')) || 1;
-        const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
-        if (newCatNum > oldCatNum) {
-          seen.set(k, { service: sName, category: cName });
+
+    if (targetServices && targetServices.length > 0) {
+      targetServices.forEach(tSvc => {
+        const matchItem = svcs.find(si => {
+          const rawN = si.raw_name || (si.service && si.service.toLowerCase().includes('multi') ? si.service : null);
+          const sn = normalizeServiceName(si.service || '', rawN);
+          return sn && sn.toLowerCase() === tSvc.toLowerCase();
+        });
+        const cName = matchItem
+          ? normalizeCategoryName(matchItem.category || f.category || defaultCat, matchItem.complexity)
+          : normalizeCategoryName(f.category || defaultCat, f.complexity);
+        const k = tSvc.toLowerCase();
+        if (!seen.has(k)) {
+          seen.set(k, { service: tSvc, category: cName });
         }
-      }
-    });
+      });
+    } else {
+      svcs.forEach(s => {
+        const rawN = s.raw_name || (s.service && s.service.toLowerCase().includes('multi') ? s.service : null);
+        let sName = normalizeServiceName(s.service || f.service || 'Clipping path', rawN);
+        if (s.raw_name && /multi/i.test(s.raw_name)) {
+          sName = 'Multi-clipping path';
+        }
+        if (!sName) return;
+        const cName = normalizeCategoryName(s.category || f.category || defaultCat, s.complexity);
+        const k = sName.toLowerCase();
+        if (!seen.has(k)) {
+          seen.set(k, { service: sName, category: cName });
+        } else {
+          const existing = seen.get(k);
+          const oldCatNum = parseFloat(String(existing.category).replace(/[^0-9.]/g, '')) || 1;
+          const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
+          if (newCatNum > oldCatNum) {
+            seen.set(k, { service: sName, category: cName });
+          }
+        }
+      });
+    }
     f.services = Array.from(seen.values());
   });
 
@@ -4231,7 +4337,12 @@ function paneBatch(){
               <tr id="bt-row-${item.idx}">
                 <td style="color:var(--muted);font-size:12px">${idx + 1}</td>
                 <td style="font-family:var(--font-mono);font-weight:600">
-                  <div style="font-size:13px">${esc(d.order_id)}</div>
+                  <div style="display:inline-flex;align-items:center;gap:6px">
+                    <span style="font-size:13px">${esc(d.order_id)}</span>
+                    <a href="https://tista.app/orders?location=all&dateRange=any&query=${encodeURIComponent(d.order_id.replace(/\D/g, ''))}" target="_blank" rel="noopener noreferrer" title="Open Order ${esc(d.order_id)} on Tista" style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;background:rgba(59,91,240,0.1);color:var(--primary);text-decoration:none;font-size:11px;font-family:var(--font-sans);font-weight:600;border:1px solid rgba(59,91,240,0.25);cursor:pointer;white-space:nowrap" onmouseover="this.style.background='rgba(59,91,240,0.22)'" onmouseout="this.style.background='rgba(59,91,240,0.1)'">
+                      🔗 Tista
+                    </a>
+                  </div>
                   ${renderBatchFileItems(d, item.idx)}
                 </td>
                 <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">
@@ -4846,8 +4957,25 @@ async function scanDisputeServices(idx){
           if(s.category && !cats.includes(s.category)) cats.push(s.category);
         });
       });
-      if(svcs.length) d.service = svcs[0];
-      if(cats.length) d.cat = cats[0];
+      if (d.disputed_services && d.disputed_services.length) {
+        const targetSvc = d.disputed_services[0].toLowerCase();
+        let matchedCat = '';
+        const matchStems = new Set((d.filenames || []).map(fn => getStem(fn)).filter(Boolean));
+        const matchedFiles = data.files.filter(f => matchStems.has(getStem(f.filename)) || [...matchStems].some(m => getStem(f.filename).includes(m)));
+        const pool = matchedFiles.length > 0 ? matchedFiles : data.files;
+        pool.forEach(f => {
+          (f.services || []).forEach(s => {
+            if (s.service && s.service.toLowerCase() === targetSvc && s.category) {
+              matchedCat = s.category;
+            }
+          });
+        });
+        d.service = d.disputed_services[0];
+        if (matchedCat) d.cat = matchedCat;
+      } else {
+        if(svcs.length) d.service = svcs[0];
+        if(cats.length) d.cat = cats[0];
+      }
       d.order_services = svcs;
       d.order_cats = cats;
       if(statusEl){
@@ -4924,8 +5052,25 @@ async function scanAllVisibleServices(){
               if(s.category && !cats.includes(s.category)) cats.push(s.category);
             });
           });
-          if(svcs.length) it.orig.service = svcs[0];
-          if(cats.length) it.orig.cat = cats[0];
+          if (it.orig.disputed_services && it.orig.disputed_services.length) {
+            const targetSvc = it.orig.disputed_services[0].toLowerCase();
+            let matchedCat = '';
+            const matchStems = new Set((it.orig.filenames || []).map(fn => getStem(fn)).filter(Boolean));
+            const matchedFiles = data.files.filter(f => matchStems.has(getStem(f.filename)) || [...matchStems].some(m => getStem(f.filename).includes(m)));
+            const pool = matchedFiles.length > 0 ? matchedFiles : data.files;
+            pool.forEach(f => {
+              (f.services || []).forEach(s => {
+                if (s.service && s.service.toLowerCase() === targetSvc && s.category) {
+                  matchedCat = s.category;
+                }
+              });
+            });
+            it.orig.service = it.orig.disputed_services[0];
+            if (matchedCat) it.orig.cat = matchedCat;
+          } else {
+            if(svcs.length) it.orig.service = svcs[0];
+            if(cats.length) it.orig.cat = cats[0];
+          }
           it.orig.order_services = svcs;
           it.orig.order_cats = cats;
           scannedCount++;
