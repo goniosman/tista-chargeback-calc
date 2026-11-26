@@ -1448,7 +1448,28 @@ function getApiBase(){
   }
   return 'http://127.0.0.1:8765';
 }
-const API_BASE = getApiBase();
+let API_BASE = getApiBase();
+
+// Transparent fallback: If local server (8765) is offline, seamlessly route requests to Render cloud backend
+const _nativeFetch = window.fetch;
+window.fetch = async function(resource, init) {
+  try {
+    return await _nativeFetch(resource, init);
+  } catch (err) {
+    const url = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+    if (url && (url.includes('127.0.0.1:8765') || url.includes('localhost:8765'))) {
+      const fallbackBase = 'https://tista-chargeback-calc-1.onrender.com';
+      const fallbackUrl = url.replace(/http:\/\/(127\.0\.0\.1|localhost):8765/, fallbackBase);
+      try {
+        console.warn(`[*] Local API server unreachable. Auto-switching to cloud backend: ${fallbackUrl}`);
+        const res2 = await _nativeFetch(fallbackUrl, init);
+        API_BASE = fallbackBase;
+        return res2;
+      } catch (e2) {}
+    }
+    throw err;
+  }
+};
 
 // ---------- helpers ----------
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1559,6 +1580,27 @@ function getStem(str) {
   if (!str) return '';
   const s = String(str).split(/[/\\]/).pop().trim();
   return s.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+}
+
+function isFilenameFuzzyMatch(needle, haystack) {
+  if (!needle || !haystack) return false;
+  const n = getStem(needle);
+  const h = getStem(haystack);
+  if (!n || !h) return false;
+  if (n === h || n.includes(h) || h.includes(n)) return true;
+
+  const nTokens = n.split(/[^a-z0-9]+/).filter(Boolean);
+  const hTokens = h.split(/[^a-z0-9]+/).filter(Boolean);
+  if (!nTokens.length || !hTokens.length) return false;
+
+  const hSet = new Set(hTokens);
+  const noise = new Set(['donor', 'back', 'front', 'side', 'alt', 'sil', 'view', 'copy', 'final', 'v1', 'v2', 'crop', 'tif', 'jpg', 'png']);
+  const nCore = nTokens.filter(t => !noise.has(t));
+
+  if (nCore.length > 0) {
+    return nCore.every(t => hSet.has(t));
+  }
+  return nTokens.every(t => hSet.has(t));
 }
 
 // Excel: VLOOKUP(Service&Category&Pixel, Config!D:H, 5, 0). Not found -> "" (treated as 0)
@@ -3347,10 +3389,17 @@ async function importFromGoogleSlides(slideUrl){
         const targetSvcs = matchedSvcs.map(s => normalizeServiceName(s)).filter(Boolean);
         let pool = job.cached_files;
         if (!job.is_all_images && job.filenames && job.filenames.length > 0) {
-          const matchStems = new Set(job.filenames.map(fn => getStem(fn)).filter(Boolean));
-          const matched = job.cached_files.filter(f => {
-            const fStem = getStem(f.filename);
-            return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+          const usedIndices = new Set();
+          const matched = [];
+          job.filenames.forEach(fn => {
+            let idx = job.cached_files.findIndex((f, i) => !usedIndices.has(i) && isFilenameFuzzyMatch(fn, f.filename));
+            if (idx === -1) {
+              idx = job.cached_files.findIndex(f => isFilenameFuzzyMatch(fn, f.filename));
+            }
+            if (idx !== -1) {
+              usedIndices.add(idx);
+              matched.push(job.cached_files[idx]);
+            }
           });
           if (matched.length > 0) pool = matched;
         }
@@ -3878,16 +3927,26 @@ function calcDisputeChargeback(d){
 
   const getStem = str => String(str || '').split(/[/\\]/).pop().trim().replace(/\.[^/.]+$/, '').toLowerCase();
 
+  const dealQty = parseInt(d.fault_quantity, 10) || qty;
+
   // Multi-service file collection & calculation for ALL dispute reasons:
   let filesList = [];
   if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
     if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
-      const matchStems = new Set(d.filenames.map(fn => getStem(typeof fn === 'string' ? fn : (fn.filename || ''))).filter(Boolean));
-      const matched = d.file_details.filter(f => {
-        const fStem = getStem(f.filename || '');
-        return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+      const usedIdx = new Set();
+      const matched = [];
+      d.filenames.forEach(fn => {
+        const fnStr = typeof fn === 'string' ? fn : (fn.filename || '');
+        let idx = d.file_details.findIndex((f, i) => !usedIdx.has(i) && isFilenameFuzzyMatch(fnStr, f.filename || ''));
+        if (idx === -1) {
+          idx = d.file_details.findIndex(f => isFilenameFuzzyMatch(fnStr, f.filename || ''));
+        }
+        if (idx !== -1) {
+          usedIdx.add(idx);
+          matched.push(d.file_details[idx]);
+        }
       });
-      filesList = matched.length > 0 ? matched : d.file_details.slice(0, d.fault_quantity || d.filenames.length);
+      filesList = matched.length > 0 ? matched : d.file_details.slice(0, dealQty);
     } else {
       filesList = d.file_details;
     }
@@ -3904,11 +3963,16 @@ function calcDisputeChargeback(d){
     }));
   }
 
-  const dealQty = parseInt(d.fault_quantity, 10) || qty;
-  if (filesList.length > dealQty) {
+  // Preserve dealQty: if dealQty > filesList.length, pad with template items
+  if (dealQty > filesList.length && filesList.length > 0) {
+    const template = filesList[0];
+    while (filesList.length < dealQty) {
+      filesList.push({ ...template, filename: `${template.filename || 'file'} (item ${filesList.length + 1})` });
+    }
+  } else if (filesList.length > dealQty) {
     filesList = filesList.slice(0, dealQty);
   }
-  const effectiveQty = filesList.length > 0 ? filesList.length : dealQty;
+  const effectiveQty = Math.max(dealQty, filesList.length);
 
   // RULE: "শুধুমাত্র স্লাইডে যে সার্ভিসটা দেওয়া থাকবে, ওই সার্ভিসের উপরই চার্জব্যাক হবে। তাছাড়া অন্য কোনো সার্ভিসের উপর চার্জব্যাক হবে না এবং কি সঠিক ক্যাটাগরিটা ফাইল নেম অনুযায়ী বের করে চার্জব্যাক করতে হবে।"
   const isSlideOrCorrection = !!(d.is_slide_dispute || (reason.toLowerCase() !== 'delay'));
@@ -4138,10 +4202,18 @@ function renderBatchFileItems(d, idx) {
 
   if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
     if (d.filenames && Array.isArray(d.filenames) && d.filenames.length && d.file_details.length > d.filenames.length) {
-      const matchStems = new Set(d.filenames.map(fn => getStem(typeof fn === 'string' ? fn : (fn.filename || ''))).filter(Boolean));
-      const matched = d.file_details.filter(f => {
-        const fStem = getStem(f.filename || '');
-        return matchStems.has(fStem) || [...matchStems].some(m => fStem.includes(m) || m.includes(fStem));
+      const usedIdx = new Set();
+      const matched = [];
+      d.filenames.forEach(fn => {
+        const fnStr = typeof fn === 'string' ? fn : (fn.filename || '');
+        let idx = d.file_details.findIndex((f, i) => !usedIdx.has(i) && isFilenameFuzzyMatch(fnStr, f.filename || ''));
+        if (idx === -1) {
+          idx = d.file_details.findIndex(f => isFilenameFuzzyMatch(fnStr, f.filename || ''));
+        }
+        if (idx !== -1) {
+          usedIdx.add(idx);
+          matched.push(d.file_details[idx]);
+        }
       });
       details = (matched.length > 0 ? matched : d.file_details).map(f => ({
         filename: (typeof f === 'string' ? f : (f.filename || '')),
@@ -5894,7 +5966,17 @@ var isTistaCurrentlyLoggedIn = false;
 
 async function checkTistaLoginStatus() {
   try {
-    const res = await fetch(`${API_BASE}/api/login_status`);
+    let res = await fetch(`${API_BASE}/api/login_status`);
+    if (!res.ok && (API_BASE.includes('127.0.0.1') || API_BASE.includes('localhost'))) {
+      const remote = 'https://tista-chargeback-calc-1.onrender.com';
+      try {
+        const resRemote = await fetch(`${remote}/api/login_status`);
+        if (resRemote.ok) {
+          API_BASE = remote;
+          res = resRemote;
+        }
+      } catch (_) {}
+    }
     if(!res.ok) return;
     const data = await res.json();
     const txt = $('tista-status-text');
@@ -5909,7 +5991,27 @@ async function checkTistaLoginStatus() {
       if(dot) dot.style.background = '#e3b341';
     }
   } catch(e) {
-    // Offline / serverless mode
+    if (API_BASE.includes('127.0.0.1') || API_BASE.includes('localhost')) {
+      const remote = 'https://tista-chargeback-calc-1.onrender.com';
+      try {
+        const resRemote = await fetch(`${remote}/api/login_status`);
+        if (resRemote.ok) {
+          API_BASE = remote;
+          const data = await resRemote.json();
+          const txt = $('tista-status-text');
+          const dot = $('tista-status-dot');
+          const savedUser = localStorage.getItem('tista_logged_user');
+          isTistaCurrentlyLoggedIn = Boolean(data.logged_in);
+          if (data.logged_in) {
+            if(txt) txt.textContent = savedUser ? `🟢 ${savedUser} (Saved)` : '🟢 Tista Connected (Saved)';
+            if(dot) dot.style.background = '#2ecc71';
+          } else {
+            if(txt) txt.textContent = '🔑 Tista Login';
+            if(dot) dot.style.background = '#e3b341';
+          }
+        }
+      } catch (_) {}
+    }
   }
 }
 

@@ -13,6 +13,7 @@ import json
 import re
 import sys
 import os
+import gc
 import time
 import threading
 import shutil
@@ -144,7 +145,7 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--js-flags=--max-old-space-size=128",
+        "--js-flags=--max-old-space-size=64",
         "--renderer-process-limit=1",
         "--single-process",
         "--no-zygote",
@@ -153,6 +154,10 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
         "--disable-background-networking",
         "--disable-default-apps",
         "--disable-sync",
+        "--disable-translate",
+        "--disk-cache-size=1",
+        "--media-cache-size=1",
+        "--safebrowsing-disable-auto-update",
         "--mute-audio"
     ]
     viewport = {"width": 1280, "height": 800}
@@ -1188,6 +1193,17 @@ def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
         for bad_oid in executor.map(_worker, to_fetch):
             if bad_oid:
                 failed.append(bad_oid)
+
+    if failed and os.environ.get("TISTA_EMAIL") and os.environ.get("TISTA_PASSWORD"):
+        print("[*] Direct API encountered unauthenticated or failed orders, attempting direct HTTP re-login...")
+        if login_tista_direct_http(os.environ.get("TISTA_EMAIL"), os.environ.get("TISTA_PASSWORD")):
+            s_new = get_tista_http_session(force_refresh=True)
+            retry_failed = []
+            for o in failed:
+                res = fetch_order_files_direct_api(o, session=s_new)
+                if res is None:
+                    retry_failed.append(o)
+            failed = retry_failed
 
     try:
         import gc
@@ -2266,6 +2282,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     out_file = DATA_DIR / "tista_batch_disputes.json"
     out_file.write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[✓] Saved {len(out_list)} disputes to: {out_file}")
+    gc.collect()
     return res
 
 def extract_filenames_from_page(page, url):
@@ -2857,6 +2874,57 @@ def check_tista_login_status():
             break
     return {"logged_in": has_cookies, "profile_dir": str(profile_dir)}
 
+def login_tista_direct_http(email, password):
+    """Logs in to Tista via direct HTTP POST. Ultra-lightweight (~2MB RAM, 0.3s)."""
+    if not email or not password or not requests:
+        return False
+    try:
+        s = requests.Session()
+        s.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        })
+        r_get = s.get(f"{BASE_URL}/users/sign_in", timeout=12)
+        if r_get.status_code != 200:
+            return False
+
+        m_csrf = re.search(r'name=["\']authenticity_token["\']\s+value=["\']([^"\']+)["\']', r_get.text)
+        if not m_csrf:
+            m_csrf = re.search(r'name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']', r_get.text)
+        token = m_csrf.group(1) if m_csrf else ""
+
+        payload = {
+            "authenticity_token": token,
+            "user[email]": email,
+            "user[password]": password,
+            "user[remember_me]": "1",
+            "commit": "Log in"
+        }
+        r_post = s.post(f"{BASE_URL}/users/sign_in", data=payload, timeout=15, allow_redirects=True)
+        if "sign_in" not in r_post.url.lower() and "login" not in r_post.url.lower():
+            cookies = []
+            for cookie in s.cookies:
+                cookies.append({
+                    "name": cookie.name,
+                    "value": cookie.value,
+                    "domain": cookie.domain or "tista.app",
+                    "path": cookie.path or "/",
+                    "secure": cookie.secure,
+                    "httpOnly": cookie.has_nonstandard_attr("HttpOnly")
+                })
+            for out_p in [DATA_DIR / "saved_cookies.json", APP_DIR / "saved_cookies.json", resolve_profile_dir() / "saved_cookies.json"]:
+                try:
+                    out_p.parent.mkdir(parents=True, exist_ok=True)
+                    out_p.write_text(json.dumps(cookies, indent=2), encoding="utf-8")
+                except Exception:
+                    pass
+            get_tista_http_session(force_refresh=True)
+            print("[✓] Successfully logged in to Tista via fast direct HTTP API!")
+            return True
+    except Exception as e:
+        print(f"[*] Direct HTTP login note: {e}")
+    return False
+
 def perform_tista_login(email=None, password=None):
     """Logs in to Tista. Local runs open visible Chrome matching unified_app."""
     profile_dir = resolve_profile_dir()
@@ -2864,6 +2932,11 @@ def perform_tista_login(email=None, password=None):
 
     email = (email or os.environ.get("TISTA_EMAIL", "")).strip()
     password = (password or os.environ.get("TISTA_PASSWORD", "")).strip()
+
+    # If email and password provided, try ultra-fast direct HTTP login first (avoids browser launch & memory spike)
+    if email and password:
+        if login_tista_direct_http(email, password):
+            return {"status": "ok", "message": "Successfully logged in to Tista via direct API (ultra-low memory)"}
 
     # In cloud environments (Render), login runs headless with env credentials.
     # On local desktop, login opens a visible Google Chrome window so the user can sign in.
@@ -3390,6 +3463,7 @@ def parse_google_slides_presentation(slide_url: str):
             except Exception:
                 pass
 
+    gc.collect()
     return {
         "status": "success",
         "presentation_id": pres_id,

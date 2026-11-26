@@ -1,0 +1,13 @@
+requirements.txt
+api/
+*.py
+*.bat
+*.exe
+*.dmg
+*.spec
+Dockerfile
+render.yaml
+tests/
+.git
+.github
+*.json

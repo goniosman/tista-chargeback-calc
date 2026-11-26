@@ -12,6 +12,10 @@ services:
         value: "1"
       - key: MALLOC_ARENA_MAX
         value: "2"
+      - key: PYTHONMALLOC
+        value: "malloc"
+      - key: MALLOC_TRIM_THRESHOLD_
+        value: "65536"
       - key: TISTA_EMAIL
         sync: false
       - key: TISTA_PASSWORD
