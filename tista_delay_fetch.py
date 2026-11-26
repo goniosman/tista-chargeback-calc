@@ -389,6 +389,10 @@ def hours_to_seconds(text):
     n = re.search(r"-?\d+(?:\.\d+)?", t)
     return round(float(n[0]) * 3600) if n else None
 
+parse_duration_to_seconds = hours_to_seconds
+parseDur = hours_to_seconds
+
+
 def ensure_logged_in(page):
     """Ensures user is logged into Tista. If on login page, attempts auto-login with env credentials or waits for user."""
     page.goto(DISPUTES_URL, wait_until="domcontentloaded")
@@ -1816,6 +1820,16 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
         link_c = link_map.get(did_c)
         if not link_c: continue
         raw_oid_c = re.sub(r"\D", "", r_check.get("order_id", ""))
+        # If files are already cached or extracted from Tista, no need to scrape external link
+        c_corr_c = DATA_DIR / f"tista_correction_{raw_oid_c}.json"
+        if not c_corr_c.exists(): c_corr_c = APP_DIR / f"tista_correction_{raw_oid_c}.json"
+        if c_corr_c.exists():
+            try:
+                c_data = json.loads(c_corr_c.read_text(encoding="utf-8"))
+                if c_data.get("files"):
+                    continue
+            except Exception:
+                pass
         c_delay_c = DATA_DIR / f"tista_{raw_oid_c}.json"
         if not c_delay_c.exists(): c_delay_c = APP_DIR / f"tista_{raw_oid_c}.json"
         if c_delay_c.exists():
