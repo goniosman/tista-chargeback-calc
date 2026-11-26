@@ -905,6 +905,250 @@ def parse_file_services(services_raw):
         deduped.append(p)
     return deduped
 
+_TISTA_SERVICE_CAT_MAP = None
+
+def get_tista_service_categories_map(session=None):
+    """
+    Loads and caches the Tista service categories map from https://tista.app/service/short.json.
+    Maps serviceCategoryId (e.g. 29) to exact service title and category label.
+    """
+    global _TISTA_SERVICE_CAT_MAP
+    if _TISTA_SERVICE_CAT_MAP is not None:
+        return _TISTA_SERVICE_CAT_MAP
+
+    s = session or get_tista_http_session()
+    if not s:
+        return {}
+
+    try:
+        r = s.get(f"{BASE_URL}/service/short.json", timeout=8)
+        if r.status_code == 200:
+            mapping = {}
+            for sv in r.json():
+                sv_title = sv.get("title", "").strip()
+                for cat in sv.get("serviceCategories", []):
+                    cid = cat.get("id")
+                    if cid is None:
+                        continue
+                    lbl = str(cat.get("categoryLabel", "1")).strip()
+                    title_friendly = cat.get("titleFriendly") or sv_title
+                    mapping[cid] = {
+                        "service": title_friendly,
+                        "parent_service": sv_title,
+                        "category_title": f"Category {lbl}",
+                        "complexity": f"C{lbl}",
+                        "numeric_cat": float(re.sub(r"[^\d.]", "", lbl) or 1.0)
+                    }
+            _TISTA_SERVICE_CAT_MAP = mapping
+            return _TISTA_SERVICE_CAT_MAP
+    except Exception as e:
+        print(f"[!] Error loading Tista service categories map: {e}")
+    return {}
+
+def fetch_order_files_direct_api(order_id: str, session=None):
+    """
+    Fetches order files, services, and categories directly using Tista's fast JSON REST API.
+    Bypasses Playwright browser launch overhead (runs in ~0.2 - 0.4s).
+    Saves cache to tista_correction_{oid}.json and returns parsed files list.
+    """
+    raw_id = str(order_id).strip()
+    digits = re.sub(r"\D", "", raw_id)
+    oid = digits or raw_id.replace("#", "")
+    if not oid:
+        return []
+
+    # Check local cache first
+    cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+    if not cached_corr.exists():
+        cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+    if cached_corr.exists():
+        try:
+            return json.loads(cached_corr.read_text(encoding="utf-8")).get("files", [])
+        except Exception:
+            pass
+
+    s = session or get_tista_http_session()
+    if not s:
+        return []
+
+    cat_map = get_tista_service_categories_map(s)
+
+    try:
+        # Step 1: Query order details via orders.json
+        r_order = s.get(f"{BASE_URL}/orders.json?q[search_by_query]={oid}&page=1&per=10", timeout=10)
+        if r_order.status_code != 200:
+            return []
+
+        o_data = r_order.json()
+        orders_list = o_data.get("orders", [])
+        matched_order = None
+        for o in orders_list:
+            clean_name = re.sub(r"\D", "", str(o.get("orderName", "")))
+            if clean_name == oid or str(o.get("id")) == oid:
+                matched_order = o
+                break
+        if not matched_order and orders_list:
+            matched_order = orders_list[0]
+
+        if not matched_order:
+            return []
+
+        internal_id = str(matched_order.get("id", ""))
+        turnaround_hours = matched_order.get("turnaroundHours") or 24
+        turnaround = f"{int(turnaround_hours)}:00:00"
+
+        # Map order assignments to locations / contractors
+        assignments = matched_order.get("orderAssignments", [])
+        assign_loc_map = {}
+        contractor = ""
+        for a in assignments:
+            loc = a.get("locationTitle", "").strip()
+            if loc:
+                assign_loc_map[a.get("id")] = loc
+                if not contractor:
+                    contractor = loc
+        if not contractor:
+            contractor = "Edgebo"
+
+        # Step 2: Query order files via files.json
+        r_files = s.get(f"{BASE_URL}/orders/{internal_id}/files.json", timeout=12)
+        if r_files.status_code != 200:
+            return []
+
+        raw_files = r_files.json()
+        if not isinstance(raw_files, list):
+            return []
+
+        parsed_files = []
+        for idx, f in enumerate(raw_files):
+            item_name = str(f.get("itemName", "")).strip()
+            item_format = str(f.get("itemFormat", "")).strip()
+            subpath = str(f.get("subpath") or "").strip()
+            if subpath and subpath != "None":
+                filename = f"{subpath}/{item_name}.{item_format}" if item_format and not item_name.endswith(f".{item_format}") else f"{subpath}/{item_name}"
+            else:
+                filename = f"{item_name}.{item_format}" if item_format and not item_name.endswith(f".{item_format}") else item_name
+
+            loc_id = f.get("orderAssignmentId")
+            f_loc = assign_loc_map.get(loc_id, contractor)
+
+            dim_px = f.get("dimensionPx") or 0
+            dim_label = ">5000px" if dim_px >= 5000 else "<5000px"
+
+            svcs = []
+            seen_tasks = set()
+            for t in f.get("itemTasks", []):
+                sc_id = t.get("serviceCategoryId")
+                if sc_id in seen_tasks:
+                    continue
+                seen_tasks.add(sc_id)
+
+                info = cat_map.get(sc_id, {})
+                s_name = info.get("service") or "Clipping path"
+                c_name = info.get("category_title") or "Category 1"
+                comp = info.get("complexity") or "C1"
+                num_c = info.get("numeric_cat") or 1.0
+
+                svcs.append({
+                    "service": s_name,
+                    "raw_name": s_name,
+                    "complexity": comp,
+                    "category": c_name,
+                    "numeric_cat": num_c
+                })
+
+            if not svcs:
+                svcs.append({
+                    "service": "Clipping path",
+                    "raw_name": "Clipping path",
+                    "complexity": "C1",
+                    "category": "Category 1",
+                    "numeric_cat": 1.0
+                })
+
+            disp = ", ".join([f"{s['service']} ({s['category']})" for s in svcs])
+            parsed_files.append({
+                "id": idx + 1,
+                "filename": filename,
+                "location": f_loc,
+                "dimension": dim_label,
+                "services": svcs,
+                "services_display": disp
+            })
+
+        corr_data = {
+            "order_id": oid,
+            "contractor": contractor,
+            "order_duration": turnaround,
+            "pixel": "> 5000",
+            "total_files": len(parsed_files),
+            "files": parsed_files
+        }
+        for path_cand in [DATA_DIR, APP_DIR]:
+            try:
+                (path_cand / f"tista_correction_{oid}.json").write_text(
+                    json.dumps(corr_data, indent=2, ensure_ascii=False), encoding="utf-8"
+                )
+            except Exception:
+                pass
+
+        print(f"[✓] [Fast API] Extracted & cached {len(parsed_files)} files for Order #{oid}")
+        return parsed_files
+    except Exception as e:
+        print(f"[!] [Fast API] Error for Order #{oid}: {e}")
+        return []
+
+def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
+    """
+    Fetches files for multiple order IDs in parallel using fast Tista JSON API and ThreadPoolExecutor.
+    Returns a list of order IDs that failed (if any).
+    """
+    if not order_ids:
+        return []
+
+    clean_oids = [re.sub(r"\D", "", str(o)) for o in order_ids]
+    clean_oids = [o for o in clean_oids if o]
+    if not clean_oids:
+        return []
+
+    # Check which are already cached
+    to_fetch = []
+    for o in clean_oids:
+        c1 = DATA_DIR / f"tista_correction_{o}.json"
+        c2 = APP_DIR / f"tista_correction_{o}.json"
+        if not c1.exists() and not c2.exists():
+            if o not in to_fetch:
+                to_fetch.append(o)
+
+    if not to_fetch:
+        return []
+
+    s = get_tista_http_session()
+    if not s:
+        return to_fetch
+
+    # Pre-load category map once
+    get_tista_service_categories_map(s)
+
+    workers = min(max_workers, len(to_fetch), 10)
+    failed = []
+
+    def _worker(o):
+        try:
+            res = fetch_order_files_direct_api(o, session=s)
+            if not res:
+                return o
+            return None
+        except Exception:
+            return o
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        for bad_oid in executor.map(_worker, to_fetch):
+            if bad_oid:
+                failed.append(bad_oid)
+
+    return failed
+
 def fetch_order_files_from_tista(order_id: str, headless: bool = True):
     """
     Fetches the list of files, services, categories, and location for an order to calculate Correction chargebacks.
@@ -952,6 +1196,19 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
                 return cdata
         except Exception:
             pass
+
+    # 2. Fast Direct JSON API Check (~0.2s, no Playwright browser overhead)
+    fast_files = fetch_order_files_direct_api(oid)
+    if fast_files:
+        cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+        if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+        if cached_corr.exists():
+            try:
+                cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
+                if cdata and (cdata.get("files") or cdata.get("total_files", 0) >= 0):
+                    return cdata
+            except Exception:
+                pass
 
     result = {
         "order_id": oid,
@@ -1188,6 +1445,11 @@ def extract_order_files_with_page(page, order_id: str):
             return json.loads(cached_corr.read_text(encoding="utf-8")).get("files", [])
         except Exception:
             pass
+
+    # Try Fast Direct JSON API first (~0.2s without browser navigation)
+    fast_files = fetch_order_files_direct_api(oid)
+    if fast_files:
+        return fast_files
 
     print(f"[*] Extracting files for Order #{oid} using active page...")
     try:
@@ -1544,7 +1806,15 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 pass
         links_to_extract.append((did_c, link_c))
 
-    # Launch Playwright only if there are uncached orders or uncached external links to parse
+    # 1. Fast Parallel Batch Fetch for all uncached orders via direct Tista JSON API (~0.2s per order)
+    if uncached_oids:
+        print(f"[*] [Fast API] Parallel extracting {len(uncached_oids)} uncached orders: {uncached_oids}")
+        failed_oids = fetch_orders_files_direct_api_batch(uncached_oids)
+        uncached_oids = failed_oids
+        if uncached_oids:
+            print(f"[*] Falling back to Playwright for {len(uncached_oids)} orders: {uncached_oids}")
+
+    # Launch Playwright only if there are still uncached orders or uncached external links to parse
     if (uncached_oids or links_to_extract) and not page and sync_playwright:
         try:
             p_instance = sync_playwright().start()
@@ -1937,6 +2207,13 @@ def get_tista_http_session(force_refresh: bool = False):
         return _TISTA_HTTP_SESSION
 
     s = requests.Session()
+    try:
+        from requests.adapters import HTTPAdapter
+        adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
+        s.mount("https://", adapter)
+        s.mount("http://", adapter)
+    except Exception:
+        pass
     s.headers.update({
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -2800,23 +3077,26 @@ def parse_google_slides_presentation(slide_url: str):
             if oid not in uncached_slide_oids:
                 uncached_slide_oids.append(oid)
 
-    if uncached_slide_oids and sync_playwright:
-        print(f"[*] Batch extracting {len(uncached_slide_oids)} uncached orders for Google Slides: {uncached_slide_oids}")
-        try:
-            with sync_playwright() as p_slides:
-                ctx_slides = launch_playwright_context(p_slides, headless=True)
-                page_slides = ctx_slides.pages[0] if ctx_slides.pages else ctx_slides.new_page()
-                for u_oid in uncached_slide_oids:
+    if uncached_slide_oids:
+        print(f"[*] [Fast API] Parallel batch extracting {len(uncached_slide_oids)} uncached orders for Google Slides: {uncached_slide_oids}")
+        failed_slide_oids = fetch_orders_files_direct_api_batch(uncached_slide_oids)
+        if failed_slide_oids and sync_playwright:
+            print(f"[*] Playwright fallback for {len(failed_slide_oids)} orders: {failed_slide_oids}")
+            try:
+                with sync_playwright() as p_slides:
+                    ctx_slides = launch_playwright_context(p_slides, headless=True)
+                    page_slides = ctx_slides.pages[0] if ctx_slides.pages else ctx_slides.new_page()
+                    for u_oid in failed_slide_oids:
+                        try:
+                            extract_order_files_with_page(page_slides, u_oid)
+                        except Exception as eo:
+                            print(f"[!] Error extracting files for #{u_oid}: {eo}")
                     try:
-                        extract_order_files_with_page(page_slides, u_oid)
-                    except Exception as eo:
-                        print(f"[!] Error extracting files for #{u_oid}: {eo}")
-                try:
-                    ctx_slides.close()
-                except Exception:
-                    pass
-        except Exception as pe:
-            print(f"[!] Batch Playwright fetch note: {pe}")
+                        ctx_slides.close()
+                    except Exception:
+                        pass
+            except Exception as pe:
+                print(f"[!] Batch Playwright fetch note: {pe}")
 
     # Attach local cached files (instant disk lookup in 0.001s, no network/Playwright overhead)
     for j in parsed_jobs:
