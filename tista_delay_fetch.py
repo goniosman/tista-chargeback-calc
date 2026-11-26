@@ -1611,7 +1611,28 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     and optionally deep-scans order files to extract service and category.
     """
     filters = filters or {}
-    reason = str(filters.get("reason", "2") or "")
+    reason = str(filters.get("reason", "2") or "").strip()
+
+    # If multiple reasons requested (e.g. "2,4" for Correction & Quality), fetch and combine
+    if reason and "," in reason:
+        sub_reasons = [r.strip() for r in reason.split(",") if r.strip()]
+        all_disputes = []
+        seen_ids = set()
+        for sr in sub_reasons:
+            sub_filters = dict(filters)
+            sub_filters["reason"] = sr
+            res = fetch_disputes_batch_from_tista(sub_filters, max_workers=max_workers)
+            for d in res.get("disputes", []):
+                uid = str(d.get("dispute_id") or d.get("order_id"))
+                if uid not in seen_ids:
+                    seen_ids.add(uid)
+                    all_disputes.append(d)
+        return {
+            "disputes": all_disputes,
+            "total_disputes": len(all_disputes),
+            "filters": filters
+        }
+
     status = str(filters.get("status", "1") or "")
     chargeable = str(filters.get("chargeable", "1") or "")
     location = str(filters.get("location", "") or "")

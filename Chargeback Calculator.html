@@ -1153,41 +1153,17 @@ tfoot td {
     </div>
 
     <nav class="sidebar-nav" id="tabs" role="tablist">
-      <button role="tab" data-tab="cor" aria-selected="true" class="sidebar-nav-item">
-        <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        </span>
-        <span class="nav-label">Correction</span>
-      </button>
-      <button role="tab" data-tab="del" aria-selected="false" class="sidebar-nav-item">
+      <button role="tab" data-tab="batch_delay" aria-selected="true" class="sidebar-nav-item" title="Batch Delay Delivery Chargeback">
         <span class="nav-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         </span>
-        <span class="nav-label">Delay Delivery</span>
+        <span class="nav-label">Delay (ডিলে)</span>
       </button>
-      <button role="tab" data-tab="auto" aria-selected="false" class="sidebar-nav-item">
+      <button role="tab" data-tab="batch_cor" aria-selected="false" class="sidebar-nav-item" title="Batch Quality & Correction Chargeback">
         <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         </span>
-        <span class="nav-label">Automatic Delay</span>
-      </button>
-      <button role="tab" data-tab="autocor" aria-selected="false" class="sidebar-nav-item">
-        <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-        </span>
-        <span class="nav-label">Auto Correction</span>
-      </button>
-      <button role="tab" data-tab="batch" aria-selected="false" class="sidebar-nav-item">
-        <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-        </span>
-        <span class="nav-label">Batch Chargeback</span>
-      </button>
-      <button role="tab" data-tab="cfg" aria-selected="false" class="sidebar-nav-item">
-        <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-        </span>
-        <span class="nav-label">Price List</span>
+        <span class="nav-label">Quality & Correction</span>
       </button>
     </nav>
 
@@ -1203,9 +1179,9 @@ tfoot td {
   <div class="app-main">
     <header class="main-header">
       <div class="header-left">
-        <div class="breadcrumbs">Operations / <span id="breadcrumb-tab-name">Correction</span></div>
-        <h1 class="header-title" id="header-main-title">Chargeback Calculator</h1>
-        <p class="header-sub" id="header-main-sub">Review service details and calculate vendor chargebacks.</p>
+        <div class="breadcrumbs">Operations / <span id="breadcrumb-tab-name">Delay</span></div>
+        <h1 class="header-title" id="header-main-title">Batch Delay Chargeback</h1>
+        <p class="header-sub" id="header-main-sub">Search, calculate, and batch close delay delivery disputes.</p>
       </div>
       <div class="header-actions">
         <button id="btn-tista-login" type="button" class="btn-tista-status" title="Tista Connection Status">
@@ -1242,14 +1218,30 @@ tfoot td {
       <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Tista Account Status</div>
       <div id="settings-account-status" style="font-size:13px;color:#059669;font-weight:600;">Checking...</div>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;">
-      <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
-        🔑 Switch Account
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <button type="button" onclick="$('settings-modal').style.display='none'; openPriceListModal();" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        📋 Price List
       </button>
-      <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
-        Save Changes
-      </button>
+      <div style="display:flex;gap:10px;">
+        <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+          🔑 Switch Account
+        </button>
+        <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+          Save Changes
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Price List Modal -->
+<div id="price-list-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;width:90%;max-width:850px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.15);color:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;">📋 Service Price List</h3>
+      <button type="button" onclick="$('price-list-modal').style.display='none'" style="background:transparent;border:none;color:#64748b;font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div id="price-list-content"></div>
   </div>
 </div>
 
@@ -1298,14 +1290,30 @@ tfoot td {
       <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Tista Account Status</div>
       <div id="settings-account-status" style="font-size:13px;color:#059669;font-weight:600;">Checking...</div>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;">
-      <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
-        🔑 Switch Account
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <button type="button" onclick="$('settings-modal').style.display='none'; openPriceListModal();" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        📋 Price List
       </button>
-      <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
-        Save Changes
-      </button>
+      <div style="display:flex;gap:10px;">
+        <button type="button" onclick="triggerTistaLogin(); $('settings-modal').style.display='none';" style="padding:9px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+          🔑 Switch Account
+        </button>
+        <button type="button" onclick="saveSettingsModal()" style="padding:9px 16px;border:none;background:#3b5bf0;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+          Save Changes
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Price List Modal -->
+<div id="price-list-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;width:90%;max-width:850px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.15);color:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;">📋 Service Price List</h3>
+      <button type="button" onclick="$('price-list-modal').style.display='none'" style="background:transparent;border:none;color:#64748b;font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div id="price-list-content"></div>
   </div>
 </div>
 
@@ -1369,20 +1377,39 @@ function getDelaySeverityFromPct(pct) {
   return 'Low';
 }
 const blank = n => Array.from({length:n},()=>({s:'',c:'',p:'',q:''}));
-const DEF = () => ({
-  tab:'cor', prices: DEFAULT_CFG.prices.map(r=>({s:r[0],c:r[1],p:r[2],v:r[3]})),
-  autoId:'', auto:null,
-  corAutoId:'', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'', corShowImport:false, corShowPasteNames:false, corPasteText:'',
-  showCorSlide:false, showDelSlide:false, corSlideUrl:'', delSlideUrl:'',
-  batch: { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', deepScan: true }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '' }, 
-  cor:{contractor:'Creative Path (P1)',service:'Dust, spot and scratch removal',cat:'Category 1.5',pix:'> 5000',fault_severity:'Low',sev:'Low',qty:'',
-    order:[],
-    cb:[]},
-  del:{contractor:'Clipping Path Zone',service:'Image masking',cat:'Category 3',pix:'> 5000',fault_severity:'Low',qty:'',dur:'00:00:00',sec:0,
-    order:[],
-    cb:[]},
-  cfgFilter:{q:'',s:''}
-});
+const DEF = () => {
+  const state = {
+    tab: 'batch_delay',
+    prices: DEFAULT_CFG.prices.map(r=>({s:r[0],c:r[1],p:r[2],v:r[3]})),
+    batch_delay: {
+      filters: { reason: '1', status: '1', chargeable: '1', location: '', query: '', dateStart: '', dateEnd: '', deepScan: true },
+      disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, statusText: '', statusColor: ''
+    },
+    batch_cor: {
+      filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', dateStart: '', dateEnd: '', deepScan: true },
+      disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '', statusText: '', statusColor: ''
+    },
+    corAutoId:'', corAuto:null, corSelectedIds:[], corService:'', corCat:'', corSev:'Low', corPix:'> 5000', corFilterQ:'',
+    cfgFilter:{q:'',s:''}
+  };
+  Object.defineProperty(state, 'batch', {
+    get: function() {
+      if (this.tab === 'batch_delay') {
+        if (!this.batch_delay) this.batch_delay = { filters: { reason: '1', status: '1', chargeable: '1', location: '', query: '', dateStart: '', dateEnd: '', deepScan: true }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false };
+        return this.batch_delay;
+      }
+      if (!this.batch_cor) this.batch_cor = { filters: { reason: '2', status: '1', chargeable: '1', location: '', query: '', dateStart: '', dateEnd: '', deepScan: true }, disputes: [], filterQ: '', contractorFilter: '', reasonFilter: '', showPaste: false, showSlides: false, slideUrl: '' };
+      return this.batch_cor;
+    },
+    set: function(val) {
+      if (this.tab === 'batch_delay') this.batch_delay = val;
+      else this.batch_cor = val;
+    },
+    configurable: true,
+    enumerable: true
+  });
+  return state;
+};
 let S = DEF();
 try{
   const raw = localStorage.getItem('chargeback-calc-v1');
@@ -4246,8 +4273,10 @@ function renderBatchFileItems(d, idx) {
   `;
 }
 
-function paneBatch(){
-  const b = S.batch || { filters: {}, disputes: [] };
+function paneBatch(mode = null){
+  const activeMode = mode || (S.tab === 'batch_delay' ? 'delay' : 'cor');
+  const isDelayMode = (activeMode === 'delay');
+  const b = isDelayMode ? S.batch_delay : S.batch_cor;
   const f = b.filters || {};
   const disputes = (b.disputes || []).filter(d => !String(d.dispute_reason || '').toLowerCase().includes('revision'));
   const q = (b.filterQ || '').toLowerCase().trim();
@@ -4295,7 +4324,7 @@ function paneBatch(){
 
   return `
   <div class="card" style="margin-bottom:16px">
-    <h2>Batch Dispute Search & Chargeback</h2>
+    <h2>${isDelayMode ? 'Batch Delay Chargeback' : 'Batch Quality & Correction Chargeback'}</h2>
 
     <!-- Fault at Date Range matching User Mockup -->
     <div style="margin:10px 0 16px;display:flex;align-items:flex-start;flex-wrap:wrap">
@@ -4357,13 +4386,19 @@ function paneBatch(){
       </div>
       <div class="batch-filter-item">
         <label>Dispute Reason</label>
-        <select id="bt-reason" class="batch-filter-select">
-          <option value="2"${f.reason==='2'?' selected':''}>Correction</option>
-          <option value="1"${f.reason==='1'?' selected':''}>Delay</option>
-          <option value="4"${f.reason==='4'?' selected':''}>Quality</option>
-          <option value=""${f.reason===''?' selected':''}>All Reasons</option>
-          <option value="5"${f.reason==='5'?' selected':''}>Technical fault</option>
-        </select>
+        ${isDelayMode ? `
+          <select id="bt-reason" class="batch-filter-select" disabled style="background:var(--soft);cursor:default;font-weight:600">
+            <option value="1" selected>Delay Delivery</option>
+          </select>
+        ` : `
+          <select id="bt-reason" class="batch-filter-select">
+            <option value="2"${f.reason==='2'?' selected':''}>Correction</option>
+            <option value="4"${f.reason==='4'?' selected':''}>Quality</option>
+            <option value="2,4"${f.reason==='2,4'?' selected':''}>Correction & Quality (Both)</option>
+            <option value="5"${f.reason==='5'?' selected':''}>Technical fault</option>
+            <option value=""${f.reason===''?' selected':''}>All Reasons</option>
+          </select>
+        `}
       </div>
       <div class="batch-filter-item">
         <label>Status</label>
@@ -4405,9 +4440,9 @@ function paneBatch(){
       <button class="btn pri" id="bt-search">⚡ SEARCH & CALCULATE (LIVE TISTA)</button>
       <button class="btn" id="bt-reset-all" style="background:#21262d;border:1px solid #30363d;color:#f0f6fc;font-weight:600">🔄 Reset / Clear All</button>
       <button class="btn" id="bt-toggle-paste">Paste Multiple IDs</button>
-      <button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>
+      ${!isDelayMode ? `<button class="btn" id="bt-toggle-slides" style="background:rgba(43,175,149,0.15);border-color:var(--accent);color:var(--accent);font-weight:600">📊 Import from Google Slides</button>` : ''}
       <button class="btn pri" id="bt-close-all" style="background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600">🔒 Charge & Close All Visible (${visibleList.length})</button>
-      <span id="bt-status-text" class="sub" style="font-weight:500;color:${esc(S.batchStatusColor||'inherit')}">${esc(S.batchStatusText||'')}</span>
+      <span id="bt-status-text" class="sub" style="font-weight:500;color:${esc(b.statusColor||'inherit')}">${esc(b.statusText||'')}</span>
     </div>
 
     <div id="bt-paste-drawer" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;${b.showPaste?'':'display:none'}">
@@ -4417,6 +4452,7 @@ function paneBatch(){
       <div class="tools"><button class="btn pri" id="bt-paste-go">Search & Calculate Pasted IDs</button></div>
     </div>
 
+    ${!isDelayMode ? `
     <div id="bt-slides-drawer" style="margin-top:14px;border-top:1px solid var(--line);padding:14px 16px;background:var(--soft);border-radius:8px;${b.showSlides?'':'display:none'}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <strong style="font-size:13.5px;color:var(--ink)">📊 Import from Google Slides (Correction Report):</strong>
@@ -4428,13 +4464,14 @@ function paneBatch(){
       </div>
       <div id="bt-slides-status" class="sub" style="margin-top:8px;font-weight:600"></div>
     </div>
+    ` : ''}
   </div>
 
   ${disputes.length === 0 ? `
     <div class="card" style="text-align:center;padding:45px 20px">
-      <div style="font-size:36px;margin-bottom:10px">📋</div>
-      <h3 style="font-family:var(--font-head);margin:0 0 8px">No batch disputes loaded</h3>
-      <p class="sub" style="max-width:560px;margin:0 auto 16px">Click <strong>⚡ SEARCH & CALCULATE</strong> to fetch live disputes matching the filters from Tista, or import from Google Slides.</p>
+      <div style="font-size:36px;margin-bottom:10px">${isDelayMode ? '⏱️' : '📋'}</div>
+      <h3 style="font-family:var(--font-head);margin:0 0 8px">No ${isDelayMode ? 'delay' : 'quality & correction'} disputes loaded</h3>
+      <p class="sub" style="max-width:560px;margin:0 auto 16px">Click <strong>⚡ SEARCH & CALCULATE</strong> to fetch live ${isDelayMode ? 'delay' : 'quality and correction'} disputes matching the filters from Tista${!isDelayMode ? ', or import from Google Slides' : ''}.</p>
     </div>
   ` : `
     <div class="kpi-row">
@@ -4698,17 +4735,18 @@ function setBatchDatePreset(type){
 }
 
 async function fetchLiveBatchDisputes(customQuery=null){
-  const statusEl = $('bt-status-text');
-  const b = S.batch || { filters: {} };
+  const isDelayMode = (S.tab === 'batch_delay');
+  const b = isDelayMode ? S.batch_delay : S.batch_cor;
   const f = b.filters || {};
+  const statusEl = $('bt-status-text');
   
   const query = customQuery !== null ? customQuery : ($('bt-query') ? $('bt-query').value : (f.query || ''));
-  const reason = $('bt-reason') ? $('bt-reason').value : (f.reason !== undefined ? f.reason : '2');
+  const reason = isDelayMode ? '1' : ($('bt-reason') ? $('bt-reason').value : (f.reason !== undefined ? f.reason : '2'));
   const status = $('bt-status') ? $('bt-status').value : (f.status !== undefined ? f.status : '1');
   const chargeable = $('bt-chargeable') ? $('bt-chargeable').value : (f.chargeable !== undefined ? f.chargeable : '1');
   const location = $('bt-location') ? $('bt-location').value : (f.location || '');
-  const dateStart = $('bt-date-start') ? $('bt-date-start').value : (f.dateStart || '');
-  const dateEnd = $('bt-date-end') ? $('bt-date-end').value : (f.dateEnd || '');
+  const dateStart = f.dateStart || ($('bt-date-start') ? $('bt-date-start').value : '');
+  const dateEnd = f.dateEnd || ($('bt-date-end') ? $('bt-date-end').value : '');
   f.query = query;
   f.reason = reason;
   f.status = status;
@@ -4718,13 +4756,15 @@ async function fetchLiveBatchDisputes(customQuery=null){
   f.dateEnd = dateEnd;
   save();
 
-  S.batchStatusText = 'Searching disputes on Tista... (please wait)';
-  S.batchStatusColor = 'var(--accent)';
+  b.statusText = `Searching ${isDelayMode ? 'delay' : 'quality/correction'} disputes on Tista... (please wait)`;
+  b.statusColor = 'var(--accent)';
+  S.batchStatusText = b.statusText;
+  S.batchStatusColor = b.statusColor;
   if(statusEl){
-    statusEl.textContent = S.batchStatusText;
-    statusEl.style.color = S.batchStatusColor;
+    statusEl.textContent = b.statusText;
+    statusEl.style.color = b.statusColor;
   }
-  showLoading('Searching Batch Disputes...', 'Fetching disputes from Tista according to selected filters...');
+  showLoading('Searching Batch Disputes...', `Fetching ${isDelayMode ? 'delay delivery' : 'quality & correction'} disputes from Tista according to selected filters...`);
 
   try {
     const params = {
@@ -4740,19 +4780,23 @@ async function fetchLiveBatchDisputes(customQuery=null){
     const data = await res.json();
     if(data.error) throw new Error(data.error);
 
-    S.batch.disputes = data.disputes || [];
-    S.batchStatusText = `✓ Fetched ${data.total_disputes || data.disputes.length} disputes successfully!`;
-    S.batchStatusColor = 'green';
+    b.disputes = data.disputes || [];
+    b.statusText = `✓ Fetched ${data.total_disputes || data.disputes.length} disputes successfully!`;
+    b.statusColor = 'green';
+    S.batchStatusText = b.statusText;
+    S.batchStatusColor = b.statusColor;
     save();
     render();
   } catch(err){
     const msg = (err && err.message) || '';
     if(msg.includes('Failed to fetch') || msg.includes('NetworkError')){
-      S.batchStatusText = '⚠️ Server is not running! Please launch "start_calculator.bat" or "Chargeback_Calculator.exe".';
+      b.statusText = '⚠️ Server is not running! Please launch "start_calculator.bat" or "Chargeback_Calculator.exe".';
     } else {
-      S.batchStatusText = '⚠️ ' + (msg || 'Could not connect to helper.');
+      b.statusText = '⚠️ ' + (msg || 'Could not connect to helper.');
     }
-    S.batchStatusColor = 'var(--danger)';
+    b.statusColor = 'var(--danger)';
+    S.batchStatusText = b.statusText;
+    S.batchStatusColor = b.statusColor;
     save();
     render();
   } finally {
@@ -5382,23 +5426,21 @@ function fillCfg(){
 
 // ---------- render + events ----------
 function render(){
+  if(S.tab !== 'batch_delay' && S.tab !== 'batch_cor'){
+    S.tab = (S.tab === 'del' || S.tab === 'auto') ? 'batch_delay' : 'batch_cor';
+  }
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
   const tabInfo = {
-    cor: { breadcrumb: 'Correction', title: 'Chargeback Calculator', sub: 'Review service details and calculate vendor chargebacks.' },
-    del: { breadcrumb: 'Delay Delivery', title: 'Delay Chargeback Calculator', sub: 'Calculate delay delivery chargebacks from duration and fulfillment history.' },
-    auto: { breadcrumb: 'Automatic Delay', title: 'Automatic Delay Delivery', sub: 'Instant delay calculation by Order ID directly from Tista fulfillment history.' },
-    autocor: { breadcrumb: 'Auto Correction', title: 'Auto Correction Calculator', sub: 'Multi-service file-by-file revision chargeback calculation.' },
-    batch: { breadcrumb: 'Batch Chargeback', title: 'Batch Dispute Search & Chargeback', sub: 'Search, calculate, and batch close vendor disputes with single-click actions.' },
-    cfg: { breadcrumb: 'Price List', title: 'Service Price List', sub: 'Standard service rates, category complexity levels, and pixel bands.' }
+    batch_delay: { breadcrumb: 'Delay Delivery', title: 'Batch Delay Chargeback', sub: 'Search, calculate, and batch close delay delivery disputes.' },
+    batch_cor: { breadcrumb: 'Quality & Correction', title: 'Batch Quality & Correction Chargeback', sub: 'Search, calculate, and batch close quality & correction disputes with file & category matching.' }
   };
-  const cur = tabInfo[S.tab] || tabInfo.cor;
+  const cur = tabInfo[S.tab] || tabInfo.batch_delay;
   if($('breadcrumb-tab-name')) $('breadcrumb-tab-name').textContent = cur.breadcrumb;
   if($('header-main-title')) $('header-main-title').textContent = cur.title;
   if($('header-main-sub')) $('header-main-sub').textContent = cur.sub;
 
   const pane=$('pane');
-  pane.innerHTML = S.tab==='cor'?paneCor():S.tab==='del'?paneDel():S.tab==='auto'?paneAuto():S.tab==='autocor'?paneAutoCor():S.tab==='batch'?paneBatch():paneCfg();
-  if(S.tab==='cor')refreshCor(); else if(S.tab==='del')refreshDel(); else if(S.tab==='auto')setCmd(); else if(S.tab==='autocor'||S.tab==='batch'){} else fillCfg();
+  pane.innerHTML = paneBatch(S.tab === 'batch_delay' ? 'delay' : 'cor');
 }
 const refresh=()=>{ save(); if(S.tab==='cor')refreshCor(); else if(S.tab==='del')refreshDel(); };
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){S.tab=b.dataset.tab;save();render();}});
@@ -5914,6 +5956,16 @@ function openSettingsModal() {
     statusEl.style.color = isTistaCurrentlyLoggedIn ? '#059669' : '#d97706';
   }
   modal.style.display = 'flex';
+}
+
+function openPriceListModal() {
+  const m = $('price-list-modal');
+  const c = $('price-list-content');
+  if (m && c) {
+    c.innerHTML = paneCfg();
+    fillCfg();
+    m.style.display = 'flex';
+  }
 }
 
 function saveSettingsModal() {
