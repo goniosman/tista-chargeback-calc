@@ -3430,15 +3430,25 @@ async function importFromGoogleSlides(slideUrl){
             }
           });
         }
-        fileDetails = pool.map(f => ({
-          filename: f.filename,
-          category: f.category || cat || 'Category 1',
-          service: svc,
-          services: (f.services && f.services.length) ? f.services : [{
+        fileDetails = pool.map(f => {
+          let itemCat = f.category;
+          if (!itemCat && f.services && f.services.length) {
+            const m = f.services.find(s => {
+              const sn = normalizeServiceName(s.service, s.raw_name);
+              return sn && targetSvcs.some(ts => ts.toLowerCase() === sn.toLowerCase());
+            }) || f.services[0];
+            if (m) itemCat = normalizeCategoryName(m.category, m.complexity);
+          }
+          return {
+            filename: f.filename,
+            category: itemCat || cat || 'Category 1',
             service: svc,
-            category: f.category || cat || 'Category 1'
-          }]
-        }));
+            services: (f.services && f.services.length) ? f.services : [{
+              service: svc,
+              category: itemCat || cat || 'Category 1'
+            }]
+          };
+        });
       } else if (job.filenames && job.filenames.length) {
         fileDetails = job.filenames.map(fn => ({
           filename: fn,
@@ -3469,13 +3479,14 @@ async function importFromGoogleSlides(slideUrl){
         order_duration: '24:00:00',
         fault_quantity: qty,
         fault_severity: job.severity || 'Minor',
-        status: 'Awaiting response from vendor',
         service: svc,
         cat: cat,
         pix: '> 5000',
         is_all_images: !!job.is_all_images,
         filenames: job.filenames || [],
         file_details: fileDetails,
+        all_order_files: job.all_order_files || job.cached_files || fileDetails,
+        total_files: job.total_files || (job.cached_files ? job.cached_files.length : qty),
         services: matchedSvcs,
         disputed_services: matchedSvcs,
         slide_services: matchedSvcs,
@@ -4092,6 +4103,41 @@ function calcDisputeChargeback(d){
     hasMultiService = true;
   }
 
+  const hasMultiCategory = uniqueCats.size > 1;
+  const hasMultiItem = hasMultiService || hasMultiCategory;
+
+  // Calculate Order Value (sum of base prices across all order files, or fileDetails, or qty * base price)
+  let orderValue = 0;
+  let orderTotalFiles = 0;
+  if (d.order_value !== undefined && d.order_value !== null && !isNaN(d.order_value) && Number(d.order_value) > 0) {
+    orderValue = num(d.order_value);
+    orderTotalFiles = d.total_files || (d.all_order_files ? d.all_order_files.length : effectiveQty);
+  } else if (d.all_order_files && Array.isArray(d.all_order_files) && d.all_order_files.length) {
+    orderTotalFiles = d.all_order_files.length;
+    d.all_order_files.forEach(f => {
+      const fSvcs = (f.services && f.services.length) ? f.services : [{ service: f.service || svc, category: f.category || cat }];
+      fSvcs.forEach(s => {
+        const p = price(s.service, s.category, f.dimension || pix);
+        orderValue += (p != null ? p : 0);
+      });
+    });
+  } else if (d.file_details && Array.isArray(d.file_details) && d.file_details.length) {
+    orderTotalFiles = d.file_details.length;
+    d.file_details.forEach(f => {
+      const fSvcs = (f.services && f.services.length) ? f.services : [{ service: f.service || svc, category: f.category || cat }];
+      fSvcs.forEach(s => {
+        const p = price(s.service, s.category, f.dimension || pix);
+        orderValue += (p != null ? p : 0);
+      });
+    });
+  } else {
+    orderTotalFiles = parseInt(d.total_qty || d.total_files || effectiveQty, 10) || effectiveQty;
+    orderValue = (totalBasePrice > 0 ? totalBasePrice : pr * effectiveQty);
+    if (orderTotalFiles > effectiveQty && pr > 0) {
+      orderValue = pr * orderTotalFiles;
+    }
+  }
+
   if(isDelay){
     const durStr = d.order_duration || d.dur || '24:00:00';
     const durDays = parseDur(durStr) || 1;
@@ -4103,6 +4149,11 @@ function calcDisputeChargeback(d){
     const pct = durDays > 0 ? delayDays / durDays : 0;
     const share = getDelayTierShare(sevCanonical, pct);
 
+    // Populate per-item chargeback breakdown
+    Object.values(svcBreakdown).forEach(item => {
+      item.chargeback = item.sum * share;
+    });
+
     // Rule: For Delay, Severity should NEVER be 'Not applicable' - auto-set from delay percentage
     const delaySev = getDelaySeverityFromPct(pct);
     if (!d.fault_severity || d.fault_severity.toLowerCase().includes('not') || d.fault_severity.toLowerCase().includes('n/a')) {
@@ -4112,14 +4163,21 @@ function calcDisputeChargeback(d){
 
     let raw = 0;
     let avgUnitPrice = pr;
-    if (hasMultiService && totalBasePrice > 0) {
+    if (hasMultiItem && totalBasePrice > 0) {
       raw = totalBasePrice * share;
       avgUnitPrice = effectiveQty > 0 ? (totalBasePrice / effectiveQty) : pr;
     } else {
       raw = pr * share * effectiveQty;
     }
 
-    const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
+    let finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
+
+    // Rule: Chargeback cannot exceed Order Value
+    let isCapped = false;
+    if (orderValue > 0 && finalAmount > orderValue && !isCustom) {
+      finalAmount = orderValue;
+      isCapped = true;
+    }
 
     const durH = durDays * 24;
     const delH = delayDays * 24;
@@ -4135,7 +4193,7 @@ function calcDisputeChargeback(d){
     return {
       reason: 'Delay',
       svc, cat, pix,
-      pr: hasMultiService ? avgUnitPrice : pr,
+      pr: hasMultiItem ? avgUnitPrice : pr,
       avgUnitPrice,
       qty: effectiveQty,
       sevKey: effectiveSev,
@@ -4146,8 +4204,13 @@ function calcDisputeChargeback(d){
       rawAmount: raw,
       chargeback: finalAmount,
       isCustom: isCustom,
-      minApplied: !isCustom && raw > 0 && raw < 2.0,
+      minApplied: !isCustom && !isCapped && raw > 0 && raw < 2.0,
+      orderValue,
+      orderTotalFiles,
+      isCapped,
       hasMultiService,
+      hasMultiCategory,
+      hasMultiItem,
       totalBasePrice,
       totalServiceCount,
       uniqueServicesCount: uniqueSvcs.size,
@@ -4156,21 +4219,36 @@ function calcDisputeChargeback(d){
       uniqueCatsList: [...uniqueCats]
     };
   } else {
-    // Correction, Quality, and Technical fault with multi-service support
+    // Correction, Quality, and Technical fault with multi-category & multi-service support
     const mult = getSeverityMultiplier(sevCanonical);
+
+    // Populate per-item chargeback breakdown
+    Object.values(svcBreakdown).forEach(item => {
+      item.chargeback = item.sum * mult;
+    });
+
     let raw = 0;
     let avgUnitPrice = pr;
-    if (hasMultiService && totalBasePrice > 0) {
+    if (hasMultiItem && totalBasePrice > 0) {
       raw = totalBasePrice * mult;
       avgUnitPrice = effectiveQty > 0 ? (totalBasePrice / effectiveQty) : pr;
     } else {
       raw = pr * mult * effectiveQty;
     }
-    const finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
+
+    let finalAmount = isCustom ? Math.max(0, num(d.custom_chargeback)) : (raw > 0 ? Math.max(2.0, raw) : 0);
+
+    // Rule: Chargeback cannot exceed Order Value
+    let isCapped = false;
+    if (orderValue > 0 && finalAmount > orderValue && !isCustom) {
+      finalAmount = orderValue;
+      isCapped = true;
+    }
+
     return {
       reason: reason,
       svc, cat, pix,
-      pr: hasMultiService ? avgUnitPrice : pr,
+      pr: hasMultiItem ? avgUnitPrice : pr,
       avgUnitPrice,
       qty: effectiveQty,
       sevKey: sevCanonical,
@@ -4179,8 +4257,13 @@ function calcDisputeChargeback(d){
       rawAmount: raw,
       chargeback: finalAmount,
       isCustom: isCustom,
-      minApplied: !isCustom && raw > 0 && raw < 2.0,
+      minApplied: !isCustom && !isCapped && raw > 0 && raw < 2.0,
+      orderValue,
+      orderTotalFiles,
+      isCapped,
       hasMultiService,
+      hasMultiCategory,
+      hasMultiItem,
       totalBasePrice,
       totalServiceCount,
       uniqueServicesCount: uniqueSvcs.size,
@@ -4626,7 +4709,7 @@ function paneBatch(mode = null){
               <th class="n">Qty</th>
               <th class="n">Unit Price</th>
               <th class="n">Chargeback ($)</th>
-              <th>Status</th>
+              <th class="n" style="text-align:right">Order Value ($)</th>
               <th style="text-align:center">Action</th>
             </tr>
           </thead>
@@ -4643,6 +4726,9 @@ function paneBatch(mode = null){
               const systemCats = [...new Set(S.prices.map(r => r.c))];
               const curCat = d.cat || r.cat || 'Category 1';
               const allCatList = [...new Set([...orderCats, ...catsOf(curSvc), ...systemCats, curCat].filter(Boolean))];
+
+              const breakdownItems = Object.values(r.svcBreakdown || {});
+              const isMulti = r.hasMultiItem && breakdownItems.length > 1;
 
               return `
               <tr id="bt-row-${item.idx}">
@@ -4692,7 +4778,16 @@ function paneBatch(mode = null){
                   `}
                 </td>
                 <td style="min-width:145px">
-                  ${r.hasMultiService ? `
+                  ${isMulti ? `
+                    <div style="display:flex;flex-direction:column;gap:5px">
+                      ${breakdownItems.map(bItem => `
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;background:var(--soft);padding:3px 7px;border-radius:4px;border:1px solid var(--line)" title="${esc(bItem.service)} - ${esc(bItem.category)}: ${bItem.count} files">
+                          <span style="font-weight:700;color:var(--ink)">${esc(bItem.category)}</span>
+                          <span class="badge" style="background:rgba(59,91,240,0.12);color:var(--primary);font-weight:700;padding:1px 6px;border-radius:4px;font-size:10.5px">${bItem.count} files</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : (r.hasMultiService ? `
                     <div style="display:flex;flex-direction:column;gap:5px">
                       ${(r.uniqueSvcsList || []).map(sn => {
                         const curCatForSvc = (d.service_categories && d.service_categories[sn]) || (r.svcBreakdown && r.svcBreakdown[sn]?.category) || d.cat || 'Category 1';
@@ -4711,7 +4806,7 @@ function paneBatch(mode = null){
                     <select class="bt-row-cat" data-idx="${item.idx}" style="font-size:12px;padding:3px 5px;max-width:125px;border-radius:4px;border:1px solid var(--line);background:var(--bg)">
                       ${allCatList.map(c => `<option value="${esc(c)}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('')}
                     </select>
-                  `}
+                  `)}
                 </td>
                 <td>
                   <select class="bt-row-sev" data-idx="${item.idx}" style="font-size:12px;padding:3px 6px;max-width:130px;border-radius:4px;border:1px solid var(--line);background:var(--bg);font-weight:600">
@@ -4727,41 +4822,71 @@ function paneBatch(mode = null){
                   `}
                 </td>
                 <td class="n" style="font-family:var(--font-mono);font-weight:600">
-                  ${r.qty}
-                  ${r.hasMultiService ? `<div style="font-size:9.5px;font-weight:normal;color:var(--muted)" title="${r.totalServiceCount} service items across ${r.qty} delayed files">${r.totalServiceCount} svcs</div>` : ''}
+                  ${isMulti ? `
+                    <div style="display:flex;flex-direction:column;gap:5px;text-align:right">
+                      ${breakdownItems.map(bItem => `
+                        <div style="font-size:11.5px;font-weight:700;padding:3px 0">${bItem.count}</div>
+                      `).join('')}
+                      <div style="font-size:10px;color:var(--muted);border-top:1px dashed var(--line);padding-top:2px;font-weight:600">Total: ${r.qty}</div>
+                    </div>
+                  ` : `
+                    ${r.qty}
+                    ${r.hasMultiService ? `<div style="font-size:9.5px;font-weight:normal;color:var(--muted)" title="${r.totalServiceCount} service items across ${r.qty} delayed files">${r.totalServiceCount} svcs</div>` : ''}
+                  `}
                 </td>
                 <td class="n" style="font-family:var(--font-mono)">
-                  ${r.hasMultiService ? `
+                  ${isMulti ? `
+                    <div style="display:flex;flex-direction:column;gap:5px;text-align:right">
+                      ${breakdownItems.map(bItem => `
+                        <div style="font-size:11.5px;font-family:var(--font-mono);font-weight:600;padding:3px 0">${money(bItem.unitPrice)}</div>
+                      `).join('')}
+                      <div style="font-size:10px;color:var(--muted);border-top:1px dashed var(--line);padding-top:2px" title="Average rate per unit">~${money(r.avgUnitPrice)}</div>
+                    </div>
+                  ` : (r.hasMultiService ? `
                     <div style="font-weight:700;color:var(--ink)" title="Sum of all services across all delayed files">${money(r.totalBasePrice)} <span style="font-size:9.5px;font-weight:normal;color:var(--muted)">base</span></div>
                     <div style="font-size:10px;color:var(--muted);margin-top:1px" title="${money(r.totalBasePrice)} / ${r.qty} delayed files">~${money(r.avgUnitPrice)}/file</div>
                   ` : `
                     ${money(r.pr)}
-                  `}
+                  `)}
                 </td>
                 <td class="n" style="font-family:var(--font-mono);white-space:nowrap">
-                  <div style="display:inline-flex;align-items:center;justify-content:flex-end;gap:3px">
-                    <span style="font-size:12px;font-weight:700;color:var(--accent)">$</span>
-                    <input type="number" step="0.01" min="0" class="bt-row-chargeback" data-idx="${item.idx}" value="${r.chargeback.toFixed(2)}" style="width:72px;text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);padding:2px 5px;border-radius:4px;border:1px solid ${r.isCustom ? 'var(--accent)' : 'var(--line)'};background:var(--bg);" title="Click to manually edit chargeback amount">
-                  </div>
-                  ${r.minApplied ? '<div style="font-size:10px;margin-top:1px"><span class="badge-min">Min $2</span></div>' : ''}
-                  ${r.isCustom ? '<div style="font-size:9.5px;color:var(--accent);font-weight:600;margin-top:1px">Custom</div>' : ''}
-                  ${r.hasMultiService ? `
-                    <div style="font-size:9.5px;color:var(--accent);font-weight:600;margin-top:2px;cursor:pointer" title="${esc(Object.entries(r.svcBreakdown||{}).map(([k, v]) => `${k}: ${v.count} × ${money(v.unitPrice)} = ${money(v.sum)}`).join('\n'))}">
-                      All ${r.uniqueServicesCount} Svcs (${money(r.totalBasePrice)})
+                  ${isMulti ? `
+                    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+                      ${breakdownItems.map(bItem => `
+                        <div style="font-size:11.5px;font-family:var(--font-mono);color:var(--ink-secondary);padding:3px 0" title="${esc(bItem.category)}: ${bItem.count} × ${money(bItem.unitPrice)} = ${money(bItem.chargeback || bItem.sum)}">
+                          <span style="font-size:10px;color:var(--muted)">${esc(bItem.category.replace('Category ', 'C'))}:</span> <strong>${money(bItem.chargeback || bItem.sum)}</strong>
+                        </div>
+                      `).join('')}
+                      <div style="display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;border-top:1px dashed var(--line);padding-top:4px;margin-top:2px">
+                        <span style="font-size:11px;font-weight:700;color:var(--accent)">Total $</span>
+                        <input type="number" step="0.01" min="0" class="bt-row-chargeback" data-idx="${item.idx}" value="${r.chargeback.toFixed(2)}" style="width:72px;text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);padding:2px 5px;border-radius:4px;border:1px solid ${r.isCustom ? 'var(--accent)' : 'var(--line)'};background:var(--bg);" title="Click to manually edit total chargeback amount">
+                      </div>
+                      ${r.isCapped ? `<div style="font-size:9.5px;color:#d9531e;font-weight:700" title="Chargeback exceeded Order Value and was capped at ${money(r.orderValue)}">🔒 Capped at Order Value</div>` : ''}
+                      ${r.minApplied ? '<div style="font-size:10px;margin-top:1px"><span class="badge-min">Min $2</span></div>' : ''}
+                      ${r.isCustom ? '<div style="font-size:9.5px;color:var(--accent);font-weight:600;margin-top:1px">Custom</div>' : ''}
                     </div>
-                  ` : ''}
+                  ` : `
+                    <div style="display:inline-flex;align-items:center;justify-content:flex-end;gap:3px">
+                      <span style="font-size:12px;font-weight:700;color:var(--accent)">$</span>
+                      <input type="number" step="0.01" min="0" class="bt-row-chargeback" data-idx="${item.idx}" value="${r.chargeback.toFixed(2)}" style="width:72px;text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);padding:2px 5px;border-radius:4px;border:1px solid ${r.isCustom ? 'var(--accent)' : 'var(--line)'};background:var(--bg);" title="Click to manually edit chargeback amount">
+                    </div>
+                    ${r.isCapped ? `<div style="font-size:9.5px;color:#d9531e;font-weight:700" title="Chargeback exceeded Order Value and was capped at ${money(r.orderValue)}">🔒 Capped at Order Value</div>` : ''}
+                    ${r.minApplied ? '<div style="font-size:10px;margin-top:1px"><span class="badge-min">Min $2</span></div>' : ''}
+                    ${r.isCustom ? '<div style="font-size:9.5px;color:var(--accent);font-weight:600;margin-top:1px">Custom</div>' : ''}
+                  `}
                 </td>
-                <td id="bt-status-td-${item.idx}" style="font-size:12px;">
-                  ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
-                    `<span style="color:#27ae60;font-weight:600">Closed</span>` : 
-                    `<span style="color:var(--muted)">${esc(d.status || 'Awaiting response')}</span>`
-                  }
+                <td class="n" style="font-family:var(--font-mono);text-align:right;white-space:nowrap" title="Order Value: Total contractor base rate for order">
+                  <div style="font-size:13px;font-weight:700;color:var(--ink)">
+                    ${money(r.orderValue)}
+                  </div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:1px">
+                    ${r.orderTotalFiles || r.qty} files
+                  </div>
                 </td>
                 <td style="text-align:center;white-space:nowrap">
-                  <button class="btn" data-bt-open="${item.idx}" style="padding:4px 9px;font-size:11.5px;border-radius:6px;font-weight:600" title="Open this dispute in calculator">Open</button>
                   ${(d.status && (d.status.toLowerCase().includes('close') || d.status.toLowerCase().includes('done'))) ? 
-                    `<button class="btn btn-done" id="bt-close-btn-${item.idx}" style="padding:4px 10px;font-size:11.5px;background:#47a9b8;border-color:#47a9b8;color:#fff;font-weight:600;margin-left:5px;border-radius:6px;cursor:default;" disabled title="Dispute is closed">Dispute Done</button>` : 
-                    `<button class="btn pri" id="bt-close-btn-${item.idx}" data-bt-close="${item.idx}" style="padding:4px 9px;font-size:11.5px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:5px;border-radius:6px" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
+                    `<button class="btn btn-done" id="bt-close-btn-${item.idx}" style="padding:5px 12px;font-size:11.5px;background:#47a9b8;border-color:#47a9b8;color:#fff;font-weight:600;border-radius:6px;cursor:default;" disabled title="Dispute is closed">Dispute Done</button>` : 
+                    `<button class="btn pri" id="bt-close-btn-${item.idx}" data-bt-close="${item.idx}" style="padding:5px 12px;font-size:11.5px;background:#c0392b;border-color:#c0392b;color:#fff;margin-left:0;border-radius:6px;font-weight:600" title="Charge to Vendor & Close on Tista">🔒 Close</button>`
                   }
                 </td>
               </tr>`;
@@ -4773,7 +4898,8 @@ function paneBatch(mode = null){
               <td class="n">${visibleList.reduce((acc, it)=>acc+it.res.qty, 0)}</td>
               <td></td>
               <td class="n" style="font-size:15px;color:var(--accent)">${money(visibleList.reduce((acc, it)=>acc+it.res.chargeback, 0))}</td>
-              <td colspan="2"></td>
+              <td class="n" style="font-size:14px;font-weight:700;color:var(--ink);text-align:right">${money(visibleList.reduce((acc, it)=>acc+(it.res.orderValue || 0), 0))}</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -5052,11 +5178,11 @@ function exportBatchCSV(){
   const disputes = b.disputes || [];
   if(!disputes.length){ alert('No disputes to export.'); return; }
 
-  const headers = ['Index', 'Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Severity/Tier', 'Fault Quantity', 'Unit Price ($)', 'Raw Calculated ($)', 'Final Chargeback ($)', 'Min $2 Applied', 'Status'];
+  const headers = ['Index', 'Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Severity/Tier', 'Fault Quantity', 'Unit Price ($)', 'Raw Calculated ($)', 'Final Chargeback ($)', 'Min $2 Applied', 'Order Value ($)'];
   const rows = disputes.map((d, i) => {
     const r = calcDisputeChargeback(d);
-    const svcStr = r.hasMultiService ? (r.uniqueSvcsList || []).join('; ') : r.svc;
-    const catStr = r.hasMultiService ? (r.uniqueCatsList || []).join('; ') : r.cat;
+    const svcStr = r.hasMultiItem ? (r.uniqueSvcsList || []).join('; ') : r.svc;
+    const catStr = r.hasMultiItem ? (r.uniqueCatsList || []).join('; ') : r.cat;
     return [
       i + 1,
       `"${d.order_id}"`,
@@ -5071,7 +5197,7 @@ function exportBatchCSV(){
       r.rawAmount.toFixed(2),
       r.chargeback.toFixed(2),
       r.minApplied ? 'Yes' : 'No',
-      `"${d.status}"`
+      (r.orderValue || 0).toFixed(2)
     ].join(',');
   });
 
@@ -5090,12 +5216,12 @@ function copyBatchSummary(){
   const disputes = b.disputes || [];
   if(!disputes.length){ alert('No disputes to copy.'); return; }
 
-  const headers = ['Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Quantity', 'Price', 'Chargeback'];
+  const headers = ['Order ID', 'Fault at', 'Reason', 'Contractor', 'Service', 'Category', 'Quantity', 'Price', 'Chargeback', 'Order Value'];
   const lines = disputes.map(d => {
     const r = calcDisputeChargeback(d);
-    const svcStr = r.hasMultiService ? (r.uniqueSvcsList || []).join('; ') : r.svc;
-    const catStr = r.hasMultiService ? (r.uniqueCatsList || []).join('; ') : r.cat;
-    return [d.order_id, d.fault_at||'', r.reason, d.contractor, svcStr, catStr, r.qty, '$' + r.pr.toFixed(2), '$' + r.chargeback.toFixed(2)].join('\t');
+    const svcStr = r.hasMultiItem ? (r.uniqueSvcsList || []).join('; ') : r.svc;
+    const catStr = r.hasMultiItem ? (r.uniqueCatsList || []).join('; ') : r.cat;
+    return [d.order_id, d.fault_at||'', r.reason, d.contractor, svcStr, catStr, r.qty, '$' + r.pr.toFixed(2), '$' + r.chargeback.toFixed(2), '$' + (r.orderValue || 0).toFixed(2)].join('\t');
   });
 
   const text = headers.join('\t') + '\n' + lines.join('\n');

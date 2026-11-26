@@ -1003,13 +1003,15 @@ def fetch_order_files_direct_api(order_id: str, session=None):
     if not oid:
         return []
 
-    # Check local cache first
+    # Check local cache first (only return if non-empty files list)
     cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
     if not cached_corr.exists():
         cached_corr = APP_DIR / f"tista_correction_{oid}.json"
     if cached_corr.exists():
         try:
-            return json.loads(cached_corr.read_text(encoding="utf-8")).get("files", [])
+            c_files = json.loads(cached_corr.read_text(encoding="utf-8")).get("files", [])
+            if c_files and len(c_files) > 0:
+                return c_files
         except Exception:
             pass
 
@@ -2263,6 +2265,8 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
             "comment_link": disp_link,
             "filenames": [f["filename"] for f in order_file_details][:qty] if order_file_details else disp_files[:qty],
             "file_details": order_file_details[:qty],
+            "all_order_files": order_file_details,
+            "total_order_files": len(order_file_details),
             "filenames_count": len(order_file_details[:qty]) if order_file_details else min(qty, len(disp_files))
         })
 
@@ -3460,6 +3464,8 @@ def parse_google_slides_presentation(slide_url: str):
                 cdata = json.loads(c_corr.read_text(encoding="utf-8"))
                 if cdata.get("files"):
                     j["cached_files"] = cdata["files"]
+                    j["all_order_files"] = cdata["files"]
+                    j["total_files"] = cdata.get("total_files") or len(cdata["files"])
             except Exception:
                 pass
 
