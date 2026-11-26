@@ -123,7 +123,17 @@ def launch_playwright_context(p, headless=DEFAULT_HEADLESS):
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--disable-gpu"
+        "--disable-gpu",
+        "--js-flags=--max-old-space-size=128",
+        "--renderer-process-limit=1",
+        "--single-process",
+        "--no-zygote",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-sync",
+        "--mute-audio"
     ]
     viewport = {"width": 1280, "height": 800}
 
@@ -570,9 +580,14 @@ def fetch_order_from_tista(order_id: str, headless: bool = True):
             except Exception:
                 pass
 
-        # Check if files already cached in tista_correction_{oid}.json
+        # Check if files already cached or fetch via Fast Direct API (~0.2s)
         cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
         if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+        if not cached_corr.exists():
+            fetch_order_files_direct_api(oid)
+            cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
+            if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
+
         if cached_corr.exists():
             try:
                 c_corr_data = json.loads(cached_corr.read_text(encoding="utf-8"))
@@ -1130,7 +1145,7 @@ def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
     # Pre-load category map once
     get_tista_service_categories_map(s)
 
-    workers = min(max_workers, len(to_fetch), 10)
+    workers = min(max_workers, len(to_fetch), 4)
     failed = []
 
     def _worker(o):
@@ -1146,6 +1161,12 @@ def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
         for bad_oid in executor.map(_worker, to_fetch):
             if bad_oid:
                 failed.append(bad_oid)
+
+    try:
+        import gc
+        gc.collect()
+    except Exception:
+        pass
 
     return failed
 

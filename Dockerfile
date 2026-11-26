@@ -8,6 +8,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8765
 ENV HEADLESS=1
+ENV MALLOC_ARENA_MAX=2
 
 # Install Python requirements
 COPY requirements.txt .
