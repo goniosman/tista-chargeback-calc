@@ -1215,6 +1215,79 @@ def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
 
     return failed
 
+_PRICES_CACHE = None
+
+def normalize_service_name_py(s: str) -> str:
+    if not s: return ""
+    low = str(s).strip().lower()
+    if "multi" in low and "clip" in low: return "Multi-clipping path"
+    if "dust" in low or "scratch" in low or "spot" in low: return "Dust, spot and scratch removal"
+    if "ghost" in low or "mannequin" in low or "neck" in low: return "Ghost mannequin"
+    if "mask" in low: return "Image masking"
+    if "shadow" in low: return "Natural shadow"
+    if "clipping" in low or "cutout" in low: return "Clipping path"
+    return str(s).strip()
+
+def normalize_category_name_py(c: str, complexity: str = "") -> str:
+    if complexity:
+        comp = re.sub(r"^[Cc]", "", str(complexity)).strip()
+        if comp: return f"Category {comp}"
+    if not c: return "Category 1"
+    m = re.search(r"Category\s*([0-9.]+)", str(c), re.I)
+    if m: return f"Category {m.group(1)}"
+    m2 = re.search(r"^[Cc]([0-9.]+)$", str(c).strip())
+    if m2: return f"Category {m2.group(1)}"
+    return str(c).strip()
+
+def normalize_pixel_name_py(p: str) -> str:
+    if not p: return "> 5000"
+    clean = re.sub(r"px", "", str(p), flags=re.I).replace(" ", "").strip().lower()
+    if ">5000" in clean or clean == ">5000": return "> 5000"
+    if "<1000" in clean or clean == "<1000": return "< 1000"
+    standard = ["< 1000", "1001-2000", "2001-3000", "3001-4000", "4001-5000", "> 5000"]
+    for sp in standard:
+        if sp.replace(" ", "") == clean:
+            return sp
+    return "> 5000"
+
+def get_base_price_map():
+    global _PRICES_CACHE
+    if _PRICES_CACHE is not None:
+        return _PRICES_CACHE
+    _PRICES_CACHE = {}
+    for cand in [BUNDLE_DIR / "Chargeback Calculator.html", APP_DIR / "Chargeback Calculator.html", Path(__file__).resolve().parent / "Chargeback Calculator.html"]:
+        if cand.exists():
+            try:
+                html = cand.read_text(encoding="utf-8")
+                m = re.search(r'const DEFAULT_CFG = (\{.*?\});', html)
+                if m:
+                    cfg = json.loads(m.group(1))
+                    for r in cfg.get("prices", []):
+                        sn = normalize_service_name_py(r[0])
+                        cn = normalize_category_name_py(r[1])
+                        pn = normalize_pixel_name_py(r[2])
+                        _PRICES_CACHE[(sn, cn, pn)] = float(r[3])
+                    break
+            except Exception:
+                pass
+    return _PRICES_CACHE
+
+def calculate_order_value_from_files_py(files: list) -> float:
+    if not files: return 0.0
+    pmap = get_base_price_map()
+    tot = 0.0
+    for f in files:
+        if not isinstance(f, dict): continue
+        dim = normalize_pixel_name_py(f.get("dimension") or "> 5000")
+        f_svcs = f.get("services") or [{"service": f.get("service", "Clipping path"), "category": f.get("category", "Category 1")}]
+        for s in f_svcs:
+            if not isinstance(s, dict): continue
+            s_name = normalize_service_name_py(s.get("service") or "")
+            c_name = normalize_category_name_py(s.get("category") or "", s.get("complexity") or "")
+            prc = pmap.get((s_name, c_name, dim), 0.0)
+            tot += prc
+    return round(tot, 2)
+
 def fetch_order_files_from_tista(order_id: str, headless: bool = True):
     """
     Fetches the list of files, services, categories, and location for an order to calculate Correction chargebacks.
@@ -1259,6 +1332,8 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
             cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
             if cdata and (cdata.get("files") or cdata.get("total_files", 0) >= 0):
                 print(f"[✓] Returning cached files data for Order #{oid}")
+                if cdata.get("files") and "order_value" not in cdata:
+                    cdata["order_value"] = calculate_order_value_from_files_py(cdata["files"])
                 return cdata
         except Exception:
             pass
@@ -1272,6 +1347,8 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
             try:
                 cdata = json.loads(cached_corr.read_text(encoding="utf-8"))
                 if cdata and (cdata.get("files") or cdata.get("total_files", 0) >= 0):
+                    if cdata.get("files") and "order_value" not in cdata:
+                        cdata["order_value"] = calculate_order_value_from_files_py(cdata["files"])
                     return cdata
             except Exception:
                 pass
@@ -3466,6 +3543,9 @@ def parse_google_slides_presentation(slide_url: str):
                     j["cached_files"] = cdata["files"]
                     j["all_order_files"] = cdata["files"]
                     j["total_files"] = cdata.get("total_files") or len(cdata["files"])
+                    ov = calculate_order_value_from_files_py(cdata["files"])
+                    if ov > 0:
+                        j["order_value"] = ov
             except Exception:
                 pass
 

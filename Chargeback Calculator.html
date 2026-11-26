@@ -1603,11 +1603,25 @@ function isFilenameFuzzyMatch(needle, haystack) {
   return nTokens.every(t => hSet.has(t));
 }
 
+function normalizePixelName(p) {
+  if (!p) return '> 5000';
+  const clean = String(p).toLowerCase().replace(/px/gi, '').replace(/\s+/g, '').trim();
+  if (clean.includes('>5000') || clean === '>5000') return '> 5000';
+  if (clean.includes('<1000') || clean === '<1000') return '< 1000';
+  if (clean === '1001-2000' || clean.includes('1001-2000')) return '1001-2000';
+  if (clean === '2001-3000' || clean.includes('2001-3000')) return '2001-3000';
+  if (clean === '3001-4000' || clean.includes('3001-4000')) return '3001-4000';
+  if (clean === '4001-5000' || clean.includes('4001-5000')) return '4001-5000';
+  const standard = ['< 1000', '1001-2000', '2001-3000', '3001-4000', '4001-5000', '> 5000'];
+  const found = standard.find(sp => sp.replace(/\s+/g, '') === clean);
+  return found || '> 5000';
+}
+
 // Excel: VLOOKUP(Service&Category&Pixel, Config!D:H, 5, 0). Not found -> "" (treated as 0)
 function price(s,c,p){
   const normS = normalizeServiceName(s);
   const normC = normalizeCategoryName(c);
-  const normP = p || '> 5000';
+  const normP = normalizePixelName(p);
   const r = S.prices.find(r => r.s === normS && r.c === normC && r.p === normP);
   return r ? num(r.v) : null;
 }
@@ -3443,9 +3457,11 @@ async function importFromGoogleSlides(slideUrl){
             filename: f.filename,
             category: itemCat || cat || 'Category 1',
             service: svc,
+            dimension: f.dimension,
             services: (f.services && f.services.length) ? f.services : [{
               service: svc,
-              category: itemCat || cat || 'Category 1'
+              category: itemCat || cat || 'Category 1',
+              dimension: f.dimension
             }]
           };
         });
@@ -3487,6 +3503,7 @@ async function importFromGoogleSlides(slideUrl){
         file_details: fileDetails,
         all_order_files: job.all_order_files || job.cached_files || fileDetails,
         total_files: job.total_files || (job.cached_files ? job.cached_files.length : qty),
+        order_value: job.order_value !== undefined ? job.order_value : null,
         services: matchedSvcs,
         disputed_services: matchedSvcs,
         slide_services: matchedSvcs,
@@ -4029,7 +4046,7 @@ function calcDisputeChargeback(d){
             : normalizeCategoryName(f.category || cat, f.complexity);
           const k = tSvc.toLowerCase();
           if (!seenFileSvcs.has(k)) {
-            seenFileSvcs.set(k, { sName: tSvc, cName, complexity: matchItem?.complexity });
+            seenFileSvcs.set(k, { sName: tSvc, cName, complexity: matchItem?.complexity, dimension: f.dimension });
           }
         });
       } else {
@@ -4045,25 +4062,25 @@ function calcDisputeChargeback(d){
           const cName = userOverriddenCat || normalizeCategoryName(sItem.category || cat, sItem.complexity);
           const k = sName.toLowerCase();
           if (!seenFileSvcs.has(k)) {
-            seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+            seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity, dimension: f.dimension });
           } else {
             // If duplicate has higher category, prefer higher unless user explicitly set category
             const existing = seenFileSvcs.get(k);
             if (userOverriddenCat) {
-              seenFileSvcs.set(k, { sName, cName: userOverriddenCat, complexity: sItem.complexity });
+              seenFileSvcs.set(k, { sName, cName: userOverriddenCat, complexity: sItem.complexity, dimension: f.dimension });
             } else {
               const oldCatNum = parseFloat(String(existing.cName).replace(/[^0-9.]/g, '')) || 1;
               const newCatNum = parseFloat(String(cName).replace(/[^0-9.]/g, '')) || 1;
               if (newCatNum > oldCatNum) {
-                seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity });
+                seenFileSvcs.set(k, { sName, cName, complexity: sItem.complexity, dimension: f.dimension });
               }
             }
           }
         });
       }
 
-      seenFileSvcs.forEach(({ sName, cName }) => {
-        const pVal = price(sName, cName, pix);
+      seenFileSvcs.forEach(({ sName, cName, dimension }) => {
+        const pVal = price(sName, cName, dimension || pix);
         const prc = pVal != null ? pVal : 0;
         totalBasePrice += prc;
         totalServiceCount++;
@@ -4117,7 +4134,7 @@ function calcDisputeChargeback(d){
     d.all_order_files.forEach(f => {
       const fSvcs = (f.services && f.services.length) ? f.services : [{ service: f.service || svc, category: f.category || cat }];
       fSvcs.forEach(s => {
-        const p = price(s.service, s.category, f.dimension || pix);
+        const p = price(s.service, s.category, s.dimension || f.dimension || pix);
         orderValue += (p != null ? p : 0);
       });
     });
@@ -4126,7 +4143,7 @@ function calcDisputeChargeback(d){
     d.file_details.forEach(f => {
       const fSvcs = (f.services && f.services.length) ? f.services : [{ service: f.service || svc, category: f.category || cat }];
       fSvcs.forEach(s => {
-        const p = price(s.service, s.category, f.dimension || pix);
+        const p = price(s.service, s.category, s.dimension || f.dimension || pix);
         orderValue += (p != null ? p : 0);
       });
     });
@@ -4137,6 +4154,11 @@ function calcDisputeChargeback(d){
       orderValue = pr * orderTotalFiles;
     }
   }
+
+  if (orderValue === 0 && totalBasePrice > 0) {
+    orderValue = totalBasePrice;
+  }
+  orderValue = Math.round(orderValue * 100) / 100;
 
   if(isDelay){
     const durStr = d.order_duration || d.dur || '24:00:00';
@@ -4277,6 +4299,9 @@ function calcDisputeChargeback(d){
 function renderBatchFileItems(d, idx) {
   const dealQty = parseInt(d.fault_quantity, 10) || 1;
   if (d.is_all_images) {
+    if ((!d.file_details || !d.file_details.length) && d.order_id) {
+      setTimeout(() => fetchRowFilenamesIfEmpty(idx), 50);
+    }
     return `<div style="font-size:11px;color:#27ae60;font-weight:600;margin-top:2px">📁 All images (${dealQty})</div>`;
   }
   const defaultCat = d.cat || 'Category 1.5';
@@ -5114,6 +5139,7 @@ async function fetchRowFilenamesIfEmpty(idx) {
               filename: fn,
               category: cleanSvcs[0].category,
               service: cleanSvcs[0].service,
+              dimension: f.dimension,
               services: cleanSvcs
             };
           });
@@ -5146,7 +5172,11 @@ async function fetchRowFilenamesIfEmpty(idx) {
         fileItems = fileItems.slice(0, dealQty);
       }
       d.file_details = fileItems;
-      d.filenames = fileItems.map(f => f.filename);
+      if (!d.is_all_images) {
+        d.filenames = fileItems.map(f => f.filename);
+      }
+      d.all_order_files = fileItems;
+      d.total_files = fileItems.length;
       d.fault_quantity = dealQty; // Strictly equal!
       // Auto-detect dominant service & category
       const svcCounts = {};
