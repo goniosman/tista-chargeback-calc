@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/Chargeback Calculator.html"
+    },
+    {
+      "source": "/calc",
+      "destination": "/Chargeback Calculator.html"
+    },
+    {
+      "source": "/calculator",
+      "destination": "/Chargeback Calculator.html"
+    }
+  ]
+}
