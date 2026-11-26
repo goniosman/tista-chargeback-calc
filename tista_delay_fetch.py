@@ -3418,7 +3418,12 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             return True  # same origin
         if origin in EXTRA_ALLOWED_ORIGINS:
             return True
-        if not IS_CLOUD_ENV and (_LOCAL_ORIGIN_RE.match(origin) or origin == "null"):
+        # Allow trusted project frontends (Vercel, Render, GitHub Pages) and local files
+        parsed = urlparse(origin)
+        h = (parsed.hostname or "").lower()
+        if h.endswith(".vercel.app") or h.endswith(".onrender.com") or h.endswith(".github.io"):
+            return True
+        if _LOCAL_ORIGIN_RE.match(origin) or origin == "null" or not origin:
             return True  # local page, or the HTML opened straight from disk (file://)
         return False
 
