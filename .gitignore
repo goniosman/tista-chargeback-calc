@@ -16,6 +16,10 @@ scratch/
 
 # Tista sensitive session data
 .tista-profile/
+saved_cookies.json
+chrome-profile/
+close_log.jsonl
+.venv/
 *.log
 
 # Misc test files

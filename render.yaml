@@ -16,6 +16,10 @@ services:
         sync: false
       - key: TISTA_PASSWORD
         sync: false
+      # Exact address(es) of the hosted front end (Vercel / GitHub Pages), comma-separated,
+      # e.g. https://tista-chargeback-calc.vercel.app - the API refuses other websites.
+      - key: ALLOWED_ORIGINS
+        sync: false
     disk:
       name: tista-profile-disk
       mountPath: /data

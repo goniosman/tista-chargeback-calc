@@ -4787,7 +4787,8 @@ async function fetchLiveBatchDisputes(customQuery=null){
     if(data.error) throw new Error(data.error);
 
     b.disputes = data.disputes || [];
-    b.statusText = `✓ Fetched ${data.total_disputes || data.disputes.length} disputes successfully!`;
+    b.statusText = `✓ Fetched ${data.total_disputes || data.disputes.length} disputes successfully!`
+      + (data.not_found_ids && data.not_found_ids.length ? ` Not found on Tista: ${data.not_found_ids.join(', ')}` : '');
     b.statusColor = 'green';
     S.batchStatusText = b.statusText;
     S.batchStatusColor = b.statusColor;
@@ -5031,7 +5032,7 @@ function copyBatchSummary(){
   } catch(e){}
 }
 
-function openDisputeInCalc(idx){
+async function openDisputeInCalc(idx){
   const b = S.batch || { disputes: [] };
   const d = b.disputes[idx];
   if(!d) return;
@@ -5099,6 +5100,26 @@ function openDisputeInCalc(idx){
   }
   save();
   render();
+
+  // The batch search no longer reads every dispute's comment; load it now for the Delay view.
+  if(r.reason === 'Delay' && !d.comment && /^\d+$/.test(String(d.dispute_id || ''))){
+    try {
+      const res = await fetch(`${API_BASE}/api/fetch_dispute_comment?dispute_id=${encodeURIComponent(d.dispute_id)}&files=0`);
+      const data = await res.json();
+      if(res.ok && data && data.comment){
+        d.comment = data.comment;
+        if(data.comment_link && !d.comment_link) d.comment_link = data.comment_link;
+        if(S.tab === 'del' && S.autoId === raw_oid){
+          S.del.comment = d.comment;
+          if(d.comment_link) S.del.comment_link = d.comment_link;
+          render();
+        }
+        save();
+      }
+    } catch(e){
+      console.warn('Could not load dispute comment:', e);
+    }
+  }
 }
 
 async function closeDisputeLive(orderId, disputeId, amount, statusId, btnId, faultSeverity){
@@ -5284,7 +5305,9 @@ async function closeBatchAll(){
     return;
   }
 
-  const totalAmt = unclosed.reduce((acc, it) => acc + it.res.chargeback, 0);
+  // Same rule the server applies: at least $2, rounded to cents. The confirm total must match what is charged.
+  const chargeAmount = it => Math.round(Math.max(2, it.res.chargeback || 2) * 100) / 100;
+  const totalAmt = unclosed.reduce((acc, it) => acc + chargeAmount(it), 0);
   if(!confirm(`Are you sure you want to Charge to Vendor and Close ${unclosed.length} disputes on Tista?\nTotal Chargeback: $${totalAmt.toFixed(2)}`)){
     return;
   }
@@ -5297,20 +5320,40 @@ async function closeBatchAll(){
   }
   showTopProgress();
 
-  let closedCount = 0;
-  for(let i = 0; i < unclosed.length; i++){
-    const it = unclosed[i];
+  const CLOSE_CONCURRENCY = 4;
+  let closedCount = 0, failedCount = 0, doneCount = 0;
+
+  // Retries only when the request never got an answer (network error). If the server answered,
+  // Tista either closed it or refused it - re-sending would just repeat the charge attempt.
+  async function postClose(payload){
+    for(let attempt = 0; ; attempt++){
+      try {
+        const res = await fetch(`${API_BASE}/api/close_dispute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({ error: 'Server returned ' + res.status }));
+        if(!res.ok || data.error) throw Object.assign(new Error(data.error || 'Failed to close dispute'), { answered: true });
+        return data;
+      } catch(err){
+        if(err.answered || attempt >= 1) throw err;
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+  }
+
+  async function closeOne(it){
     const curIdx = it.idx;
     const curD = it.orig;
     const curRes = it.res;
-    const amt = curRes.chargeback || 2.0;
+    const amt = chargeAmount(it);
 
     const rowBtn = $(`bt-close-btn-${curIdx}`);
     const rowStatus = $(`bt-status-td-${curIdx}`);
     const rowEl = $(`bt-row-${curIdx}`);
 
     if(rowEl){
-      try { rowEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(e){}
       rowEl.style.backgroundColor = 'rgba(245, 158, 11, 0.08)';
     }
     if(rowBtn){
@@ -5323,35 +5366,15 @@ async function closeBatchAll(){
     if(rowStatus){
       rowStatus.innerHTML = '<span style="color:#f59e0b;font-weight:600"><span class="btn-spinner" style="border-top-color:#f59e0b;border-color:rgba(245,158,11,0.25)"></span> Closing...</span>';
     }
-    if(statusEl){
-      statusEl.textContent = `Closing Order ${curD.order_id} (${i + 1} of ${unclosed.length})...`;
-      statusEl.style.color = 'var(--accent)';
-    }
 
     const cleanDid = (curD.dispute_id && !String(curD.dispute_id).startsWith('SLIDE-') && /^\d+$/.test(String(curD.dispute_id))) ? curD.dispute_id : '';
     try {
-      let data = null;
-      for(let attempt = 0; attempt < 2; attempt++){
-        try {
-          const res = await fetch(`${API_BASE}/api/close_dispute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              dispute_id: cleanDid,
-              order_id: curD.order_id,
-              amount: amt,
-              fault_severity: curD.fault_severity || curRes.sevKey || 'Low'
-            })
-          });
-          data = await res.json();
-          if(res.ok && !data.error) break;
-          if(attempt === 0) await new Promise(r => setTimeout(r, 300));
-        } catch(netErr){
-          if(attempt === 1) throw netErr;
-          await new Promise(r => setTimeout(r, 300));
-        }
-      }
-      if(!data || data.error) throw new Error((data && data.error) || 'Failed to close dispute');
+      const data = await postClose({
+        dispute_id: cleanDid,
+        order_id: curD.order_id,
+        amount: amt,
+        fault_severity: curD.fault_severity || curRes.sevKey || 'Low'
+      });
 
       curD.status = 'Closed';
       curD.charge = data.amount || amt;
@@ -5359,6 +5382,7 @@ async function closeBatchAll(){
         curD.dispute_id = data.dispute_id;
       }
       closedCount++;
+      save(); // persist progress after every close, so a closed tab doesn't lose it
 
       if(rowBtn){
         rowBtn.style.background = '#47a9b8';
@@ -5374,10 +5398,8 @@ async function closeBatchAll(){
       if(rowEl){
         rowEl.style.backgroundColor = '';
       }
-      if(statusEl){
-        statusEl.textContent = `✓ Closed ${closedCount} of ${unclosed.length} disputes...`;
-      }
     } catch(err){
+      failedCount++;
       console.error('Error closing order ' + curD.order_id, err);
       if(rowBtn){
         rowBtn.disabled = false;
@@ -5391,12 +5413,29 @@ async function closeBatchAll(){
       if(rowEl){
         rowEl.style.backgroundColor = '';
       }
+    } finally {
+      doneCount++;
+      if(statusEl){
+        statusEl.textContent = `Closing disputes: ${doneCount} of ${unclosed.length} done (${closedCount} closed${failedCount ? `, ${failedCount} failed` : ''})...`;
+        statusEl.style.color = 'var(--accent)';
+      }
     }
   }
 
+  // Simple worker pool: CLOSE_CONCURRENCY closes in flight at once.
+  let next = 0;
+  const workers = Array.from({ length: Math.min(CLOSE_CONCURRENCY, unclosed.length) }, async () => {
+    while(next < unclosed.length){
+      await closeOne(unclosed[next++]);
+    }
+  });
+  await Promise.all(workers);
+
   hideTopProgress();
-  S.batchStatusText = `✓ Successfully charged & closed ${closedCount} of ${unclosed.length} disputes on Tista!`;
-  S.batchStatusColor = '#27ae60';
+  S.batchStatusText = failedCount
+    ? `⚠️ Charged & closed ${closedCount} of ${unclosed.length} disputes on Tista. ${failedCount} failed - hover "Error" for the reason.`
+    : `✓ Successfully charged & closed ${closedCount} of ${unclosed.length} disputes on Tista!`;
+  S.batchStatusColor = failedCount ? 'var(--danger)' : '#27ae60';
   save();
   render();
 }

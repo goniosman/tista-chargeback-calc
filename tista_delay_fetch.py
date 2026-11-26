@@ -14,6 +14,7 @@ import re
 import sys
 import os
 import time
+import threading
 import shutil
 import tempfile
 import urllib.request
@@ -21,7 +22,15 @@ from pathlib import Path
 from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
 from concurrent.futures import ThreadPoolExecutor
+from link_files import extract_files_from_links, clean_link
+
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 import html
+from html import unescape as html_unescape
 try:
     import requests
 except ImportError:
@@ -58,14 +67,25 @@ NAVBAR_SEARCH_XPATH = '//*[@id="navbar"]/form/div[1]/input'
 APP_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 BUNDLE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
 
-# Writable data directory (supports read-only DMG volumes / Applications on macOS)
-try:
-    if os.access(APP_DIR, os.W_OK):
-        DATA_DIR = APP_DIR
-    else:
-        DATA_DIR = Path.home() / ".tista-data"
-except Exception:
-    DATA_DIR = Path.home() / ".tista-data"
+# Writable data directory for caches and close_log.jsonl.
+# On Render the app folder is reset on every deploy/restart, so the persistent disk at /data is
+# preferred when it exists (override with TISTA_CACHE_DIR). Desktop: the app folder, or
+# ~/.tista-data when that is read-only (DMG volumes / Applications on macOS).
+def _resolve_data_dir() -> Path:
+    custom = os.environ.get("TISTA_CACHE_DIR")
+    if custom:
+        return Path(custom)
+    persistent = Path("/data")
+    if persistent.is_dir() and os.access(persistent, os.W_OK):
+        return persistent
+    try:
+        if os.access(APP_DIR, os.W_OK):
+            return APP_DIR
+    except Exception:
+        pass
+    return Path.home() / ".tista-data"
+
+DATA_DIR = _resolve_data_dir()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Cloud / Headless auto-detection (True by default so data fetching runs silently in background)
@@ -969,6 +989,8 @@ def fetch_order_files_direct_api(order_id: str, session=None):
     Fetches order files, services, and categories directly using Tista's fast JSON REST API.
     Bypasses Playwright browser launch overhead (runs in ~0.2 - 0.4s).
     Saves cache to tista_correction_{oid}.json and returns parsed files list.
+    Returns [] when Tista definitively has no such order, and None on a network/server error
+    (only the latter is worth retrying with the browser).
     """
     raw_id = str(order_id).strip()
     digits = re.sub(r"\D", "", raw_id)
@@ -988,7 +1010,7 @@ def fetch_order_files_direct_api(order_id: str, session=None):
 
     s = session or get_tista_http_session()
     if not s:
-        return []
+        return None
 
     cat_map = get_tista_service_categories_map(s)
 
@@ -996,7 +1018,7 @@ def fetch_order_files_direct_api(order_id: str, session=None):
         # Step 1: Query order details via orders.json
         r_order = s.get(f"{BASE_URL}/orders.json?q[search_by_query]={oid}&page=1&per=10", timeout=10)
         if r_order.status_code != 200:
-            return []
+            return None
 
         o_data = r_order.json()
         orders_list = o_data.get("orders", [])
@@ -1010,6 +1032,7 @@ def fetch_order_files_direct_api(order_id: str, session=None):
             matched_order = orders_list[0]
 
         if not matched_order:
+            print(f"[*] [Fast API] Order #{oid} not found on Tista")
             return []
 
         internal_id = str(matched_order.get("id", ""))
@@ -1032,11 +1055,11 @@ def fetch_order_files_direct_api(order_id: str, session=None):
         # Step 2: Query order files via files.json
         r_files = s.get(f"{BASE_URL}/orders/{internal_id}/files.json", timeout=12)
         if r_files.status_code != 200:
-            return []
+            return None
 
         raw_files = r_files.json()
         if not isinstance(raw_files, list):
-            return []
+            return None
 
         parsed_files = []
         for idx, f in enumerate(raw_files):
@@ -1115,7 +1138,7 @@ def fetch_order_files_direct_api(order_id: str, session=None):
         return parsed_files
     except Exception as e:
         print(f"[!] [Fast API] Error for Order #{oid}: {e}")
-        return []
+        return None
 
 def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
     """
@@ -1149,13 +1172,13 @@ def fetch_orders_files_direct_api_batch(order_ids: list, max_workers: int = 8):
     # Pre-load category map once
     get_tista_service_categories_map(s)
 
-    workers = min(max_workers, len(to_fetch), 4)
+    workers = min(max_workers, len(to_fetch))
     failed = []
 
     def _worker(o):
         try:
             res = fetch_order_files_direct_api(o, session=s)
-            if not res:
+            if res is None:  # network/server error -> browser fallback
                 return o
             return None
         except Exception:
@@ -1224,7 +1247,7 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
 
     # 2. Fast Direct JSON API Check (~0.2s, no Playwright browser overhead)
     fast_files = fetch_order_files_direct_api(oid)
-    if fast_files:
+    if fast_files is not None:  # a definite answer from Tista (None = network/server error)
         cached_corr = DATA_DIR / f"tista_correction_{oid}.json"
         if not cached_corr.exists(): cached_corr = APP_DIR / f"tista_correction_{oid}.json"
         if cached_corr.exists():
@@ -1234,6 +1257,10 @@ def fetch_order_files_from_tista(order_id: str, headless: bool = True):
                     return cdata
             except Exception:
                 pass
+        if not fast_files:
+            # Tista's order search found no such order: the browser would search the same data.
+            return {"order_id": oid, "contractor": "", "pixel": "> 5000", "total_files": 0, "files": [],
+                    "warnings": [f"Order #{oid} was not found on Tista"]}
 
     result = {
         "order_id": oid,
@@ -1605,6 +1632,62 @@ def extract_order_files_with_page(page, order_id: str):
         print(f"[!] Note on extract_order_files_with_page for #{oid}: {e}")
         return []
 
+MAX_DISPUTE_PAGES = 200
+
+def _page_url(url: str, page_no: int) -> str:
+    return f"{url}{'&' if '?' in url else '?'}page={page_no}"
+
+def fetch_remaining_dispute_pages(http_sess, url: str, first_html: str, parse_rows) -> list:
+    """
+    Returns dispute rows from pages 2..N of a Tista disputes list.
+    Uses the "Displaying disputes 1 - 25 of 97 in total" banner to fetch all pages in parallel,
+    falling back to following rel="next" links one page at a time.
+    """
+    text = re.sub(r"<[^>]+>", "", first_html).replace("&nbsp;", " ")
+    m = re.search(r"Displaying\s+\w+\s+(\d+)\s*-\s*(\d+)\s+of\s+(\d+)\s+in total", text)
+    extra = []
+    if m:
+        first, last, total = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        per_page = max(1, last - first + 1)
+        n_pages = min(MAX_DISPUTE_PAGES, -(-total // per_page))
+        if n_pages <= 1:
+            return []
+
+        def _get(page_no):
+            try:
+                r = http_sess.get(_page_url(url, page_no), timeout=15)
+                if r.status_code == 200 and "sign_in" not in r.url:
+                    return parse_rows(r.text)
+            except Exception as e:
+                print(f"[!] Dispute page {page_no} note: {e}")
+            return []
+
+        with ThreadPoolExecutor(max_workers=min(8, n_pages - 1)) as pool:
+            for page_rows in pool.map(_get, range(2, n_pages + 1)):
+                extra.extend(page_rows)
+        if len(extra) + per_page < total:
+            print(f"[!] Expected {total} disputes but fetched {len(extra) + per_page}")
+        return extra
+
+    # No banner: follow rel="next" sequentially.
+    html_text = first_html
+    page_no = 1
+    while re.search(r'rel=["\']next["\']', html_text) and page_no < MAX_DISPUTE_PAGES:
+        page_no += 1
+        try:
+            r = http_sess.get(_page_url(url, page_no), timeout=15)
+        except Exception as e:
+            print(f"[!] Dispute page {page_no} note: {e}")
+            break
+        if r.status_code != 200 or "sign_in" in r.url:
+            break
+        page_rows = parse_rows(r.text)
+        if not page_rows:
+            break
+        extra.extend(page_rows)
+        html_text = r.text
+    return extra
+
 def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False):
     """
     Fetches list of disputes based on filters (Dispute reason, Status, Chargeable to, Location, Order ID),
@@ -1618,19 +1701,29 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
         sub_reasons = [r.strip() for r in reason.split(",") if r.strip()]
         all_disputes = []
         seen_ids = set()
-        for sr in sub_reasons:
+
+        def _fetch_sub(sr):
             sub_filters = dict(filters)
             sub_filters["reason"] = sr
-            res = fetch_disputes_batch_from_tista(sub_filters, max_workers=max_workers)
+            return fetch_disputes_batch_from_tista(sub_filters, headless=headless)
+
+        # Fetch each reason concurrently; results are merged in the original reason order.
+        with ThreadPoolExecutor(max_workers=len(sub_reasons)) as pool:
+            sub_results = list(pool.map(_fetch_sub, sub_reasons))
+
+        for res in sub_results:
             for d in res.get("disputes", []):
                 uid = str(d.get("dispute_id") or d.get("order_id"))
                 if uid not in seen_ids:
                     seen_ids.add(uid)
                     all_disputes.append(d)
+        # A pasted ID counts as not found only if no reason's search found it.
+        not_found = set.intersection(*[set(r.get("not_found_ids") or []) for r in sub_results]) if sub_results else set()
         return {
             "disputes": all_disputes,
             "total_disputes": len(all_disputes),
-            "filters": filters
+            "filters": filters,
+            "not_found_ids": sorted(not_found)
         }
 
     status = str(filters.get("status", "1") or "")
@@ -1704,24 +1797,59 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                 })
         return found_rows
 
+    not_found_ids = []
+
+    def _lookup_one_id(raw_id):
+        """Rows for one pasted order/dispute ID: with the current filters first, then without them
+        (same as the single-ID search), so a pasted ID is never silently dropped."""
+        base = [p for p in params if not p.startswith("q[id_or_fulfillment_order_order_name_eq]=")]
+        first = f"%23{raw_id}" if len(raw_id) == 6 else raw_id
+        attempts = [f"{DISPUTES_URL}?{'&'.join(base + [f'q[id_or_fulfillment_order_order_name_eq]={first}'])}"]
+        attempts += [f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={c}" for c in dict.fromkeys([first, f"%23{raw_id}", raw_id])]
+        for a_url in attempts:
+            r_id = http_sess.get(a_url, timeout=15)
+            if r_id.status_code != 200 or "sign_in" in r_id.url:
+                raise RuntimeError(f"Tista returned {r_id.status_code} for ID {raw_id}")
+            found = parse_rows_from_html(r_id.text)
+            if found:
+                return raw_id, found
+        return raw_id, []
+
     try:
-        resp = http_sess.get(url, timeout=10)
-        if resp.status_code == 200 and "sign_in" not in resp.url and "order_disputes" in resp.url:
-            rows = parse_rows_from_html(resp.text)
+        if multiple_ids:
+            # One direct lookup per pasted ID instead of downloading the whole filtered list.
+            seen_dids = set()
+            with ThreadPoolExecutor(max_workers=min(8, len(multiple_ids))) as pool:
+                for raw_id, found in pool.map(_lookup_one_id, list(dict.fromkeys(multiple_ids))):
+                    if not found:
+                        not_found_ids.append(raw_id)
+                    for row in found:
+                        if row["dispute_id"] not in seen_dids:
+                            seen_dids.add(row["dispute_id"])
+                            rows.append(row)
             http_ok = True
-            print(f"[✓] Extracted {len(rows)} dispute records in {time.time()-t_start:.2f}s via fast HTTP session!")
-            if single_clean_id and not rows:
-                for cand_val in [single_clean_id if single_is_hash else f"%23{single_clean_id}", f"%23{single_clean_id}", single_clean_id]:
-                    alt_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
-                    try:
-                        r_alt = http_sess.get(alt_url, timeout=5)
-                        if r_alt.status_code == 200:
-                            alt_rows = parse_rows_from_html(r_alt.text)
-                            if alt_rows:
-                                rows = alt_rows
-                                break
-                    except Exception:
-                        pass
+            print(f"[✓] Looked up {len(multiple_ids)} pasted IDs in {time.time()-t_start:.2f}s: {len(rows)} disputes"
+                  + (f", not found: {not_found_ids}" if not_found_ids else ""))
+        else:
+            resp = http_sess.get(url, timeout=10)
+            if resp.status_code == 200 and "sign_in" not in resp.url and "order_disputes" in resp.url:
+                rows = parse_rows_from_html(resp.text)
+                http_ok = True
+                # Tista paginates at 25 rows; fetch the remaining pages in parallel.
+                rows.extend(fetch_remaining_dispute_pages(http_sess, url, resp.text, parse_rows_from_html))
+                print(f"[✓] Extracted {len(rows)} dispute records in {time.time()-t_start:.2f}s via fast HTTP session!")
+                if single_clean_id and not rows:
+                    for cand_val in [single_clean_id if single_is_hash else f"%23{single_clean_id}", f"%23{single_clean_id}", single_clean_id]:
+                        alt_url = f"{DISPUTES_URL}?q[id_or_fulfillment_order_order_name_eq]={cand_val}"
+                        try:
+                            r_alt = http_sess.get(alt_url, timeout=5)
+                            if r_alt.status_code == 200:
+                                alt_rows = parse_rows_from_html(r_alt.text)
+                                if alt_rows:
+                                    rows = alt_rows
+                                    break
+                        except Exception:
+                            pass
     except Exception as he:
         print(f"[*] Fast HTTP search note: {he}")
 
@@ -1765,7 +1893,7 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                     if trs_broad.count() > 0 and "no data" not in trs_broad.first.inner_text().lower():
                         break
 
-        rows = page.evaluate("""() => {
+        rows_js = """() => {
             const table = document.querySelector('table');
             if(!table) return [];
             const trs = [...table.querySelectorAll('tbody tr')];
@@ -1787,7 +1915,19 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
                     status: cells[11]
                 };
             }).filter(Boolean);
-        }""")
+        }"""
+        rows = page.evaluate(rows_js)
+        # Follow pagination (25 rows per page) for list searches.
+        if not single_clean_id:
+            page_no = 1
+            while page_no < MAX_DISPUTE_PAGES and page.locator('a[rel="next"]').count() > 0:
+                page_no += 1
+                page.goto(_page_url(url, page_no))
+                page.wait_for_load_state("domcontentloaded")
+                page_rows = page.evaluate(rows_js)
+                if not page_rows:
+                    break
+                rows.extend(page_rows)
 
     if multiple_ids:
         target_set = set(multiple_ids)
@@ -1795,83 +1935,101 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
 
     print(f"[*] Processing {len(rows)} dispute records...")
 
-    # Fast parallel pre-fetch dispute comments and links via HTTP (takes ~0.5s for 10-20 disputes)
-    disp_ids_to_fetch = [r["dispute_id"] for r in rows if r.get("dispute_id") and (single_clean_id or deep_scan)]
+    def _cache_paths(oid):
+        c_corr = DATA_DIR / f"tista_correction_{oid}.json"
+        if not c_corr.exists(): c_corr = APP_DIR / f"tista_correction_{oid}.json"
+        c_delay = DATA_DIR / f"tista_{oid}.json"
+        if not c_delay.exists(): c_delay = APP_DIR / f"tista_{oid}.json"
+        return c_corr, c_delay
+
+    def _cache_has(path, key):
+        if not path.exists():
+            return False
+        try:
+            return bool(json.loads(path.read_text(encoding="utf-8")).get(key))
+        except Exception:
+            return False
+
+    # Decide up front (from the cache as it is now) which orders need Tista files and which need
+    # their comment link scanned, so the parallel stages below don't race on cache files.
+    uncached_oids = []
+    needs_link_oids = set()
+    for r in rows:
+        raw_oid = re.sub(r"\D", "", r.get("order_id", ""))
+        if not raw_oid:
+            continue
+        c_corr, c_delay = _cache_paths(raw_oid)
+        if (deep_scan or single_clean_id) and "revision" not in (r.get("dispute_reason") or "").lower():
+            if not c_corr.exists() and not c_delay.exists() and raw_oid not in uncached_oids:
+                uncached_oids.append(raw_oid)
+        # Skip the external link when files are already known from Tista or an earlier link scan.
+        if not _cache_has(c_corr, "files") and not _cache_has(c_delay, "filenames"):
+            needs_link_oids.add(raw_oid)
+
+    # Stage A (background): order files via Tista's JSON API, running while comments and links load.
+    stage_pool = ThreadPoolExecutor(max_workers=1)
+    orders_future = None
+    if uncached_oids:
+        print(f"[*] [Fast API] Parallel extracting {len(uncached_oids)} uncached orders: {uncached_oids}")
+        orders_future = stage_pool.submit(fetch_orders_files_direct_api_batch, uncached_oids)
+
+    # Stage B: dispute comments (they carry the file link) via HTTP, 8 at a time - only where needed.
+    # The batch table doesn't show comments; the calculator loads one when a row is opened.
     comment_map = {}
     link_map = {}
-    if disp_ids_to_fetch:
-        def fetch_disp_info(did):
-            try:
-                e_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{did}/edit"
-                resp_e = http_sess.get(e_url, timeout=5)
-                if resp_e.status_code == 200:
-                    m = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', resp_e.text, re.I)
-                    if m:
-                        c_text = html.unescape(m.group(1).strip())
-                        urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_text)]
-                        return did, c_text, (urls[0] if urls else "")
-            except Exception:
-                pass
-            return did, "", ""
 
-        with ThreadPoolExecutor(max_workers=min(8, len(disp_ids_to_fetch))) as pool:
-            for did, c_text, c_link in pool.map(fetch_disp_info, disp_ids_to_fetch):
+    def fetch_comments(dids):
+        dids = [d for d in dict.fromkeys(dids) if d and d not in comment_map]
+        to_read = []
+        for did in dids:
+            cached = load_cached_comment(did)
+            if cached is None:
+                to_read.append(did)
+            else:
+                if cached[0]: comment_map[did] = cached[0]
+                if cached[1]: link_map[did] = cached[1]
+        if not to_read:
+            return
+        with ThreadPoolExecutor(max_workers=min(8, len(to_read))) as pool:
+            for did, c_text, c_link in pool.map(lambda d: (d, *read_dispute_comment(http_sess, d)), to_read):
+                save_cached_comment(did, c_text, c_link)
                 if c_text: comment_map[did] = c_text
                 if c_link: link_map[did] = c_link
 
-    # Check which orders require Playwright deep scan of files
-    uncached_oids = []
-    if deep_scan or single_clean_id:
-        for r in rows:
-            raw_oid = re.sub(r"\D", "", r.get("order_id", ""))
-            r_name = (r.get("dispute_reason") or "").lower()
-            if "revision" in r_name: continue
-            if raw_oid:
-                c_corr = DATA_DIR / f"tista_correction_{raw_oid}.json"
-                if not c_corr.exists(): c_corr = APP_DIR / f"tista_correction_{raw_oid}.json"
-                c_delay = DATA_DIR / f"tista_{raw_oid}.json"
-                if not c_delay.exists(): c_delay = APP_DIR / f"tista_{raw_oid}.json"
-                if not c_corr.exists() and not c_delay.exists():
-                    uncached_oids.append(raw_oid)
+    def _oid(r):
+        return re.sub(r"\D", "", r.get("order_id", ""))
 
-    # Check which external links need filename extraction (skip if already cached)
-    links_to_extract = []
-    for r_check in rows:
-        did_c = str(r_check.get("dispute_id") or "").strip()
-        link_c = link_map.get(did_c)
-        if not link_c: continue
-        raw_oid_c = re.sub(r"\D", "", r_check.get("order_id", ""))
-        # If files are already cached or extracted from Tista, no need to scrape external link
-        c_corr_c = DATA_DIR / f"tista_correction_{raw_oid_c}.json"
-        if not c_corr_c.exists(): c_corr_c = APP_DIR / f"tista_correction_{raw_oid_c}.json"
-        if c_corr_c.exists():
-            try:
-                c_data = json.loads(c_corr_c.read_text(encoding="utf-8"))
-                if c_data.get("files"):
-                    continue
-            except Exception:
-                pass
-        c_delay_c = DATA_DIR / f"tista_{raw_oid_c}.json"
-        if not c_delay_c.exists(): c_delay_c = APP_DIR / f"tista_{raw_oid_c}.json"
-        if c_delay_c.exists():
-            try:
-                d_c = json.loads(c_delay_c.read_text(encoding="utf-8"))
-                if d_c.get("filenames"):
-                    continue
-            except Exception:
-                pass
-        links_to_extract.append((did_c, link_c))
+    def _is_delay(r):
+        return "delay" in (r.get("dispute_reason") or "").lower()
 
-    # 1. Fast Parallel Batch Fetch for all uncached orders via direct Tista JSON API (~0.2s per order)
-    if uncached_oids:
-        print(f"[*] [Fast API] Parallel extracting {len(uncached_oids)} uncached orders: {uncached_oids}")
-        failed_oids = fetch_orders_files_direct_api_batch(uncached_oids)
-        uncached_oids = failed_oids
+    if single_clean_id:
+        fetch_comments([r.get("dispute_id") for r in rows])
+    elif deep_scan:
+        # Delay rows: the link lists the delayed files, needed unless already known.
+        fetch_comments([r.get("dispute_id") for r in rows if _is_delay(r) and _oid(r) in needs_link_oids])
+
+    # Join stage A; any orders the JSON API couldn't resolve fall back to the Tista browser scan.
+    if orders_future:
+        uncached_oids = orders_future.result()
         if uncached_oids:
             print(f"[*] Falling back to Playwright for {len(uncached_oids)} orders: {uncached_oids}")
+    stage_pool.shutdown(wait=False)
 
-    # Launch Playwright only if there are still uncached orders or uncached external links to parse
-    if (uncached_oids or links_to_extract) and not page and sync_playwright:
+    # Quality/Correction rows: the link is only a fallback when Tista has no files for the order.
+    if deep_scan and not single_clean_id:
+        fetch_comments([r.get("dispute_id") for r in rows
+                        if not _is_delay(r) and _oid(r) in needs_link_oids
+                        and not _cache_has(_cache_paths(_oid(r))[0], "files")])
+
+    # Stage C: filenames from external links, all at once in one headless browser.
+    links_to_extract = []
+    for r_check in rows:
+        link_c = link_map.get(str(r_check.get("dispute_id") or "").strip())
+        if link_c and _oid(r_check) in needs_link_oids:
+            links_to_extract.append(link_c)
+    link_files_map = extract_files_from_links(links_to_extract) if links_to_extract else {}
+
+    if uncached_oids and not page and sync_playwright:
         try:
             p_instance = sync_playwright().start()
             ctx = launch_playwright_context(p_instance, headless=headless)
@@ -1934,9 +2092,9 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
         if not disp_link and d_id in link_map:
             disp_link = link_map[d_id]
 
-        # If link exists and files not yet extracted, use active page and cache permanently
-        if disp_link and not disp_files and page:
-            disp_files = extract_filenames_from_page(page, disp_link)
+        # If link exists and files not yet extracted, use the batch link results and cache permanently
+        if disp_link and not disp_files:
+            disp_files = link_files_map.get(clean_link(disp_link), [])
             if disp_files and raw_oid:
                 try:
                     (DATA_DIR / f"tista_{raw_oid}.json").write_text(json.dumps({
@@ -2102,7 +2260,8 @@ def fetch_disputes_batch_from_tista(filters: dict = None, headless: bool = False
     res = {
         "filters": filters,
         "total_disputes": len(out_list),
-        "disputes": out_list
+        "disputes": out_list,
+        "not_found_ids": not_found_ids
     }
     out_file = DATA_DIR / "tista_batch_disputes.json"
     out_file.write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -2176,24 +2335,13 @@ def extract_filenames_from_page(page, url):
         return []
 
 def extract_filenames_from_link_standalone(url: str, headless: bool = True):
-    """Launches Playwright headless and extracts filenames from any storage/transfer link."""
-    if not sync_playwright:
-        return {
-            "status": "error",
-            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
-        }
+    """Extracts filenames from any storage/transfer link (see link_files.py)."""
+    return extract_files_from_links([url]).get(clean_link(url), [])
 
-    with sync_playwright() as p:
-        ctx = launch_playwright_context(p, headless=headless)
-        page = ctx.new_page()
-        files = extract_filenames_from_page(page, url)
-        ctx.close()
-        return files
-
-def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
+def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True, with_files: bool = True):
     """
-    Visits the dispute edit page on Tista, extracts comment and any storage/transfer link,
-    and extracts all filenames from that link.
+    Reads the dispute's comment and first storage/transfer link from its Tista edit page over HTTP,
+    and (with_files) the filenames behind that link.
     """
     clean_did = str(dispute_id or "").strip().replace("#", "")
     if not clean_did:
@@ -2206,43 +2354,15 @@ def fetch_dispute_comment_and_files(dispute_id: str, headless: bool = True):
         "filenames": [],
         "count": 0
     }
+    s = get_tista_http_session()
+    if not s:
+        return {**result, "error": "HTTP session not available"}
 
-    edit_url = f"{BASE_URL}/manage/vendors/1/order_disputes/{clean_did}/edit"
-    print(f"[*] Fetching dispute edit page: {edit_url}")
-
-    if not sync_playwright:
-        return {
-            "status": "error",
-            "error": "Playwright is not installed in the currently active Python environment. Please run: pip install playwright && playwright install chromium"
-        }
-
-    with sync_playwright() as p:
-        ctx = launch_playwright_context(p, headless=headless)
-        page = ctx.new_page()
-        try:
-            ensure_logged_in(page)
-            page.goto(edit_url, wait_until="domcontentloaded", timeout=25000)
-            time.sleep(1.5)
-            comment_el = page.locator("#order_dispute_comment, textarea[name*='comment']").first
-            if comment_el.count() > 0:
-                comment_val = comment_el.input_value().strip()
-                result["comment"] = comment_val
-                print(f"[✓] Extracted comment: {comment_val}")
-                urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", comment_val)]
-                if urls:
-                    link = urls[0]
-                    result["comment_link"] = link
-                    print(f"[*] Found link in comment: {link}")
-                    files = extract_filenames_from_page(page, link)
-                    result["filenames"] = files
-                    result["count"] = len(files)
-                    print(f"[✓] Extracted {len(files)} files from dispute comment link!")
-        except Exception as e:
-            print(f"[!] Error fetching dispute comment: {e}")
-            result["error"] = str(e)
-        finally:
-            ctx.close()
-
+    comment, link = read_dispute_comment(s, clean_did)
+    result["comment"], result["comment_link"] = comment, link
+    if link and with_files:
+        files = extract_files_from_links([link]).get(clean_link(link), [])
+        result["filenames"], result["count"] = files, len(files)
     return result
 
 # --- Ultra-Fast Direct HTTP Tista Session & Cache ---
@@ -2250,19 +2370,41 @@ _TISTA_HTTP_SESSION = None
 _CACHED_CSRF_TOKEN = ""
 _ORDER_TO_DISPUTE_CACHE = {}
 _DISPUTE_STATUS_CACHE = {}
+# Guards creation/replacement of the shared session and CSRF token, so parallel
+# requests (e.g. closing several disputes at once) never race on them.
+_SESSION_LOCK = threading.RLock()
+_CSRF_LOCK = threading.Lock()
 
 def get_tista_http_session(force_refresh: bool = False):
     """
     Returns a persistent, keep-alive requests.Session loaded with Tista session cookies.
     Reuses TCP/TLS connections to execute requests in ~200-300ms.
     """
-    global _TISTA_HTTP_SESSION
     if requests is None:
         return None
     if _TISTA_HTTP_SESSION is not None and not force_refresh:
         return _TISTA_HTTP_SESSION
+    with _SESSION_LOCK:
+        if _TISTA_HTTP_SESSION is not None and not force_refresh:
+            return _TISTA_HTTP_SESSION
+        return _build_tista_http_session()
+
+# At most this many requests to Tista are in flight at once across the whole server
+# (e.g. "Correction & Quality (Both)" runs two searches, each with its own worker pools).
+MAX_TISTA_CONCURRENT_REQUESTS = 12
+_TISTA_REQUEST_SLOTS = threading.BoundedSemaphore(MAX_TISTA_CONCURRENT_REQUESTS)
+
+def _build_tista_http_session():
+    global _TISTA_HTTP_SESSION
 
     s = requests.Session()
+    _unthrottled_request = s.request
+
+    def _throttled_request(*args, **kwargs):
+        with _TISTA_REQUEST_SLOTS:
+            return _unthrottled_request(*args, **kwargs)
+
+    s.request = _throttled_request
     try:
         from requests.adapters import HTTPAdapter
         adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
@@ -2312,15 +2454,22 @@ def sync_cookies_from_playwright_context(ctx):
     except Exception as e:
         print(f"[!] Cookie sync note: {e}")
 
-def get_cached_csrf_token(session=None, force_refresh: bool = False):
+def get_cached_csrf_token(session=None, force_refresh: bool = False, failed_token: str = None):
     """
     Returns the cached CSRF token. If missing or forced, fetches once from disputes list.
+    Pass failed_token when refreshing after a 422: if another thread already replaced that
+    token, the new one is returned without another fetch.
     Also opportunistically pre-populates _ORDER_TO_DISPUTE_CACHE and _DISPUTE_STATUS_CACHE.
     """
-    global _CACHED_CSRF_TOKEN
     if _CACHED_CSRF_TOKEN and not force_refresh:
         return _CACHED_CSRF_TOKEN
+    with _CSRF_LOCK:
+        if _CACHED_CSRF_TOKEN and (not force_refresh or (failed_token and _CACHED_CSRF_TOKEN != failed_token)):
+            return _CACHED_CSRF_TOKEN
+        return _fetch_csrf_token(session)
 
+def _fetch_csrf_token(session=None):
+    global _CACHED_CSRF_TOKEN
     s = session or get_tista_http_session()
     try:
         resp = s.get(f"{BASE_URL}/manage/vendors/1/order_disputes?per_page=100", timeout=8)
@@ -2374,11 +2523,14 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
         clean_did = _ORDER_TO_DISPUTE_CACHE[raw_oid]
         print(f"[*] [Fast HTTP] Using cached Dispute ID #{clean_did} for Order #{raw_oid}")
 
-    # 2. Check if already marked closed in cache
-    if clean_did and clean_did in _DISPUTE_STATUS_CACHE:
-        c_status = str(_DISPUTE_STATUS_CACHE[clean_did]).lower()
-        if "close" in c_status or "done" in c_status:
-            print(f"[✓] [Fast HTTP] Dispute #{clean_did} is already CLOSED in cache.")
+    # 2. If the in-memory cache says closed, confirm with Tista before skipping the update
+    #    (the cache can be stale if the dispute was reopened).
+    if clean_did and "close" in str(_DISPUTE_STATUS_CACHE.get(clean_did, "")).lower():
+        live_status = read_dispute_status(s, clean_did)
+        if live_status != "closed":
+            _DISPUTE_STATUS_CACHE.pop(clean_did, None)
+        else:
+            print(f"[✓] [Fast HTTP] Dispute #{clean_did} is already closed on Tista.")
             return True, {
                 "success": True,
                 "dispute_id": clean_did,
@@ -2487,134 +2639,204 @@ def close_dispute_via_direct_http(dispute_id: str = None, order_id: str = None, 
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
 
-    # 6. Execute direct POST
+    # 6. Execute direct POST. Rails answers a successful update with a redirect (302/303);
+    #    a 200 means the form was re-rendered with validation errors, i.e. NOT saved.
+    def _post(form):
+        return s.post(post_url, data=form, headers=headers, timeout=10, allow_redirects=False)
+
+    def _saved(resp):
+        loc = resp.headers.get("Location", "")
+        return resp.status_code in (301, 302, 303) and "sign_in" not in loc and "/edit" not in loc
+
     t0 = time.time()
     try:
-        post_resp = s.post(post_url, data=form_data, headers=headers, timeout=10, allow_redirects=True)
-        elapsed = time.time() - t0
-        print(f"[✓] [Fast HTTP] POST to dispute #{clean_did} status: {post_resp.status_code} ({elapsed:.3f}s)")
+        post_resp = _post(form_data)
+        print(f"[*] [Fast HTTP] POST to dispute #{clean_did} status: {post_resp.status_code} ({time.time() - t0:.3f}s)")
 
-        if post_resp.status_code in (200, 302, 303) and "sign_in" not in str(post_resp.url):
-            _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
-            return True, {
-                "success": True,
-                "dispute_id": clean_did,
-                "order_id": order_id or f"#{raw_oid}",
-                "amount": charge_amt,
-                "status": "Closed",
-                "elapsed_seconds": round(elapsed, 3),
-                "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did} ({elapsed:.2f}s)."
-            }
-
-        # If 422: CSRF expired, refresh CSRF and retry once
+        # 422 = CSRF token expired: refresh it and retry once.
         if post_resp.status_code == 422:
             print("[*] [Fast HTTP] 422 received. Refreshing CSRF token and retrying...")
-            fresh_csrf = get_cached_csrf_token(s, force_refresh=True)
+            fresh_csrf = get_cached_csrf_token(s, force_refresh=True, failed_token=form_data["authenticity_token"])
             if fresh_csrf:
                 form_data["authenticity_token"] = fresh_csrf
                 headers["X-CSRF-Token"] = fresh_csrf
-                retry_resp = s.post(post_url, data=form_data, headers=headers, timeout=10, allow_redirects=True)
-                if retry_resp.status_code in (200, 302, 303) and "sign_in" not in str(retry_resp.url):
-                    _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
-                    return True, {
-                        "success": True,
-                        "dispute_id": clean_did,
-                        "order_id": order_id or f"#{raw_oid}",
-                        "amount": charge_amt,
-                        "status": "Closed",
-                        "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
-                    }
+                post_resp = _post(form_data)
 
-        # If 500: Retry once with minimal essential payload
-        print(f"[*] [Fast HTTP] Retrying with minimal payload...")
-        min_form = {
-            "_method": "patch",
-            "authenticity_token": csrf_token,
-            "order_dispute[chargeable_to]": "vendor",
-            "order_dispute[charge_to_vendor]": f"{charge_amt:.2f}",
-            "order_dispute[status]": "closed",
-            "commit": "Update Order dispute"
+        # 5xx = server error: retry once without the optional fields (severity, comment).
+        if post_resp.status_code >= 500:
+            print("[*] [Fast HTTP] Server error. Retrying once with the essential fields only...")
+            min_form = {k: v for k, v in form_data.items()
+                        if k not in ("order_dispute[fault_severity]", "order_dispute[comment]")}
+            post_resp = _post(min_form)
+
+        elapsed = time.time() - t0
+        if not _saved(post_resp):
+            if post_resp.status_code in (301, 302, 303):
+                reason = "Tista session expired - please log in again"
+            elif post_resp.status_code == 200:
+                errs = re.findall(r'class="[^"]*(?:invalid-feedback|error|alert-danger)[^"]*"[^>]*>([^<]{3,200})<', post_resp.text)
+                reason = "Tista rejected the update" + (f": {html_unescape(errs[0].strip())}" if errs else " (form returned with errors)")
+            else:
+                reason = f"Tista returned status {post_resp.status_code}"
+            print(f"[!] [Fast HTTP] Dispute #{clean_did} NOT closed: {reason}")
+            return False, reason
+
+        # Confirm the dispute really is closed now.
+        live_status = read_dispute_status(s, clean_did)
+        if live_status and live_status != "closed":
+            print(f"[!] [Fast HTTP] Dispute #{clean_did} saved but status is '{live_status}', not closed")
+            return False, f"Tista saved the dispute but its status is '{live_status}', not closed"
+
+        _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
+        return True, {
+            "success": True,
+            "dispute_id": clean_did,
+            "order_id": order_id or f"#{raw_oid}",
+            "amount": charge_amt,
+            "status": "Closed",
+            "verified": live_status == "closed",
+            "elapsed_seconds": round(elapsed, 3),
+            "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did} ({elapsed:.2f}s)."
         }
-        retry_resp = s.post(post_url, data=min_form, headers=headers, timeout=10, allow_redirects=True)
-        if retry_resp.status_code in (200, 302, 303) and "sign_in" not in str(retry_resp.url):
-            _DISPUTE_STATUS_CACHE[clean_did] = "Closed"
-            return True, {
-                "success": True,
-                "dispute_id": clean_did,
-                "order_id": order_id or f"#{raw_oid}",
-                "amount": charge_amt,
-                "status": "Closed",
-                "message": f"Successfully charged ${charge_amt:.2f} to Vendor and closed dispute #{clean_did}."
-            }
-
-        return False, f"Tista returned status {post_resp.status_code}"
     except Exception as pe:
         print(f"[!] Fast HTTP error for dispute #{clean_did}: {pe}")
         return False, str(pe)
+
+COMMENT_CACHE_TTL_SECONDS = 6 * 3600
+
+def _comment_cache_path(dispute_id: str) -> Path:
+    return DATA_DIR / f"tista_comment_{dispute_id}.json"
+
+def load_cached_comment(dispute_id: str):
+    """(comment, link) read within the last COMMENT_CACHE_TTL_SECONDS, else None."""
+    p = _comment_cache_path(dispute_id)
+    try:
+        if p.exists() and time.time() - p.stat().st_mtime < COMMENT_CACHE_TTL_SECONDS:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            return d.get("comment", ""), d.get("comment_link", "")
+    except Exception:
+        pass
+    return None
+
+def save_cached_comment(dispute_id: str, comment: str, link: str):
+    try:
+        _comment_cache_path(dispute_id).write_text(json.dumps({"dispute_id": dispute_id, "comment": comment, "comment_link": link}, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+def read_dispute_comment(session, dispute_id: str):
+    """Returns (comment, first_link) from the dispute's Tista edit page over plain HTTP; ("", "") if unavailable."""
+    try:
+        r = session.get(f"{BASE_URL}/manage/vendors/1/order_disputes/{dispute_id}/edit", timeout=10)
+        if r.status_code == 200:
+            m = re.search(r'<textarea[^>]+(?:id=[\x22\x27]order_dispute_comment[\x22\x27]|name=[^>]*comment)[^>]*>([\s\S]*?)</textarea>', r.text, re.I)
+            if m:
+                c_text = html_unescape(m.group(1).strip())
+                urls = [u.rstrip(".,;!?')\"") for u in re.findall(r"https?://[^\s<>\x22\x27,]+", c_text)]
+                return c_text, (urls[0] if urls else "")
+    except Exception:
+        pass
+    return "", ""
+
+def read_dispute_status(session, dispute_id: str):
+    """Returns the dispute's current status value from its Tista edit page (e.g. 'closed'), or None if unreadable."""
+    try:
+        r = session.get(f"{BASE_URL}/manage/vendors/1/order_disputes/{dispute_id}/edit", timeout=8, allow_redirects=False)
+        if r.status_code != 200:
+            return None
+        sel = re.search(r'<select[^>]+name="order_dispute\[status\]"[^>]*>([\s\S]*?)</select>', r.text, re.I)
+        if not sel:
+            return None
+        opt = re.search(r'<option[^>]*selected[^>]*value="([^"]+)"|<option[^>]*value="([^"]+)"[^>]*selected', sel.group(1))
+        return (opt.group(1) or opt.group(2)) if opt else None
+    except Exception:
+        return None
 
 def close_dispute_on_tista(dispute_id: str = None, order_id: str = None, amount: float = 2.0, comment: str = None, fault_severity: str = None, headless: bool = False):
     """
     Charges the specified amount to vendor and closes the dispute on Tista.
     Uses ultra-fast direct HTTP session (completes in ~0.4 - 0.8s with zero browser launch overhead).
     """
-    ok, res = close_dispute_via_direct_http(
-        dispute_id=dispute_id,
-        order_id=order_id,
-        amount=amount,
-        comment=comment,
-        fault_severity=fault_severity
-    )
+    started = time.time()
+    try:
+        ok, res = close_dispute_via_direct_http(
+            dispute_id=dispute_id,
+            order_id=order_id,
+            amount=amount,
+            comment=comment,
+            fault_severity=fault_severity
+        )
+    except Exception as e:
+        ok, res = False, str(e)
+
     if ok:
         print(f"[✓] Dispute closed via fast HTTP: {res.get('message')}")
+        _log_close_attempt(dispute_id, order_id, amount, fault_severity, True, res, started)
         return res
 
     err_msg = res if isinstance(res, str) else str(res.get("error") if isinstance(res, dict) else "Failed to close dispute")
     print(f"[!] HTTP dispute close note: {err_msg}")
-    return {
+    out = {
         "status": "error",
         "error": err_msg,
         "dispute_id": dispute_id,
         "order_id": order_id
     }
+    _log_close_attempt(dispute_id, order_id, amount, fault_severity, False, out, started)
+    return out
+
+CLOSE_LOG_FILE = DATA_DIR / "close_log.jsonl"
+CLOSE_CONCURRENCY = 4
+_CLOSE_LOG_LOCK = threading.Lock()
+
+def _log_close_attempt(dispute_id, order_id, amount_requested, fault_severity, success, res, started):
+    """Appends one line per close attempt to close_log.jsonl - the record of what was charged."""
+    entry = {
+        "time": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "dispute_id": str((res or {}).get("dispute_id") or dispute_id or ""),
+        "order_id": str(order_id or ""),
+        "amount_requested": amount_requested,
+        "amount_charged": (res or {}).get("amount") if success else None,
+        "fault_severity": fault_severity,
+        "success": bool(success),
+        "verified": (res or {}).get("verified") if success else None,
+        "error": None if success else (res or {}).get("error"),
+        "seconds": round(time.time() - started, 2),
+    }
+    try:
+        with _CLOSE_LOG_LOCK, open(CLOSE_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception as e:
+        print(f"[!] Could not write close log: {e}")
 
 def batch_close_disputes_on_tista(items: list, headless: bool = False):
     """
-    Charges to vendor and closes multiple disputes sequentially via ultra-fast direct HTTP session.
-    Takes ~0.5s per dispute without parallel session conflicts or heavy browser overhead.
+    Charges to vendor and closes multiple disputes via the direct HTTP session,
+    CLOSE_CONCURRENCY at a time. Every attempt is written to close_log.jsonl.
     """
     if not items:
         return {"total": 0, "closed": 0, "results": []}
 
     s = get_tista_http_session()
     if not s:
-        return False, "HTTP session not available"
+        return {"total": len(items), "closed": 0, "results": [], "error": "HTTP session not available"}
     get_cached_csrf_token(s)
 
-    results = []
-    print(f"[*] Sequentially closing {len(items)} disputes via fast HTTP session...")
-    for it in items:
-        did = str(it.get("dispute_id") or "").strip()
-        oid = str(it.get("order_id") or "").strip()
-        amt = round(max(2.0, float(it.get("amount") or 2.0)), 2)
-        comm = it.get("comment") or ""
-        sev = it.get("fault_severity") or None
-
-        ok, r = close_dispute_via_direct_http(
-            dispute_id=did,
-            order_id=oid,
-            amount=amt,
-            comment=comm,
-            fault_severity=sev
+    def _close(it):
+        r = close_dispute_on_tista(
+            dispute_id=str(it.get("dispute_id") or "").strip(),
+            order_id=str(it.get("order_id") or "").strip(),
+            amount=float(it.get("amount") or 2.0),
+            comment=it.get("comment") or "",
+            fault_severity=it.get("fault_severity") or None,
         )
-        if ok:
-            results.append(r)
-        else:
-            results.append({
-                "success": False,
-                "dispute_id": did,
-                "order_id": oid,
-                "error": r if isinstance(r, str) else "Failed to close dispute"
-            })
+        if r.get("error"):
+            r = {**r, "success": False}
+        return r
+
+    print(f"[*] Closing {len(items)} disputes, {CLOSE_CONCURRENCY} at a time...")
+    with ThreadPoolExecutor(max_workers=CLOSE_CONCURRENCY) as pool:
+        results = list(pool.map(_close, items))
 
     success_count = sum(1 for r in results if r.get("success"))
     return {
@@ -3176,19 +3398,65 @@ def parse_google_slides_presentation(slide_url: str):
     }
 
 # ---------- Web API & Local Server Support ----------
+# Only these files are served as static content; everything else (cookies, cached order JSON,
+# source code) returns 404.
+STATIC_FILES = {
+    "/Chargeback%20Calculator.html", "/Chargeback Calculator.html",
+    "/favicon.png", "/favicon.ico", "/logo.png", "/logo.ico",
+}
+
+# Extra origins allowed to call the API cross-site (e.g. the Vercel/GitHub Pages front end that
+# talks to the Render backend), comma-separated: ALLOWED_ORIGINS=https://my-app.vercel.app
+EXTRA_ALLOWED_ORIGINS = {o.strip().rstrip("/") for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()}
+_LOCAL_ORIGIN_RE = re.compile(r"^http://(127\.0\.0\.1|localhost)(:\d+)?$")
+
 class TistaRequestHandler(SimpleHTTPRequestHandler):
+    def _origin_allowed(self, origin: str) -> bool:
+        origin = origin.rstrip("/")
+        host = self.headers.get("Host", "")
+        if origin in (f"http://{host}", f"https://{host}"):
+            return True  # same origin
+        if origin in EXTRA_ALLOWED_ORIGINS:
+            return True
+        if not IS_CLOUD_ENV and (_LOCAL_ORIGIN_RE.match(origin) or origin == "null"):
+            return True  # local page, or the HTML opened straight from disk (file://)
+        return False
+
+    def _request_allowed(self) -> bool:
+        """Blocks other websites from driving the API (e.g. closing disputes) through the user's browser."""
+        origin = self.headers.get("Origin")
+        if origin:
+            return self._origin_allowed(origin)
+        # No Origin header: plain tools (curl) and same-site navigations are fine;
+        # cross-site no-cors requests (e.g. <img src=".../api/close_dispute?...">) are not.
+        return self.headers.get("Sec-Fetch-Site", "") != "cross-site"
+
+    def _reject_if_forbidden(self, path: str) -> bool:
+        if path.startswith("/api/") and not self._request_allowed():
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Origin not allowed"}).encode("utf-8"))
+            return True
+        return False
+
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        origin = self.headers.get("Origin") if hasattr(self, "headers") and self.headers else None
+        if origin and self._origin_allowed(origin):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Vary", "Origin")
         super().end_headers()
 
     def do_OPTIONS(self):
-        self.send_response(200)
+        self.send_response(200 if self._request_allowed() else 403)
         self.end_headers()
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if self._reject_if_forbidden(parsed.path):
+            return
         if parsed.path == "/api/version":
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -3371,7 +3639,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 return
             print(f"\n[API] Received fetch_dispute_comment request for Dispute #{dispute_id}")
             try:
-                res = fetch_dispute_comment_and_files(dispute_id, headless=True)
+                res = fetch_dispute_comment_and_files(dispute_id, headless=True, with_files=qs.get("files", ["1"])[0] != "0")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
@@ -3393,7 +3661,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             print(f"\n[API] Received close_dispute request: order_id={order_id}, dispute_id={dispute_id}, amount={amount}, fault_severity={fault_severity}")
             try:
                 res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, fault_severity=fault_severity, headless=DEFAULT_HEADLESS)
-                self.send_response(200)
+                self.send_response(502 if res.get("error") else 200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
@@ -3404,10 +3672,18 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             return
 
+        if parsed.path not in STATIC_FILES:
+            self.send_response(404)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Not found"}).encode("utf-8"))
+            return
         super().do_GET()
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if self._reject_if_forbidden(parsed.path):
+            return
         content_len = int(self.headers.get("Content-Length", 0))
         post_body = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else ""
         data = {}
@@ -3500,7 +3776,7 @@ class TistaRequestHandler(SimpleHTTPRequestHandler):
             print(f"\n[API POST] Close dispute: order_id={order_id}, dispute_id={dispute_id}, amount={amount}, fault_severity={fault_severity}")
             try:
                 res = close_dispute_on_tista(dispute_id=dispute_id, order_id=order_id, amount=amount, comment=comment, fault_severity=fault_severity, headless=DEFAULT_HEADLESS)
-                self.send_response(200)
+                self.send_response(502 if res.get("error") else 200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))

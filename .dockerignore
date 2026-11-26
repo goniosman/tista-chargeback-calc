@@ -13,3 +13,10 @@ macOS/
 scratch/
 .tista-profile
 Test_Chargeback Calculator.xlsx
+
+# Local-only files: virtualenv, browser profile, caches and the close log
+.venv
+chrome-profile
+close_log.jsonl
+tista_comment_*.json
+tests
